@@ -1,4 +1,0 @@
-/home/alex/uni/git/lce-test/build/CMakeFiles/edit_cache.dir
-/home/alex/uni/git/lce-test/build/CMakeFiles/testTime.dir
-/home/alex/uni/git/lce-test/build/CMakeFiles/rebuild_cache.dir
-/home/alex/uni/git/lce-test/build/CMakeFiles/testCorrectness.dir

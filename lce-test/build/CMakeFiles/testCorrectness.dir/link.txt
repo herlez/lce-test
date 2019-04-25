@@ -1,1 +1,0 @@
-/usr/bin/c++  -std=c++17 -O3 -fno-exceptions -ftemplate-backtrace-limit=0  -rdynamic CMakeFiles/testCorrectness.dir/src/testCorrectness.cpp.o  -o testCorrectness 
