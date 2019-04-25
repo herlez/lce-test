@@ -1,3 +1,0 @@
-/home/herlez/git/lce-test/build/CMakeFiles/rebuild_cache.dir
-/home/herlez/git/lce-test/build/CMakeFiles/testTime.dir
-/home/herlez/git/lce-test/build/CMakeFiles/edit_cache.dir
