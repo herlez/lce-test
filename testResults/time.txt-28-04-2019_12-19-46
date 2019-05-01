@@ -1,0 +1,1 @@
+RESULT text=dna algo=naiveLCE lceQueries=10000000 time=0.425376 lce=75652923 aveLce=7 lceLog=3

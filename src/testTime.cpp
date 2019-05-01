@@ -4,12 +4,13 @@
 #include <iomanip>
 #include <ctime>
 #include "structs/lceNaive.hpp"
+#include "structs/lcePrezza.hpp"
 #include "structs/lcePrezzaAdv.hpp"
 using namespace std;
 
 const string fileNames[] {"dna"};
 //const string files[] {"/scratch/text/dna"};
-const string files[] {"/scratch/text/dna"};
+const string files[] {"../../text/dna"};
 const string lceSet[] = {"../res/lceDna/i3", "../res/lceDna/i4", "../res/lceDna/i5", "../res/lceDna/i6", "../res/lceDna/i7", "../res/lceDna/i8", "../res/lceDna/i9", "../res/lceDna/i10", "../res/lceDna/i11", "../res/lceDna/i12", "../res/lceDna/i13", "../res/lceDna/i14"};
 const int NUMBEROFSETS = 12;
 const int SETPAD = 3;
@@ -38,11 +39,11 @@ int main(int argc, char *argv[]) {
 	/* Build data structures */
 	//lceUltraNaive dataUN(files[0]);
 	lceNaive dataN(files[0]);
-	//lcePrezza dataP(files[0]);
-	lcePrezzaAdv dataPA(files[0]);
+	lcePrezza dataP(files[0]);
+	//lcePrezzaAdv dataPA(files[0]);
 	
 	const int NUMBEROFALGS = 2;
-	lceDataStructure * lceData[NUMBEROFALGS] {&dataN, &dataPA};
+	lceDataStructure * lceData[NUMBEROFALGS] {&dataN, &dataP};
 	string algo[NUMBEROFALGS] {"naiveLCE", "prezzaLCE"};
 	
 	
