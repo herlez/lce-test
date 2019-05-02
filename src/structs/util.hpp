@@ -43,6 +43,13 @@ public:
 		}
     }
     
+    /* Returns the length of the file in bytes */
+    static uint64_t calculateSizeOfInputFile(std::string path) {
+        std::ifstream input(path, std::ios::in|std::ios::binary);
+		util::inputErrorHandling(&input);
+		return calculateSizeOfInputFile(&input);
+    }
+    
     /* Returns a prime number from a precalculated set */
     static unsigned __int128 getLow64BitPrime() {
 		

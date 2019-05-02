@@ -3,17 +3,15 @@
 #include <vector>
 #include <iomanip>
 #include <ctime>
-#include "structs/lceNaive.hpp"
-#include "structs/lcePrezza.hpp"
-//#include "structs/lcePrezzaAdv.hpp"
+#include "structs/lceSyncSets.hpp"
 using namespace std;
 
 const string fileNames[] {"dna"};
+//const string files[] {"/scratch/text/dna"};
 const string files[] {"/scratch/text/dna"};
-//const string files[] {"../../text/dna"};
-const string lceSet[] = {"../res/lceDna/i1", "../res/lceDna/i2", "../res/lceDna/i3", "../res/lceDna/i4", "../res/lceDna/i5", "../res/lceDna/i6", "../res/lceDna/i7", "../res/lceDna/i8", "../res/lceDna/i9", "../res/lceDna/i10", "../res/lceDna/i11", "../res/lceDna/i12", "../res/lceDna/i13", "../res/lceDna/i14", "../res/lceDna/i15", "../res/lceDna/i16"};
-const int NUMBEROFSETS = 16;
-const int SETPAD = 1;
+const string lceSet[] = {"../res/lceDna/i3", "../res/lceDna/i4", "../res/lceDna/i5", "../res/lceDna/i6", "../res/lceDna/i7", "../res/lceDna/i8", "../res/lceDna/i9", "../res/lceDna/i10", "../res/lceDna/i11", "../res/lceDna/i12", "../res/lceDna/i13", "../res/lceDna/i14", "../res/lceDna/i15", "../res/lceDna/i16", "../res/lceDna/iH"};
+const int NUMBEROFSETS = 14;
+const int SETPAD = 3;
 /* Up to 50000000 tests possible */
 const uint64_t NUMBEROFTESTS = 10000000ULL;
 
@@ -27,7 +25,7 @@ int main(int argc, char *argv[]) {
     auto tm = *std::localtime(&t);
 
     std::ostringstream oss;
-    oss << std::put_time(&tm, "%Y-%m-%d-%H-%M-%S");
+    oss << std::put_time(&tm, "%d-%m-%Y_%H-%M-%S");
     auto str = oss.str();
 
 	ofstream log(string("../testResults/time.txt-") + str, ios::out|ios::trunc);
@@ -38,13 +36,14 @@ int main(int argc, char *argv[]) {
 	 
 	/* Build data structures */
 	//lceUltraNaive dataUN(files[0]);
-	LceNaive dataN(files[0]);
-	LcePrezza dataP(files[0]);
+	//lceNaive dataN(files[0]);
+	//lcePrezza dataP(files[0]);
 	//lcePrezzaAdv dataPA(files[0]);
+	lceSyncSets dataSS(files[0]);
 	
-	const int NUMBEROFALGS = 2;
-	LceDataStructure * lceData[NUMBEROFALGS] {&dataN, &dataP};
-	string algo[NUMBEROFALGS] {"naiveLCE", "prezzaLCE"};
+	const int NUMBEROFALGS = 1;
+	lceDataStructure * lceData[NUMBEROFALGS] {&dataSS};
+	string algo[NUMBEROFALGS] {"syncSetsLCE"};
 	
 	
 	/************************************
@@ -52,7 +51,7 @@ int main(int argc, char *argv[]) {
 	 ************************************/
 	
 	/* LCE query test */
-	for(int k = 0; k < NUMBEROFSETS; ++k) {
+	for(int k = 0; k < NUMBEROFSETS; k++) {
 		ifstream lc(lceSet[k], ios::in);
 		util::inputErrorHandling(&lc);
 		/* We use indexes which lead to lce results in defined ranges.
@@ -75,7 +74,7 @@ int main(int argc, char *argv[]) {
 		 * if we are out of bound of the vector */
 		
 		uint64_t * lceI = new uint64_t[NUMBEROFTESTS*2];
-		for(uint64_t k = 0; k < NUMBEROFTESTS * 2; ++k) {
+		for(uint64_t k = 0; k < NUMBEROFTESTS * 2; k++) {
 			lceI[k] = v[k % v.size()];
 			if (lceI[k] == 0) {
 				cout << "ERROR AT "<< k << endl;
@@ -93,11 +92,11 @@ int main(int argc, char *argv[]) {
 		// Timestamps
 		double ts1, ts2;
 		// For every lce Datastructure..
-		for(int alg = 0; alg < NUMBEROFALGS; ++alg) { 
+		for(int alg = 0; alg < NUMBEROFALGS; alg++) { 
 			// ..do NUMBEROFTESTS LCE queries
 			ts1 = timestamp();
 			
-			for(uint64_t k = 0; k < NUMBEROFTESTS * 2; ++k) {
+			for(uint64_t k = 0; k < NUMBEROFTESTS * 2; k++) {
 				i = lceI[k];
 				j = lceI[++k];
 				lce += lceData[alg]->lce(i, j);

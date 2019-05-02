@@ -7,28 +7,32 @@
 /* This class builds Prezza's in-place LCE data structure and
  * answers LCE-queries in O(log(n)). */
 
-class lcePrezza : public lceDataStructure {
+class LcePrezza : public LceDataStructure {
 	public:
+		LcePrezza() = delete;
 		/* Loads the full file located at PATH and builds Prezza's LCE data structure */
-		lcePrezza(const std::string path) {
+		LcePrezza(const std::string path) :
+									textLengthInBytes{util::calculateSizeOfInputFile(path)},
+									textLengthInBlocks{textLengthInBytes/8 + (textLengthInBytes % 8 == 0 ? 0 : 1)},
+									prime{util::getLow64BitPrime()},
+									fingerprints{new uint64_t[textLengthInBlocks]},
+									powerTable{new uint64_t[((int) std::log2(textLengthInBlocks)) + 6]} {
 			std::ifstream input(path, std::ios::in|std::ios::binary);
 			util::inputErrorHandling(&input);
-			textLengthInBytes = util::calculateSizeOfInputFile(&input);
-			/* Calculate how many 8 byte blocks are needed */
-			textLengthInBlocks = textLengthInBytes/8;
-			if(textLengthInBytes%8 != 0) {
-				textLengthInBlocks++;
-			}
-			fingerprints = new uint64_t[textLengthInBlocks];
 			input.seekg(0);
 			input.read((char*)fingerprints, textLengthInBytes);
-			prime = util::getLow64BitPrime();
 			calculateFingerprints();
 			calculatePowers();
 		}
 		
-		/* Loads a prefix of the file located at PATH and build Prezza's LCE data structure*/ 
-		lcePrezza(const std::string path, const uint64_t numberOfChars) {
+		/* Loads a prefix of the file located at PATH and build Prezza's LCE data structure */
+		LcePrezza(const std::string path, const uint64_t numberOfChars) :
+									textLengthInBytes{numberOfChars},
+									textLengthInBlocks{textLengthInBytes/8 + (textLengthInBytes % 8 == 0 ? 0 : 1)},
+									prime{util::getLow64BitPrime()},
+									fingerprints{new uint64_t[textLengthInBlocks]},
+									powerTable{new uint64_t[((int) std::log2(textLengthInBlocks)) + 6]} {
+
 			std::ifstream input(path, std::ios::in|std::ios::binary);
 			util::inputErrorHandling(&input);
 			uint64_t dataSize = util::calculateSizeOfInputFile(&input);
@@ -36,17 +40,8 @@ class lcePrezza : public lceDataStructure {
 				std::cerr << "Attemted to load the first " << numberOfChars << " Bytes, but the file " << path << " is only " << dataSize << " Bytes big." << std::endl;
 				exit(EXIT_FAILURE);
 			}
-			textLengthInBytes = numberOfChars;
-			/* Calculate how many 8 byte blocks are needed */
-			textLengthInBlocks = textLengthInBytes/8;
-			if(textLengthInBytes%8 != 0) {
-				textLengthInBlocks++;
-			}
-			
-			fingerprints = new uint64_t[textLengthInBlocks];
 			input.seekg(0);
 			input.read((char*)fingerprints, textLengthInBytes);
-			prime = util::getLow64BitPrime();
 			calculateFingerprints();
 			calculatePowers();
 		}
@@ -57,7 +52,7 @@ class lcePrezza : public lceDataStructure {
 				return textLengthInBytes - i;
 			}
 			
-			const uint64_t maxLength = textLengthInBytes - ((i < j) ? j : i);
+			uint64_t maxLength = textLengthInBytes - ((i < j) ? j : i);
 			const uint64_t nCheck = maxLength > 1024 ? 1024 : maxLength;
 
 			/* Compare single characters */
@@ -85,12 +80,13 @@ class lcePrezza : public lceDataStructure {
 			dist /= 2;
 			uint64_t i2 = i + dist;
 			uint64_t j2 = j + dist;
-			const uint64_t maxLengthB = textLengthInBytes - ((i2 < j2) ? j2 : i2);
+			maxLength = textLengthInBytes - ((i2 < j2) ? j2 : i2);
 			
 			while(k != 0) {
 				k--;
 				dist /= 2;
-				if (unlikely(dist > maxLengthB)) {
+				if (unlikely(dist > maxLength)) {
+					continue;
 				}
 				if(fingerprintExp(i2, k) == fingerprintExp(j2, k)) {
 					i2 += dist;
@@ -130,11 +126,12 @@ class lcePrezza : public lceDataStructure {
 		}
 	
 	private:
-		uint64_t * fingerprints;
-		uint64_t textLengthInBytes;
-		uint64_t textLengthInBlocks;
-		unsigned __int128 prime;
-		uint64_t * powerTable;
+		
+		const uint64_t textLengthInBytes;
+		const uint64_t textLengthInBlocks;
+		const unsigned __int128 prime;
+		uint64_t * const fingerprints;
+		uint64_t * const powerTable;
 		
 		uint64_t cachedBlock1;
 		uint64_t cachedBlockIndex1;
@@ -162,11 +159,9 @@ class lcePrezza : public lceDataStructure {
 				currentFingerprint &= 0x7FFFFFFFFFFFFFFFULL;
 				
 				uint64_t Y = (uint64_t) X;
-				if (Y <= currentFingerprint) {
-					Y = currentFingerprint - Y;
-				} else {
-					Y = prime - (Y - currentFingerprint);
-				}
+				
+				Y = Y <= currentFingerprint ? currentFingerprint - Y : prime - (Y - currentFingerprint);
+				
 				return Y + sBit*(uint64_t)prime;
 			}
 		}
@@ -212,7 +207,7 @@ class lcePrezza : public lceDataStructure {
 		/* Calculates the powers of 2. This reduces the time from polylogarithmic to logarithmic. */
 		void calculatePowers() {
 			unsigned int numberOfLevels = ((int) std::log2(textLengthInBlocks)) + 6; // +1 to round up and +4 because we need bit shifts by 1byte, 2byte, 4byte and 8byte
-			powerTable = new uint64_t[numberOfLevels];
+			//powerTable = new uint64_t[numberOfLevels];
 			unsigned __int128 X = 256;
 			powerTable[0] = (uint64_t) X;
 			for (unsigned int i = 1; i < numberOfLevels; i++) {
@@ -221,7 +216,7 @@ class lcePrezza : public lceDataStructure {
 			}
 		}
 		
-		/* Calculates the fingerprint of T[from, 2^exp) */
+		/* Calculates the fingerprint of T[from, from + 2^exp) */
 		uint64_t fingerprintExp(const uint64_t from, const int exp) {
 			if (unlikely(from == 0)) {
 				return fingerprintTo((1 << exp)-1); // ie if exponent = 3, we want P[0..7];
@@ -231,29 +226,22 @@ class lcePrezza : public lceDataStructure {
 				fingerprintToI *= powerTable[exp];
 				fingerprintToI %= prime;
 
-				if (fingerprintToJ >= fingerprintToI) {
-					return (uint64_t) (fingerprintToJ - fingerprintToI);
-				} else {
-					return (uint64_t) (prime - (fingerprintToI - fingerprintToJ));
-				}
+				return fingerprintToJ >= fingerprintToI ? (uint64_t) (fingerprintToJ - fingerprintToI) : uint64_t (fingerprintToI - fingerprintToJ);
 			}
 		}
 		
 		/* Calculates the fingerprint of T[0..i] */
 		uint64_t fingerprintTo(const uint64_t i) {
 			unsigned __int128 fingerprint = 0;
-			int pad = ((i+1) % 8) * 8;
-			
+			//int pad = ((i+1) % 8) * 8;
+			int pad = ((i+1) & 7) * 8;
 			if(pad == 0) {
 				// This fingerprints is already saved. We only have to remove the helping bit.
 				return fingerprints[i/8] < 0x8000000000000000ULL ? fingerprints[i/8] : fingerprints[i/8] - 0x8000000000000000ULL; 
 			}
 			/* Add fingerprint from previous block */
 			if (i > 7) {
-				fingerprint = fingerprints[((i/8) - 1)];
-				if (fingerprint > 0x8000000000000000) {
-					fingerprint -= 0x8000000000000000;
-				}
+				fingerprint = fingerprints[((i/8) - 1)] &= 0x7FFFFFFFFFFFFFFFULL;
 				fingerprint <<= pad;
 			}
 			/* Add relevant part of block */
