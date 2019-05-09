@@ -7,11 +7,11 @@
 /* This class builds Prezza's in-place LCE data structure and
  * answers LCE-queries in O(log(n)). */
 
-class LcePrezza : public LceDataStructure {
+class LcePrezzaBlock : public LceDataStructure {
 	public:
-		LcePrezza() = delete;
+		LcePrezzaBlock() = delete;
 		/* Loads the full file located at PATH and builds Prezza's LCE data structure */
-		LcePrezza(const std::string path) :
+		LcePrezzaBlock(const std::string path) :
 									textLengthInBytes{util::calculateSizeOfInputFile(path)},
 									textLengthInBlocks{textLengthInBytes/8 + (textLengthInBytes % 8 == 0 ? 0 : 1)},
 									prime{util::getLow64BitPrime()},
@@ -26,7 +26,7 @@ class LcePrezza : public LceDataStructure {
 		}
 		
 		/* Loads a prefix of the file located at PATH and build Prezza's LCE data structure */
-		LcePrezza(const std::string path, const uint64_t numberOfChars) :
+		LcePrezzaBlock(const std::string path, const uint64_t numberOfChars) :
 									textLengthInBytes{numberOfChars},
 									textLengthInBlocks{textLengthInBytes/8 + (textLengthInBytes % 8 == 0 ? 0 : 1)},
 									prime{util::getLow64BitPrime()},
@@ -53,7 +53,7 @@ class LcePrezza : public LceDataStructure {
 			}
 			
 			uint64_t maxLength = textLengthInBytes - ((i < j) ? j : i);
-			const uint64_t nCheck = (maxLength > 1024 ? 1024 : maxLength);
+			uint64_t nCheck = maxLength > 1024 ? 1024 : maxLength;
 			
 			/* naive part of lce query */
 			cachedBlockIndex1 = i / 8;
@@ -63,23 +63,38 @@ class LcePrezza : public LceDataStructure {
 			offsetLce1 = 7 - (i % 8);
 			offsetLce2 = 7 - (j % 8);
 			
-			for(int lceN = 0; lceN <= nCheck; ++lceN) {
-				if (getNextChar1() != getNextChar2()) {
+			
+			/* compare blockwise */
+			nextNCheck = 8 - (offsetLce1 > offsetLce2 ? offsetLce1 : offsetLce2); 
+			int lceN;
+			for (lceN = 0; (lceN + nextNCheck) <= nCheck; lceN += nextNCheck) {
+				/* If the block does not match we want to compare bytewise in the next step */
+				if (nextBlockCheck1() != nextBlockCheck2()) {
+					nCheck = lceN + nextNCheck;
+					break;
+				}
+			}
+			
+			/* compare the rest bytewise */	
+			for ( ; (lceN <= nCheck); ++lceN) {
+				if (nextCharCheck1() != nextCharCheck2()) {
 					return lceN;
 				}
 			}
 			
+			
+			if(unlikely(lceN = maxLength)) { return maxLength; }
+				
+		//		offsetLce1 -= nextNCheck;
+		//		offsetLce2 -= nextNCheck;
+		//		nextNCheck = (nextNCheck == 8) ? 8 : (8 - nextNCheck);
+			
+			
 			/* exponential search */
 			int k = 11;
 			uint64_t dist = 2048;
-	//		while(fingerprintExp(i, k) == fingerprintExp(j, k)) {
-	//			++k;
-	//			dist *= 2;
-	//			if(unlikely(dist > maxLength)) {
-	//				break;
-	//			}
-	//		}
-			while(dist < maxLength) {
+			
+			while( dist < maxLength ) {
 				if (fingerprintExp(i, k) != fingerprintExp(j, k)) {
 					break;
 				}
@@ -130,12 +145,15 @@ class LcePrezza : public LceDataStructure {
 		uint64_t * const powerTable;
 		
 		/* The following variables speed up the naive part of an LCE query */
+		int nextNCheck;
 		uint64_t cachedBlock1;
 		uint64_t cachedBlock2;
 		uint64_t cachedBlockIndex1;
 		uint64_t cachedBlockIndex2;
 		int offsetLce1;
 		int offsetLce2;
+		
+		const uint64_t ff[8] {0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFF, 0xFFFFFFFFFFFF, 0xFFFFFFFFFF, 0xFFFFFFFF, 0xFFFFFF, 0xFFFF, 0xFF};
 		
 		/* Returns the i'th block. A block contains 8 character. */
 		uint64_t getBlock(const uint64_t i) {
@@ -166,7 +184,7 @@ class LcePrezza : public LceDataStructure {
 		}
 		
 		/* Returns the next character, which is compared in a LCE query */
-		char getNextChar1() {
+		char nextCharCheck1() {
 			if (offsetLce1 == -1) {
 				offsetLce1 = 7;
 				cachedBlock1 = getBlock(++cachedBlockIndex1);
@@ -175,13 +193,32 @@ class LcePrezza : public LceDataStructure {
 		}
 		
 		/* Returns the next character, which is compared in an LCE query */
-		char getNextChar2() {
+		char nextCharCheck2() {
 			if (offsetLce2 == -1) {
 				offsetLce2 = 7;
 				cachedBlock2 = getBlock(++cachedBlockIndex2);
 			}
 			return (cachedBlock2 >> (8*offsetLce2--)) & 0xff;
 		}
+		
+		uint64_t nextBlockCheck1() {
+			if (offsetLce1 == -1) {
+				offsetLce1 = 7;
+				cachedBlock1 = getBlock(++cachedBlockIndex1);
+			}
+			return (cachedBlock1 >> (8*nextNCheck) & ff[offsetLce1]); 
+		}
+		
+		uint64_t nextBlockCheck2() {
+			if (offsetLce2 == -1) {
+				offsetLce2 = 7;
+				cachedBlock2 = getBlock(++cachedBlockIndex2);
+			}
+			return (cachedBlock2 >> (8*nextNCheck) & ff[offsetLce2]); 
+		}
+		
+		
+		
 		
 		/* Calculates the fingerprint of T[from, from + 2^exp) */
 		uint64_t fingerprintExp(const uint64_t from, const int exp) {

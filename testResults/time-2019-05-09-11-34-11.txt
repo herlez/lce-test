@@ -1,0 +1,11 @@
+RESULT text=dna algo=naiveLCE lceQueries=10000000 time=0.233352 lce=9113924 aveLce=0 lceLog=0
+RESULT text=dna algo=prezzaLCE lceQueries=10000000 time=1.55566 lce=9113924 aveLce=0 lceLog=0
+RESULT text=dna algo=prezzaBlock lceQueries=10000000 time=9.02536 lce=2275313516 aveLce=227 lceLog=0
+RESULT text=dna algo=naiveLCE lceQueries=10000000 time=0.2848 lce=20016694 aveLce=2 lceLog=1
+RESULT text=dna algo=prezzaLCE lceQueries=10000000 time=1.92199 lce=20016694 aveLce=2 lceLog=1
+RESULT text=dna algo=prezzaBlock lceQueries=10000000 time=19.3207 lce=4508738284 aveLce=450 lceLog=1
+RESULT text=dna algo=naiveLCE lceQueries=10000000 time=0.478964 lce=37210055 aveLce=3 lceLog=2
+RESULT text=dna algo=prezzaLCE lceQueries=10000000 time=2.59908 lce=37210055 aveLce=3 lceLog=2
+RESULT text=dna algo=prezzaBlock lceQueries=10000000 time=34.1437 lce=7356888349 aveLce=735 lceLog=2
+RESULT text=dna algo=naiveLCE lceQueries=10000000 time=1.47541 lce=75652923 aveLce=7 lceLog=3
+RESULT text=dna algo=prezzaLCE lceQueries=10000000 time=4.9127 lce=75652923 aveLce=7 lceLog=3

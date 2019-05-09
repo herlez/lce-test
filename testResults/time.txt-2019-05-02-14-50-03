@@ -1,5 +1,0 @@
-RESULT text=dna algo=naiveLCE lceQueries=10000000 time=0.060075 lce=20016694 aveLce=2 lceLog=1
-RESULT text=dna algo=naiveLCE lceQueries=10000000 time=0.178952 lce=37210055 aveLce=3 lceLog=2
-RESULT text=dna algo=naiveLCE lceQueries=10000000 time=0.532325 lce=75652923 aveLce=7 lceLog=3
-RESULT text=dna algo=naiveLCE lceQueries=10000000 time=0.83493 lce=152881059 aveLce=15 lceLog=4
-RESULT text=dna algo=naiveLCE lceQueries=10000000 time=0.547211 lce=268331176 aveLce=26 lceLog=5

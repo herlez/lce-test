@@ -4,17 +4,26 @@
 #include <iomanip>
 #include <ctime>
 #include "structs/lceNaive.hpp"
+#include "structs/lceNaiveBlock.hpp"
+#include "structs/lceNaiveBlock128.hpp"
 #include "structs/lcePrezza.hpp"
-//#include "structs/lcePrezzaAdv.hpp"
+#include "structs/lcePrezzaBlock.hpp"
+
 using namespace std;
 
 const string fileNames[] {"dna"};
 const string files[] {"/scratch/text/dna"};
 //const string files[] {"../../text/dna"};
-const string lceSet[] = {"../res/lceDna/i1", "../res/lceDna/i2", "../res/lceDna/i3", "../res/lceDna/i4", "../res/lceDna/i5", "../res/lceDna/i6", "../res/lceDna/i7", "../res/lceDna/i8", "../res/lceDna/i9", "../res/lceDna/i10", "../res/lceDna/i11", "../res/lceDna/i12", "../res/lceDna/i13", "../res/lceDna/i14", "../res/lceDna/i15", "../res/lceDna/i16"};
-const int NUMBEROFSETS = 16;
-const int SETPAD = 1;
-/* Up to 50000000 tests possible */
+
+
+const string lceSet[] = {"../res/lceDna/i0", "../res/lceDna/i1", "../res/lceDna/i2", "../res/lceDna/i3", "../res/lceDna/i4", "../res/lceDna/i5", "../res/lceDna/i6", "../res/lceDna/i7", "../res/lceDna/i8", "../res/lceDna/i9", "../res/lceDna/i10", "../res/lceDna/i11", "../res/lceDna/i12", "../res/lceDna/i13", "../res/lceDna/i14", "../res/lceDna/i15", "../res/lceDna/i16"};
+const int NUMBEROFSETS = 17;
+
+//const string lceSet[] = {"../res/lceDna/i11", "../res/lceDna/i12", "../res/lceDna/i13", "../res/lceDna/i14", "../res/lceDna/i15", "../res/lceDna/i16"};
+//const int NUMBEROFSETS = 6;
+
+const int SETPAD = 0;
+/* Up to 100000000 tests possible */
 const uint64_t NUMBEROFTESTS = 10000000ULL;
 
 double timestamp();
@@ -30,7 +39,7 @@ int main(int argc, char *argv[]) {
     oss << std::put_time(&tm, "%Y-%m-%d-%H-%M-%S");
     auto str = oss.str();
 
-	ofstream log(string("../testResults/time.txt-") + str, ios::out|ios::trunc);
+	ofstream log(string("../testResults/time-") + str + string(".txt"), ios::out|ios::trunc);
 	
 	/************************************
 	 ****PREPARE LCE DATA STRUCTURES*****
@@ -39,12 +48,14 @@ int main(int argc, char *argv[]) {
 	/* Build data structures */
 	//lceUltraNaive dataUN(files[0]);
 	LceNaive dataN(files[0]);
+	LceNaiveBlock dataNB(files[0]);
+	LceNaiveBlock128 dataNB128 (files[0]);
 	LcePrezza dataP(files[0]);
-	//lcePrezzaAdv dataPA(files[0]);
+	//LcePrezzaBlock dataPB(files[0]);
 	
-	const int NUMBEROFALGS = 2;
-	LceDataStructure * lceData[NUMBEROFALGS] {&dataN, &dataP};
-	string algo[NUMBEROFALGS] {"naiveLCE", "prezzaLCE"};
+	const int NUMBEROFALGS = 4;
+	LceDataStructure * lceData[NUMBEROFALGS] {&dataN, &dataNB, &dataNB128, &dataP};
+	string algo[NUMBEROFALGS] {"naiveLCE", "naiveNB", "naiveNB128", "prezzaLCE"};
 	
 	
 	/************************************
@@ -52,7 +63,7 @@ int main(int argc, char *argv[]) {
 	 ************************************/
 	
 	/* LCE query test */
-	for(int k = 0; k < NUMBEROFSETS; ++k) {
+	for(int k = 1; k < NUMBEROFSETS; ++k) {
 		ifstream lc(lceSet[k], ios::in);
 		util::inputErrorHandling(&lc);
 		/* We use indexes which lead to lce results in defined ranges.
