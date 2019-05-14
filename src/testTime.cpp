@@ -16,13 +16,13 @@ const string files[] {"/scratch/text/dna"};
 //const string files[] {"../../text/dna"};
 
 
-const string lceSet[] = {"../res/lceDna/i0", "../res/lceDna/i1", "../res/lceDna/i2", "../res/lceDna/i3", "../res/lceDna/i4", "../res/lceDna/i5", "../res/lceDna/i6", "../res/lceDna/i7", "../res/lceDna/i8", "../res/lceDna/i9", "../res/lceDna/i10", "../res/lceDna/i11", "../res/lceDna/i12", "../res/lceDna/i13", "../res/lceDna/i14", "../res/lceDna/i15", "../res/lceDna/i16"};
-const int NUMBEROFSETS = 17;
+const string lceSet[] = {"../res/lceDna/i0", "../res/lceDna/i1", "../res/lceDna/i2", "../res/lceDna/i3", "../res/lceDna/i4", "../res/lceDna/i5", "../res/lceDna/i6", "../res/lceDna/i7", "../res/lceDna/i8", "../res/lceDna/i9", "../res/lceDna/i10", "../res/lceDna/i11", "../res/lceDna/i12", "../res/lceDna/i13", "../res/lceDna/i14", "../res/lceDna/i15", "../res/lceDna/i16", "../res/lceDna/iH"};
+const int NUMBEROFSETS = 18;
 
 //const string lceSet[] = {"../res/lceDna/i11", "../res/lceDna/i12", "../res/lceDna/i13", "../res/lceDna/i14", "../res/lceDna/i15", "../res/lceDna/i16"};
 //const int NUMBEROFSETS = 6;
 
-const int SETPAD = 0;
+const int SETPAD = 8;
 /* Up to 100000000 tests possible */
 const uint64_t NUMBEROFTESTS = 10000000ULL;
 
@@ -48,14 +48,14 @@ int main(int argc, char *argv[]) {
 	/* Build data structures */
 	//lceUltraNaive dataUN(files[0]);
 	LceNaive dataN(files[0]);
-	LceNaiveBlock dataNB(files[0]);
-	LceNaiveBlock128 dataNB128 (files[0]);
+	//LceNaiveBlock dataNB(files[0]);
+	//LceNaiveBlock128 dataNB128 (files[0]);
 	LcePrezza dataP(files[0]);
-	//LcePrezzaBlock dataPB(files[0]);
+	LcePrezzaBlock dataPB(files[0]);
 	
-	const int NUMBEROFALGS = 4;
-	LceDataStructure * lceData[NUMBEROFALGS] {&dataN, &dataNB, &dataNB128, &dataP};
-	string algo[NUMBEROFALGS] {"naiveLCE", "naiveNB", "naiveNB128", "prezzaLCE"};
+	const int NUMBEROFALGS = 3;
+	LceDataStructure * lceData[NUMBEROFALGS] {&dataN, &dataP, & dataPB}; // &dataNB, &dataNB128}; //, &dataP};
+	string algo[NUMBEROFALGS] {"naiveLCE", "prezza", "prezzaBlock"}; //, "prezzaLCE"};
 	
 	
 	/************************************
@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
 	 ************************************/
 	
 	/* LCE query test */
-	for(int k = 1; k < NUMBEROFSETS; ++k) {
+	for(int k = SETPAD; k < NUMBEROFSETS; ++k) {
 		ifstream lc(lceSet[k], ios::in);
 		util::inputErrorHandling(&lc);
 		/* We use indexes which lead to lce results in defined ranges.
@@ -81,6 +81,7 @@ int main(int argc, char *argv[]) {
 			}
 			l++;
 		}
+		
 		/* We use a fixed size array in order to answer LCE queries,
 		 * because we do not want an overhead by checking
 		 * if we are out of bound of the vector */
@@ -88,9 +89,6 @@ int main(int argc, char *argv[]) {
 		uint64_t * lceI = new uint64_t[NUMBEROFTESTS*2];
 		for(uint64_t k = 0; k < NUMBEROFTESTS * 2; ++k) {
 			lceI[k] = v[k % v.size()];
-			if (lceI[k] == 0) {
-				cout << "ERROR AT "<< k << endl;
-			}
 		}
 		
 		
@@ -108,7 +106,7 @@ int main(int argc, char *argv[]) {
 			// ..do NUMBEROFTESTS LCE queries
 			ts1 = timestamp();
 			
-			for(uint64_t k = 0; k < NUMBEROFTESTS * 2; ++k) {
+			for(uint64_t k = 0; k < NUMBEROFTESTS*2; ++k) {
 				i = lceI[k];
 				j = lceI[++k];
 				lce += lceData[alg]->lce(i, j);

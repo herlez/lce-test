@@ -53,71 +53,72 @@ class LcePrezzaBlock : public LceDataStructure {
 			}
 			
 			uint64_t maxLength = textLengthInBytes - ((i < j) ? j : i);
-			uint64_t nCheck = maxLength > 1024 ? 1024 : maxLength;
 			
 			/* naive part of lce query */
 			cachedBlockIndex1 = i / 8;
 			cachedBlockIndex2 = j / 8;
 			cachedBlock1 = getBlock(cachedBlockIndex1);
 			cachedBlock2 = getBlock(cachedBlockIndex2);
-			offsetLce1 = 7 - (i % 8);
-			offsetLce2 = 7 - (j % 8);
+			offsetLce1 = (i % 8) * 8;
+			offsetLce2 = (j % 8) * 8;
 			
+			
+			uint64_t blockI;
+			uint64_t blockI2;
+			uint64_t blockJ;
+			uint64_t blockJ2;
+			uint64_t compBlockI;
+			uint64_t compBlockJ;
 			
 			/* compare blockwise */
-			nextNCheck = 8 - (offsetLce1 > offsetLce2 ? offsetLce1 : offsetLce2); 
-			int lceN;
-			for (lceN = 0; (lceN + nextNCheck) <= nCheck; lceN += nextNCheck) {
-				/* If the block does not match we want to compare bytewise in the next step */
-				if (nextBlockCheck1() != nextBlockCheck2()) {
-					nCheck = lceN + nextNCheck;
-					break;
+			uint64_t max = maxLength < 1024 ? maxLength/8 : 1024/8;
+			for(uint64_t lce = 0; lce < max; ++lce) {
+				blockI = getBlock((i/8)+lce);
+				blockI2 = getBlock((i/8)+lce+1);
+				blockJ = getBlock((j/8)+lce);
+				blockJ2 = getBlock((j/8)+lce+1);
+			
+				compBlockI = (blockI >> offsetLce1) + (blockI2 << (64-offsetLce1));
+				compBlockJ = (blockJ >> offsetLce2) + (blockJ2 << (64-offsetLce2));
+				if(compBlockI != compBlockJ) {
+					for(int k = 0; k < 8; ++k) {
+						return lce*8;
+					}
 				}
 			}
+
 			
-			/* compare the rest bytewise */	
-			for ( ; (lceN <= nCheck); ++lceN) {
-				if (nextCharCheck1() != nextCharCheck2()) {
-					return lceN;
-				}
-			}
-			
-			
-			if(unlikely(lceN = maxLength)) { return maxLength; }
-				
-		//		offsetLce1 -= nextNCheck;
-		//		offsetLce2 -= nextNCheck;
-		//		nextNCheck = (nextNCheck == 8) ? 8 : (8 - nextNCheck);
+
 			
 			
 			/* exponential search */
-			int k = 11;
+			int exp = 11;
 			uint64_t dist = 2048;
 			
 			while( dist < maxLength ) {
-				if (fingerprintExp(i, k) != fingerprintExp(j, k)) {
+				if (fingerprintExp(i, exp) != fingerprintExp(j, exp)) {
 					break;
 				}
-				++k;
+				++exp;
 				dist *= 2;
 			}
-			if (k == 0) {return 0;}
-			if (k == 1) {return 1;}
+			if (exp == 0) {return 0;}
+			if (exp == 1) {return 1;}
 			
 			/* binary search */
-			--k;
+			--exp;
 			dist /= 2;
 			uint64_t i2 = i + dist;
 			uint64_t j2 = j + dist;
 			maxLength = textLengthInBytes - ((i2 < j2) ? j2 : i2);
 			
-			while(k != 0) {
-				--k;
+			while(exp != 0) {
+				--exp;
 				dist /= 2;
 				if (unlikely(dist > maxLength)) {
 					continue;
 				}
-				if(fingerprintExp(i2, k) == fingerprintExp(j2, k)) {
+				if(fingerprintExp(i2, exp) == fingerprintExp(j2, exp)) {
 					i2 += dist;
 					j2 += dist;
 				}

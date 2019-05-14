@@ -79,10 +79,7 @@ class LcePrezza : public LceDataStructure {
 	//				break;
 	//			}
 	//		}
-			while(dist < maxLength) {
-				if (fingerprintExp(i, k) != fingerprintExp(j, k)) {
-					break;
-				}
+			while(dist < maxLength & (fingerprintExp(i, k) != fingerprintExp(j, k))) {
 				++k;
 				dist *= 2;
 			}

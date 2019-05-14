@@ -45,15 +45,37 @@ class LceNaive : public LceDataStructure {
 		
 		
 		/* Naive LCE-query */
-		uint64_t lce (const uint64_t i, const uint64_t j) {
+		uint64_t lce(const uint64_t i, const uint64_t j) {
 			uint64_t lce = 0;
 			if (unlikely(i == j)) {
 				return textLengthInBytes - i;
 			}
+			
 			const uint64_t maxLength = textLengthInBytes - ((i < j) ? j : i);
-			while (text[i + lce] == text[j + lce]) {
-				++lce;
-				if (unlikely(lce >= maxLength)) {
+			
+			// First we compare the first few characters. We do this, because in the usual case the lce is low.
+			for(; lce < 8; ++lce) {
+				if(unlikely(lce >= maxLength)) {
+					return maxLength;
+				}
+				if(text[i + lce] != text[j + lce]) {
+					return lce;
+				}
+			}
+			
+			// Accelerate search by comparing 16-byte blocks
+			lce = 0;
+			unsigned __int128 * textBlocks1 = (unsigned __int128*) (text + i);
+			unsigned __int128 * textBlocks2 = (unsigned __int128*) (text + j);
+			for(; lce < maxLength/16; ++lce) {
+				if(textBlocks1[lce] != textBlocks2[lce]) {
+					break;
+				}
+			}
+			lce *= 16;
+			// The last block did not match. Here we compare its single characters
+			for (; lce < (8 < maxLength) ? 8 : maxLength; ++lce) {
+				if(text[i + lce] != text[j + lce]) {
 					break;
 				}
 			}

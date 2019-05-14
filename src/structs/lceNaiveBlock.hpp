@@ -51,23 +51,21 @@ class LceNaiveBlock : public LceDataStructure {
 				return textLengthInBytes - i;
 			}
 			
-			uint64_t * textBlocks1 = (uint64_t*) (text + i);
-			uint64_t * textBlocks2 = (uint64_t*) (text + j);
-			
 			const uint64_t maxLength = textLengthInBytes - ((i < j) ? j : i);
 			
-			while (textBlocks1[lce] == textBlocks2[lce]) {
-				++lce;
-				if (unlikely(lce >= maxLength)) {
+			// We count how many blocks match. 
+			uint64_t * textBlocks1 = (uint64_t*) (text + i);
+			uint64_t * textBlocks2 = (uint64_t*) (text + j);
+			for(; lce < maxLength/8; ++lce) {
+				if(textBlocks1[lce] != textBlocks2[lce]) {
 					break;
 				}
 			}
-			
 			lce *= 8;
 			
-			while (text[i + lce] == text[j + lce]) {
-				++lce;
-				if (unlikely(lce >= maxLength)) {
+			// The last block did not match. Here we compare its single characters
+			for (; lce <= (7 < maxLength) ? 7 : maxLength; ++lce) {
+				if(text[i + lce] != text[j + lce]) {
 					break;
 				}
 			}
