@@ -1,5 +1,5 @@
 #include <math.h>
-#include <algorithm> 
+#include <algorithm>
 #include "lceInterface.hpp"
 #include "util.hpp"
 
@@ -63,7 +63,7 @@ class LcePrezza : public LceDataStructure {
 			offsetLce1 = 7 - (i % 8);
 			offsetLce2 = 7 - (j % 8);
 			
-			for(int lceN = 0; lceN <= nCheck; ++lceN) {
+			for(uint64_t lceN = 0; lceN <= nCheck; ++lceN) {
 				if (getNextChar1() != getNextChar2()) {
 					return lceN;
 				}
@@ -72,17 +72,19 @@ class LcePrezza : public LceDataStructure {
 			/* exponential search */
 			int k = 11;
 			uint64_t dist = 2048;
-	//		while(fingerprintExp(i, k) == fingerprintExp(j, k)) {
-	//			++k;
-	//			dist *= 2;
-	//			if(unlikely(dist > maxLength)) {
-	//				break;
-	//			}
-	//		}
-			while(dist < maxLength & (fingerprintExp(i, k) != fingerprintExp(j, k))) {
+			while(fingerprintExp(i, k) == fingerprintExp(j, k)) {
+				++k;
+				dist *= 2;
+				if(unlikely(dist > maxLength)) {
+					break;
+				}
+			}
+			/*
+			while((dist < maxLength) && (fingerprintExp(i, k) == fingerprintExp(j, k))) {
 				++k;
 				dist *= 2;
 			}
+			*/
 			if (k == 0) {return 0;}
 			if (k == 1) {return 1;}
 			
