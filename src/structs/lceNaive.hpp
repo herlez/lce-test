@@ -1,5 +1,5 @@
-#include "lceInterface.hpp"
-#include "util.hpp"
+#include "util/lceInterface.hpp"
+#include "util/util.hpp"
 #include <cstdio>
 
 #define unlikely(x)    __builtin_expect(!!(x), 0) 
@@ -82,8 +82,20 @@ class LceNaive : public LceDataStructure {
 			return lce;
 		}
 		
-		char getChar(const uint64_t i) {
+		inline char operator[](const uint64_t i) {
 			return text[i];
+		}
+		
+		int isSmallerSuffix(const uint64_t i, const uint64_t j) {
+			uint64_t lceS = lce(i, j);
+			if(unlikely((i + lceS + 1 == textLengthInBytes) || (j + lceS + 1 == textLengthInBytes))) {
+				return true;
+			}
+			return (operator[](i + lceS) < operator[](j + lceS));
+		}
+		
+		uint64_t getSizeInBytes() {
+			return textLengthInBytes;
 		}
 		
 	private: 

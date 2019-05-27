@@ -1,7 +1,7 @@
 #include <math.h>
-#include <algorithm>
-#include "lceInterface.hpp"
-#include "util.hpp"
+#include <algorithm> 
+#include "util/lceInterface.hpp"
+#include "util/util.hpp"
 
 #define unlikely(x)    __builtin_expect(!!(x), 0)
 /* This class builds Prezza's in-place LCE data structure and
@@ -32,7 +32,6 @@ class LcePrezza : public LceDataStructure {
 									prime{util::getLow64BitPrime()},
 									fingerprints{new uint64_t[textLengthInBlocks]},
 									powerTable{new uint64_t[((int) std::log2(textLengthInBlocks)) + 6]} {
-
 			std::ifstream input(path, std::ios::in|std::ios::binary);
 			util::inputErrorHandling(&input);
 			uint64_t dataSize = util::calculateSizeOfInputFile(&input);
@@ -53,55 +52,78 @@ class LcePrezza : public LceDataStructure {
 			}
 			
 			uint64_t maxLength = textLengthInBytes - ((i < j) ? j : i);
-			const uint64_t nCheck = (maxLength > 1024 ? 1024 : maxLength);
 			
 			/* naive part of lce query */
-			cachedBlockIndex1 = i / 8;
-			cachedBlockIndex2 = j / 8;
-			cachedBlock1 = getBlock(cachedBlockIndex1);
-			cachedBlock2 = getBlock(cachedBlockIndex2);
-			offsetLce1 = 7 - (i % 8);
-			offsetLce2 = 7 - (j % 8);
+			const int offsetLce1 = (i % 8) * 8;
+			const int offsetLce2 = (j % 8) * 8;
+	
+			uint64_t blockI;
+			uint64_t blockI2 = getBlock(i/8);
+			uint64_t blockJ;
+			uint64_t blockJ2 = getBlock(j/8);
+			uint64_t compBlockI = blockI2;
+			uint64_t compBlockJ = blockJ2;
 			
-			for(uint64_t lceN = 0; lceN <= nCheck; ++lceN) {
-				if (getNextChar1() != getNextChar2()) {
-					return lceN;
+			/* compare blockwise */
+			uint64_t max = maxLength < 1024 ? maxLength/8 : 1024/8;
+			
+			uint64_t lce = 0;
+			//for(; lce < max; ++lce) {
+			do {
+				blockI = blockI2;
+				blockI2 = getBlock((i/8)+lce+1);
+				blockJ = blockJ2;
+				blockJ2 = getBlock((j/8)+lce+1);
+		
+				compBlockI = (blockI << offsetLce1) + ((blockI2 >> 1) >> (63-offsetLce1));
+				compBlockJ = (blockJ << offsetLce2) + ((blockJ2 >> 1) >> (63-offsetLce2));
+				if(compBlockI != compBlockJ) {
+					break;
+				}
+				++lce;
+			} while (lce < max);
+			
+			
+			if(lce < max || lce == 0) {
+				lce *= 8;
+				unsigned char * compBlockIP = (unsigned char *) &compBlockI;
+				unsigned char * compBlockJP = (unsigned char *) &compBlockJ;
+				for(unsigned int k = 7; lce < maxLength; --k) {
+					if(compBlockIP[k] != compBlockJP[k]) {
+						return lce;
+					}
+					++lce;
 				}
 			}
 			
 			/* exponential search */
-			int k = 11;
+			int exp = 11;
 			uint64_t dist = 2048;
-			while(fingerprintExp(i, k) == fingerprintExp(j, k)) {
-				++k;
-				dist *= 2;
-				if(unlikely(dist > maxLength)) {
+			
+			while( dist < maxLength ) {
+				if (fingerprintExp(i, exp) != fingerprintExp(j, exp)) {
 					break;
 				}
-			}
-			/*
-			while((dist < maxLength) && (fingerprintExp(i, k) == fingerprintExp(j, k))) {
-				++k;
+				++exp;
 				dist *= 2;
 			}
-			*/
-			if (k == 0) {return 0;}
-			if (k == 1) {return 1;}
+			if (exp == 0) {return 0;}
+			if (exp == 1) {return 1;}
 			
 			/* binary search */
-			--k;
+			--exp;
 			dist /= 2;
 			uint64_t i2 = i + dist;
 			uint64_t j2 = j + dist;
 			maxLength = textLengthInBytes - ((i2 < j2) ? j2 : i2);
 			
-			while(k != 0) {
-				--k;
+			while(exp != 0) {
+				--exp;
 				dist /= 2;
 				if (unlikely(dist > maxLength)) {
 					continue;
 				}
-				if(fingerprintExp(i2, k) == fingerprintExp(j2, k)) {
+				if(fingerprintExp(i2, exp) == fingerprintExp(j2, exp)) {
 					i2 += dist;
 					j2 += dist;
 				}
@@ -115,10 +137,18 @@ class LcePrezza : public LceDataStructure {
 		}
 		
 		/* Returns the character at index i */ 
-		char getChar(const uint64_t i) {
+		char operator[](const uint64_t i) {
 			uint64_t blockNumber = i / 8;
 			uint64_t offset = 7 - (i % 8);
 			return (getBlock(blockNumber)) >> (8*offset) & 0xff;
+		}
+		
+		int isSmallerSuffix(const uint64_t i, const uint64_t j) {
+			uint64_t lceS = lce(i, j);
+			if(unlikely((i + lceS + 1 == textLengthInBytes) || (j + lceS + 1 == textLengthInBytes))) {
+				return true;
+			}
+			return (operator[](i + lceS) < operator[](j + lceS));
 		}
 	
 	private:
@@ -127,14 +157,6 @@ class LcePrezza : public LceDataStructure {
 		const unsigned __int128 prime;
 		uint64_t * const fingerprints;
 		uint64_t * const powerTable;
-		
-		/* The following variables speed up the naive part of an LCE query */
-		uint64_t cachedBlock1;
-		uint64_t cachedBlock2;
-		uint64_t cachedBlockIndex1;
-		uint64_t cachedBlockIndex2;
-		int offsetLce1;
-		int offsetLce2;
 		
 		/* Returns the i'th block. A block contains 8 character. */
 		uint64_t getBlock(const uint64_t i) {
@@ -162,24 +184,6 @@ class LcePrezza : public LceDataStructure {
 				
 				return Y + sBit*(uint64_t)prime;
 			}
-		}
-		
-		/* Returns the next character, which is compared in a LCE query */
-		char getNextChar1() {
-			if (offsetLce1 == -1) {
-				offsetLce1 = 7;
-				cachedBlock1 = getBlock(++cachedBlockIndex1);
-			}
-			return (cachedBlock1 >> (8*offsetLce1--)) & 0xff;
-		}
-		
-		/* Returns the next character, which is compared in an LCE query */
-		char getNextChar2() {
-			if (offsetLce2 == -1) {
-				offsetLce2 = 7;
-				cachedBlock2 = getBlock(++cachedBlockIndex2);
-			}
-			return (cachedBlock2 >> (8*offsetLce2--)) & 0xff;
 		}
 		
 		/* Calculates the fingerprint of T[from, from + 2^exp) */

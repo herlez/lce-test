@@ -5,6 +5,7 @@ project (lceTest)
 # to the source code
   
 #set(CMAKE_CXX_FLAGS "-O0 -ggdb")  
-set(CMAKE_CXX_FLAGS " -Wall -Werror -std=c++17 -fno-exceptions -O3 -ftemplate-backtrace-limit=0")
+set(CMAKE_CXX_FLAGS " -Wall -std=c++17 -fno-exceptions -O3 -ftemplate-backtrace-limit=0")
 add_executable(testTime ./src/testTime.cpp)
+add_executable(testSss ./src/testSss.cpp)
 #add_executable(testCorrectness ./src/testCorrectness.cpp)

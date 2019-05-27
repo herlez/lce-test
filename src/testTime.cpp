@@ -5,7 +5,7 @@
 #include <ctime>
 #include "structs/lceNaive.hpp"
 #include "structs/lcePrezza.hpp"
-#include "structs/lcePrezzaBlock.hpp"
+#include "structs/lcePrezzaMersenne.hpp"
 
 using namespace std;
 
@@ -13,12 +13,9 @@ const string fileNames[] {"dna"};
 const string files[] {"/scratch/text/dna"};
 //const string files[] {"../../text/dna"};
 
-
 const string lceSet[] = {"../res/lceDna/i0", "../res/lceDna/i1", "../res/lceDna/i2", "../res/lceDna/i3", "../res/lceDna/i4", "../res/lceDna/i5", "../res/lceDna/i6", "../res/lceDna/i7", "../res/lceDna/i8", "../res/lceDna/i9", "../res/lceDna/i10", "../res/lceDna/i11", "../res/lceDna/i12", "../res/lceDna/i13", "../res/lceDna/i14", "../res/lceDna/i15", "../res/lceDna/i16","../res/lceDna/i17","../res/lceDna/i18", "../res/lceDna/i19", "../res/lceDna/iH"};
-const int NUMBEROFSETS = 20;
+const int NUMBEROFSETS = 21;
 
-//const string lceSet[] = {"../res/lceDna/i11", "../res/lceDna/i12", "../res/lceDna/i13", "../res/lceDna/i14", "../res/lceDna/i15", "../res/lceDna/i16"};
-//const int NUMBEROFSETS = 6;
 
 const int SETPAD = 0;
 /* Up to 100000000 tests possible */
@@ -32,11 +29,9 @@ int main(int argc, char *argv[]) {
 	// Results output
 	auto t = std::time(nullptr);
     auto tm = *std::localtime(&t);
-
     std::ostringstream oss;
     oss << std::put_time(&tm, "%Y-%m-%d-%H-%M-%S");
     auto str = oss.str();
-
 	ofstream log(string("../testResults/time-") + str + string(".txt"), ios::out|ios::trunc);
 	
 	/************************************
@@ -46,13 +41,12 @@ int main(int argc, char *argv[]) {
 	/* Build data structures */
 	//lceUltraNaive dataUN(files[0]);
 	LceNaive dataN(files[0]);
-	//LceNaiveBlock dataNB(files[0]);
-	//LceNaiveBlock128 dataNB128 (files[0]);
 	LcePrezza dataP(files[0]);
-	LcePrezzaBlock dataPB(files[0]);
-	const int NUMBEROFALGS = 3;
-	LceDataStructure * lceData[NUMBEROFALGS] {&dataN, &dataP, &dataPB};
-	string algo[NUMBEROFALGS] {"naiveLCE", "prezza", "prezzaBlock"}; 
+	rklce::LcePrezzaMersenne dataPM(files[0]);
+
+	const int NUMBEROFSTRUCTS = 3;
+	LceDataStructure * lceData[NUMBEROFSTRUCTS] {&dataN, &dataP, &dataPM};
+	string algo[NUMBEROFSTRUCTS] {"naiveLCE", "prezzaLCE", "prezzaMersenneLCE"}; 
 	
 	
 	/************************************
@@ -68,15 +62,9 @@ int main(int argc, char *argv[]) {
 		vector<uint64_t> v;
 		string line;
 		
-		uint64_t l = 0;
 		string::size_type sz;
 		while(getline(lc, line)) {
 			v.push_back(stoi(line, &sz));
-			if (v[l] == 0) {
-				cout << "0 at " << l << endl;
-				return EXIT_FAILURE;
-			}
-			l++;
 		}
 		
 		/* We use a fixed size array in order to answer LCE queries,
@@ -99,7 +87,7 @@ int main(int argc, char *argv[]) {
 		// Timestamps
 		double ts1, ts2;
 		// For every lce Datastructure..
-		for(int alg = 0; alg < NUMBEROFALGS; ++alg) { 
+		for(int alg = 0; alg < NUMBEROFSTRUCTS; ++alg) { 
 			// ..do NUMBEROFTESTS LCE queries
 			ts1 = timestamp();
 			
