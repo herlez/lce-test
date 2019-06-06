@@ -1,40 +1,51 @@
 #include <fstream>
 #include <sys/time.h>
-#include "structs/util.hpp"
+#include "structs/util/util.hpp"
 
 #include "structs/lceNaive.hpp"
 #include "structs/lcePrezza.hpp"
+
+//#define charTest
+//#define randomLce
+#define exhaustiveLce
+
+
 using namespace std;
 
-const string fileNames{"english"};
+const string fileNames{"dna"};
 //const string files[] {"../../../text/english"};
-const string files[] {"/scratch/text/english"};
+const string files[] {"/scratch/text/jError.txt"};
 
 double timestamp();
 
 
 int main(int argc, char *argv[]) {
-	ofstream log("../test/correctness.test", ios::out|ios::trunc);
-	lceNaive T1(files[0], 4096);
-	lcePrezza T2(files[0], 4096);
+	ofstream log("../testResults/correctness.txt", ios::out|ios::trunc);
+	LceNaive T1(files[0]);
+	LcePrezza T2(files[0]);
 	
 	log << "Prime: "; util::printInt128(T2.getPrime());
-	log << "Block extraction test" << endl;
 	
+	uint64_t textSizeInBytes = T1.getSizeInBytes();
+	log << "Text: " << fileNames[0] << '\n'
+	    << "Size: " << textSizeInBytes << '\n';
+
+	    
+#ifdef charTest
 	/* Test if character extraction works */
-	log << "Character extraction test" << endl;
-	for(uint64_t i = 0; i < 1024; i++) {
-		if (T1.getChar(i) != T2.getChar(i)) {
+	log << "Testing character extraction (exhaustive)" << endl;
+	for(uint64_t i = 0; i < textSizeInBytes; i++) {
+		if (T1[i] != T2[i]) {
 			log << "Mismatch at position " << i << endl;
-			log << "NaiveLCE: " << T1.getChar(i) << endl;
-			log << "FastLCE: " << T2.getChar(i) << endl; 
+			log << "NaiveLCE: " << T1[i] << endl;
+			log << "FastLCE: " << T2[i] << endl; 
 		}
 	}
-
-	/* Test if LCE-queries work */
+#endif
+	
+#ifdef randomLce
+	log << "Testing LCE (random)" << endl;
 	uint64_t i, j;
-	uint64_t textSizeInBytes = T2.getSizeInBytes();
-	log << "LCE queries test" << endl;
 	for(uint64_t k = 0; k < 100000000; k++) {
 		i = util::randomIndex(textSizeInBytes);
 		j = util::randomIndex(textSizeInBytes);
@@ -44,6 +55,26 @@ int main(int argc, char *argv[]) {
 			log << "FastLCE says: " << T2.lce(i, j) << endl;
 		}
 	}
+#endif
+
+#ifdef exhaustiveLce
+	log << "Testing LCE (exhaustive)" << endl;
+	for(unsigned int i = 0; i < textSizeInBytes; ++i) {
+		log << i << endl;
+		for(unsigned int j = 0; j < textSizeInBytes; ++j) {
+		
+		uint64_t lce1 = T1.lce(i, j);
+		uint64_t lce2 = T2.lce(i, j);
+		
+			if (lce1 != lce2) {
+				log << "WRONG LCE AT POSITION " << i << " and " << j << endl;
+				log << "lceNaive  at " << i << " and " << j << ": " << lce1 << '\n';
+				log << "lcePrezza at " << i << " and " << j << ": " << lce2 << '\n';
+			}
+		}
+	}
+#endif
+	log << "Test finished" << endl;
 	return EXIT_SUCCESS;
 }
 

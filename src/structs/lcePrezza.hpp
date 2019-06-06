@@ -51,56 +51,59 @@ class LcePrezza : public LceDataStructure {
 				return textLengthInBytes - i;
 			}
 			
-			uint64_t maxLength = textLengthInBytes - ((i < j) ? j : i);
+			const uint64_t maxLce = textLengthInBytes - ((i < j) ? j : i);
 			
 			/* naive part of lce query */
 			const int offsetLce1 = (i % 8) * 8;
 			const int offsetLce2 = (j % 8) * 8;
-	
-			uint64_t blockI;
-			uint64_t blockI2 = getBlock(i/8);
-			uint64_t blockJ;
-			uint64_t blockJ2 = getBlock(j/8);
-			uint64_t compBlockI = blockI2;
-			uint64_t compBlockJ = blockJ2;
+			uint64_t blockI = getBlock(i/8);
+			uint64_t blockI2 = getBlock(i/8 + 1);
+			uint64_t blockJ = getBlock(j/8);
+			uint64_t blockJ2 = getBlock(j/8 + 1);
+			uint64_t compBlockI = (blockI << offsetLce1) + ((blockI2 >> 1) >> (63-offsetLce1));
+			uint64_t compBlockJ = (blockJ << offsetLce2) + ((blockJ2 >> 1) >> (63-offsetLce2));
 			
 			/* compare blockwise */
-			uint64_t max = maxLength < 1024 ? maxLength/8 : 1024/8;
+			const uint64_t maxBlocksNaive = maxLce < 1024 ? maxLce/8 : 1024/8;
 			
 			uint64_t lce = 0;
-			//for(; lce < max; ++lce) {
-			do {
-				blockI = blockI2;
-				blockI2 = getBlock((i/8)+lce+1);
-				blockJ = blockJ2;
-				blockJ2 = getBlock((j/8)+lce+1);
-		
-				compBlockI = (blockI << offsetLce1) + ((blockI2 >> 1) >> (63-offsetLce1));
-				compBlockJ = (blockJ << offsetLce2) + ((blockJ2 >> 1) >> (63-offsetLce2));
+
+			while(lce < maxBlocksNaive) {
 				if(compBlockI != compBlockJ) {
 					break;
 				}
 				++lce;
-			} while (lce < max);
+				blockI = blockI2;
+				blockI2 = getBlock((i/8)+lce+1);
+				blockJ = blockJ2;
+				blockJ2 = getBlock((j/8)+lce+1);
+				compBlockI = (blockI << offsetLce1) + ((blockI2 >> 1) >> (63-offsetLce1));
+				compBlockJ = (blockJ << offsetLce2) + ((blockJ2 >> 1) >> (63-offsetLce2));
+			}
 			
 			
-			if(lce < max || lce == 0) {
-				lce *= 8;
+			
+			lce *= 8;
+			/* If everything except the stub matches, we compare the stub character-wise and return the result */
+			if(lce != 1024) {
+				
 				unsigned char * compBlockIP = (unsigned char *) &compBlockI;
 				unsigned char * compBlockJP = (unsigned char *) &compBlockJ;
-				for(unsigned int k = 7; lce < maxLength; --k) {
-					if(compBlockIP[k] != compBlockJP[k]) {
+				unsigned int maxStub = (maxLce - lce) < 8 ? (maxLce - lce) : 8;
+				for(unsigned int k = 0; k < maxStub; k++) {
+					if(compBlockIP[7-k] != compBlockJP[7-k]) {
 						return lce;
 					}
 					++lce;
 				}
+				return lce;
 			}
 			
 			/* exponential search */
 			int exp = 11;
 			uint64_t dist = 2048;
 			
-			while( dist < maxLength ) {
+			while( (dist*2) <= maxLce ) {
 				if (fingerprintExp(i, exp) != fingerprintExp(j, exp)) {
 					break;
 				}
@@ -115,12 +118,13 @@ class LcePrezza : public LceDataStructure {
 			dist /= 2;
 			uint64_t i2 = i + dist;
 			uint64_t j2 = j + dist;
-			maxLength = textLengthInBytes - ((i2 < j2) ? j2 : i2);
 			
+			
+			const uint64_t maxRest = textLengthInBytes - ((i2 < j2) ? j2 : i2);
 			while(exp != 0) {
 				--exp;
 				dist /= 2;
-				if (unlikely(dist > maxLength)) {
+				if (unlikely(dist > maxRest)) {
 					continue;
 				}
 				if(fingerprintExp(i2, exp) == fingerprintExp(j2, exp)) {
