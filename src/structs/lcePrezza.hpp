@@ -103,17 +103,16 @@ class LcePrezza : public LceDataStructure {
 			int exp = 11;
 			uint64_t dist = 2048;
 			
-			while( (dist*2) <= maxLce ) {
+			while( dist <= maxLce ) {
 				if (fingerprintExp(i, exp) != fingerprintExp(j, exp)) {
 					break;
 				}
 				++exp;
 				dist *= 2;
 			}
-			if (exp == 0) {return 0;}
-			if (exp == 1) {return 1;}
-			
-			/* binary search */
+	
+			/* binary search , we start it at i2 and j2, because we know that 
+			 * up until i2 and j2 everything matched */
 			--exp;
 			dist /= 2;
 			uint64_t i2 = i + dist;
@@ -136,12 +135,12 @@ class LcePrezza : public LceDataStructure {
 		}
 		
 		/* Returns the prime*/
-		unsigned __int128 getPrime() const {
+		const unsigned __int128 getPrime() const {
 			return prime;
 		}
 		
 		/* Returns the character at index i */ 
-		char operator[](const uint64_t i) {
+		char operator[] (const uint64_t i) {
 			uint64_t blockNumber = i / 8;
 			uint64_t offset = 7 - (i % 8);
 			return (getBlock(blockNumber)) >> (8*offset) & 0xff;
@@ -163,7 +162,7 @@ class LcePrezza : public LceDataStructure {
 		uint64_t * const powerTable;
 		
 		/* Returns the i'th block. A block contains 8 character. */
-		uint64_t getBlock(const uint64_t i) {
+		const uint64_t getBlock(const uint64_t i) {
 			if (unlikely(i > textLengthInBlocks)) {
 				return 0;
 			}
@@ -191,7 +190,7 @@ class LcePrezza : public LceDataStructure {
 		}
 		
 		/* Calculates the fingerprint of T[from, from + 2^exp) */
-		uint64_t fingerprintExp(const uint64_t from, const int exp) {
+		const uint64_t fingerprintExp(const uint64_t from, const int exp) {
 			if (unlikely(from == 0)) {
 				return fingerprintTo((1 << exp)-1); // ie if exponent = 3, we want P[0..7];
 			} else {
@@ -205,7 +204,7 @@ class LcePrezza : public LceDataStructure {
 		}
 		
 		/* Calculates the fingerprint of T[0..i] */
-		uint64_t fingerprintTo(const uint64_t i) {
+		const uint64_t fingerprintTo(const uint64_t i) {
 			unsigned __int128 fingerprint = 0;
 			int pad = ((i+1) & 7) * 8; // &7 is equal to % 8
 			if(pad == 0) {
@@ -214,7 +213,7 @@ class LcePrezza : public LceDataStructure {
 			}
 			/* Add fingerprint from previous block */
 			if (i > 7) {
-				fingerprint = fingerprints[((i/8) - 1)] &= 0x7FFFFFFFFFFFFFFFULL;
+				fingerprint = fingerprints[((i/8) - 1)] & 0x7FFFFFFFFFFFFFFFULL;
 				fingerprint <<= pad;
 			}
 			/* Add relevant part of block */

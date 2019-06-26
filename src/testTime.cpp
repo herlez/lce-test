@@ -9,11 +9,10 @@
 
 using namespace std;
 
-const string fileNames[] {"english"};
-const string files[] {"/scratch/text/english"};
-//const string files[] {"../../text/dna"};
-
-const string lceSet[] = {"../res/lceDna/i0", "../res/lceDna/i1", "../res/lceDna/i2", "../res/lceDna/i3", "../res/lceDna/i4", "../res/lceDna/i5", "../res/lceDna/i6", "../res/lceDna/i7", "../res/lceDna/i8", "../res/lceDna/i9", "../res/lceDna/i10", "../res/lceDna/i11", "../res/lceDna/i12", "../res/lceDna/i13", "../res/lceDna/i14", "../res/lceDna/i15", "../res/lceDna/i16","../res/lceDna/i17","../res/lceDna/i18", "../res/lceDna/i19", "../res/lceDna/iH"};
+const string fileName = "dna";
+const string file = "../../text/" + fileName;
+const string lSet = "../res/lce_" + fileName; 
+const string lceSet[] = {lSet + "/i0", lSet + "/i1", lSet + "/i2", lSet + "/i3", lSet + "/i4", lSet + "/i5", lSet + "/i6", lSet + "/i7", lSet + "/i8", lSet + "/i9", lSet + "/i10", lSet + "/i11", lSet + "/i12", lSet + "/i13", lSet + "/i14", lSet + "/i15", lSet + "/i16",lSet + "/i17",lSet + "/i18", lSet + "/i19", lSet + "/iH"};
 const int NUMBEROFSETS = 21;
 
 
@@ -39,14 +38,20 @@ int main(int argc, char *argv[]) {
 	 ************************************/
 	 
 	/* Build data structures */
-	LceNaive dataN(files[0]);
-	LcePrezza dataP(files[0]);
-	//rklce::LcePrezzaMersenne dataPM(files[0]);
+	//size_t size = 13000000000ULL/9;
+	LceNaive dataN(file);
+	LcePrezza dataP(file);
+	rklce::LcePrezzaMersenne dataPM(file);
 
-	const int NUMBEROFSTRUCTS = 2;
-	LceDataStructure * lceData[NUMBEROFSTRUCTS] {&dataN, &dataP}; //, &dataPM};
-	string algo[NUMBEROFSTRUCTS] {"naiveLCE", "prezzaLCE"};//, "prezzaMersenneLCE"}; 
+	const int NUMBEROFSTRUCTS = 3;
+	LceDataStructure * lceData[NUMBEROFSTRUCTS] {&dataN, &dataP, &dataPM};
+	string algo[NUMBEROFSTRUCTS] {"naiveLCE", "prezzaLCE",  "prezzaMersenneLCE"}; 
 	
+	/*
+	const int NUMBEROFSTRUCTS = 2;
+	LceDataStructure * lceData[NUMBEROFSTRUCTS] {&dataN, &dataP};
+	string algo[NUMBEROFSTRUCTS] {"naiveLCE", "prezzaLCE"};
+	*/
 	
 	/************************************
 	 *******PREPARE RANDOM INDEXES*******
@@ -94,11 +99,16 @@ int main(int argc, char *argv[]) {
 				i = lceI[k];
 				j = lceI[++k];
 				lce += lceData[alg]->lce(i, j);
-				//if(lceDa
+				/* //ERROR-HUNT
+				 * if(lceData[0]->lce(i,j) != lceData[1]->lce(i,j)) {
+					cout << "Lce: " << lceData[0]->lce(i,j) << endl;
+					cout << "wLce: " << lceData[1]->lce(i,j) << endl;
+					cout << "i: " << i << "  j: " << j << endl;
+				}*/
 			}
 			ts2 = timestamp();
 			log << "RESULT"
-				<< " text=" << fileNames[0]
+				<< " text=" << fileName
 				<< " algo=" << algo[alg]
 				<< " lceQueries=" << NUMBEROFTESTS
 				<< " time=" << ts2-ts1
@@ -108,6 +118,7 @@ int main(int argc, char *argv[]) {
 				<< endl;
 			lce = 0;
 		}
+		log << "---" << endl;
 		delete[] lceI;
 	}
 	return EXIT_SUCCESS;

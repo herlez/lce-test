@@ -12,9 +12,9 @@
 
 using namespace std;
 
-const string fileNames{"dna"};
-//const string files[] {"../../../text/english"};
-const string files[] {"/scratch/text/jError.txt"};
+const string fileNames{"english"};
+const string files[] {"../../text/english"};
+//const string files[] {"/scratch/text/err"};
 
 double timestamp();
 
@@ -58,15 +58,18 @@ int main(int argc, char *argv[]) {
 #endif
 
 #ifdef exhaustiveLce
+	int c = 0;
 	log << "Testing LCE (exhaustive)" << endl;
-	for(unsigned int i = 0; i < textSizeInBytes; ++i) {
-		log << i << endl;
-		for(unsigned int j = 0; j < textSizeInBytes; ++j) {
+	for(uint64_t i = 0; i < textSizeInBytes; ++i) {
+		if(c % 1000 == 0) log << i << endl;
+		for(uint64_t j = 0; j < textSizeInBytes; ++j) {
 		
 		uint64_t lce1 = T1.lce(i, j);
 		uint64_t lce2 = T2.lce(i, j);
 		
 			if (lce1 != lce2) {
+				if(c > 10000) {return 0;}
+				++c;
 				log << "WRONG LCE AT POSITION " << i << " and " << j << endl;
 				log << "lceNaive  at " << i << " and " << j << ": " << lce1 << '\n';
 				log << "lcePrezza at " << i << " and " << j << ": " << lce2 << '\n';

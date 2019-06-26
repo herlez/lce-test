@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2019.1.28)  23 MAY 2019 07:53
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2019.1.28)  26 JUN 2019 15:00
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1263,22 +1263,21 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] (./data.aux) ) 
 Here is how much of TeX's memory you used:
- 23534 strings out of 494757
- 595986 string characters out of 6175785
- 777701 words of memory out of 5000000
- 26468 multiletter control sequences out of 15000+600000
+ 23594 strings out of 494757
+ 597256 string characters out of 6175785
+ 777702 words of memory out of 5000000
+ 26528 multiletter control sequences out of 15000+600000
  8477 words of font info for 31 fonts, out of 8000000 for 9000
  81 hyphenation exceptions out of 8191
  62i,17n,103p,700b,2206s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/share/
-texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texliv
-e/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf
--dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fo
-nts/type1/public/mathabx-type1/matha10.pfb>
-Output written on data.pdf (1 page, 40136 bytes).
+texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive
+/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/share/texlive/texmf-d
+ist/fonts/type1/public/mathabx-type1/matha10.pfb>
+Output written on data.pdf (1 page, 31998 bytes).
 PDF statistics:
- 27 PDF objects out of 1000 (max. 8388607)
- 19 compressed objects within 1 object stream
+ 23 PDF objects out of 1000 (max. 8388607)
+ 16 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  13 words of extra memory for PDF output out of 10000 (max. 10000000)
 
