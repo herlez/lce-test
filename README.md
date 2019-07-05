@@ -6,3 +6,9 @@ Included data structures are:
 - Prezza's rk-lce with mersenne prime (https://github.com/nicolaprezza/rk-lce)
 - My implementation of Prezza's in-place LCE data structure(https://arxiv.org/abs/1608.05100)
 
+Compile with
+```
+mkdir build; cd build
+cmake ..
+make
+```
