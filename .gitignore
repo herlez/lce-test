@@ -2,5 +2,6 @@ build/
 *.txt
 *.log
 *.aux
+*.gz
 *.test
 
