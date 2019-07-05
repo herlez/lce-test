@@ -13,8 +13,8 @@
 using namespace std;
 
 const string fileNames{"english"};
-const string files[] {"../../text/english"};
-//const string files[] {"/scratch/text/err"};
+//const string files[] {"../../text/english"};
+const string files[] {"/scratch/text/dna"};
 
 double timestamp();
 

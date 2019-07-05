@@ -10,7 +10,8 @@
 using namespace std;
 
 const string fileName = "dna";
-const string file = "../../text/" + fileName;
+//const string file = "../../text/" + fileName;
+const string file = "/scratch/text/" + fileName;
 const string lSet = "../res/lce_" + fileName; 
 const string lceSet[] = {lSet + "/i0", lSet + "/i1", lSet + "/i2", lSet + "/i3", lSet + "/i4", lSet + "/i5", lSet + "/i6", lSet + "/i7", lSet + "/i8", lSet + "/i9", lSet + "/i10", lSet + "/i11", lSet + "/i12", lSet + "/i13", lSet + "/i14", lSet + "/i15", lSet + "/i16",lSet + "/i17",lSet + "/i18", lSet + "/i19", lSet + "/iH"};
 const int NUMBEROFSETS = 21;
@@ -40,12 +41,12 @@ int main(int argc, char *argv[]) {
 	/* Build data structures */
 	//size_t size = 13000000000ULL/9;
 	LceNaive dataN(file);
-	LcePrezza dataP(file);
+	//LcePrezza dataP(file);
 	rklce::LcePrezzaMersenne dataPM(file);
 
-	const int NUMBEROFSTRUCTS = 3;
-	LceDataStructure * lceData[NUMBEROFSTRUCTS] {&dataN, &dataP, &dataPM};
-	string algo[NUMBEROFSTRUCTS] {"naiveLCE", "prezzaLCE",  "prezzaMersenneLCE"}; 
+	const int NUMBEROFSTRUCTS = 2;
+	LceDataStructure * lceData[NUMBEROFSTRUCTS] {&dataN, &dataPM};
+	string algo[NUMBEROFSTRUCTS] {"naiveLCE",  "prezzaMersenneLCE"}; 
 	
 	/*
 	const int NUMBEROFSTRUCTS = 2;
@@ -100,7 +101,7 @@ int main(int argc, char *argv[]) {
 				j = lceI[++k];
 				lce += lceData[alg]->lce(i, j);
 				/* //ERROR-HUNT
-				 * if(lceData[0]->lce(i,j) != lceData[1]->lce(i,j)) {
+				  if(lceData[0]->lce(i,j) != lceData[1]->lce(i,j)) {
 					cout << "Lce: " << lceData[0]->lce(i,j) << endl;
 					cout << "wLce: " << lceData[1]->lce(i,j) << endl;
 					cout << "i: " << i << "  j: " << j << endl;

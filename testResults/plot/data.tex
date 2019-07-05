@@ -48,7 +48,7 @@
     ylabel={Run Time [s]},
     ]
 
-    %% MULTIPLOT(algo) SELECT LOG(2, aveLCE) AS x, LOG(2, time) AS y, MULTIPLOT
+    %% MULTIPLOT(algo) SELECT LOG(2, aveLCE) AS x, time AS y, MULTIPLOT
     %% FROM stats GROUP BY MULTIPLOT,x  ORDER BY MULTIPLOT,x
     \addplot coordinates { (0.0,-11.8928) (1.0,-10.5288) (2.58496,-8.06005) (3.80735,-6.7965) (4.70044,-7.67659) (5.2854,-7.14937) (6.42626,-6.75415) (7.44294,-6.88459) (8.49185,-7.15471) (9.51964,-7.08021) (10.5127,-6.61724) (11.5241,-5.93194) (12.5085,-5.11363) (13.4995,-4.23618) (14.4891,-3.30792) (15.505,-2.33805) (16.4986,-1.36436) (17.5768,-0.294406) (18.5825,0.798275) (19.8688,2.40501) };
     \addlegendentry{algo=naiveLCE};
