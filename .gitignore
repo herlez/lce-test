@@ -1,3 +1,6 @@
 build/
 *.txt
-testResults/plot
+*.log
+*.aux
+*.test
+
