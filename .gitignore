@@ -5,3 +5,6 @@ build/
 *.gz
 *.test
 
+!.gitignore
+!.README.md
+!.CMakeLists.txt
