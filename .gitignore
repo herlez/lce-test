@@ -6,5 +6,5 @@ build/
 *.test
 
 !.gitignore
-!.README.md
-!.CMakeLists.txt
+!README.md
+!CMakeLists.txt
