@@ -6,6 +6,7 @@
 #include "structs/lceNaive.hpp"
 #include "structs/lcePrezza.hpp"
 #include "structs/lcePrezzaMersenne.hpp"
+#include "structs/lceSyncSets.hpp"
 
 using namespace std;
 
@@ -40,19 +41,21 @@ int main(int argc, char *argv[]) {
 	 
 	/* Build data structures */
 	//size_t size = 13000000000ULL/9;
-	LceNaive dataN(file);
+	//LceNaive dataN(file);
 	//LcePrezza dataP(file);
-	rklce::LcePrezzaMersenne dataPM(file);
+	//rklce::LcePrezzaMersenne dataPM(file);
+	LceSyncSets dataSSS(file);
 
+	/*
 	const int NUMBEROFSTRUCTS = 2;
 	LceDataStructure * lceData[NUMBEROFSTRUCTS] {&dataN, &dataPM};
 	string algo[NUMBEROFSTRUCTS] {"naiveLCE",  "prezzaMersenneLCE"}; 
-	
-	/*
-	const int NUMBEROFSTRUCTS = 2;
-	LceDataStructure * lceData[NUMBEROFSTRUCTS] {&dataN, &dataP};
-	string algo[NUMBEROFSTRUCTS] {"naiveLCE", "prezzaLCE"};
 	*/
+	
+	const int NUMBEROFSTRUCTS = 1;
+	LceDataStructure * lceData[NUMBEROFSTRUCTS] {&dataSSS};
+	string algo[NUMBEROFSTRUCTS] {"sssLCE"};
+	
 	
 	/************************************
 	 *******PREPARE RANDOM INDEXES*******
