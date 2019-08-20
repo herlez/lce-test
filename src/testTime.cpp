@@ -8,19 +8,35 @@
 #include "structs/lcePrezzaMersenne.hpp"
 #include "structs/lceSyncSets.hpp"
 
+//#define benchmark_ordered_by_lce
+#define benchmark_random
+//define benchmark_complete
+
 using namespace std;
 
-const string fileName = "dna";
+//const string fileName = "benutzungsrichtlinie.txt";
+const string fileName = "dna.50MB";
 //const string file = "../../text/" + fileName;
 const string file = "/scratch/text/" + fileName;
-const string lSet = "../res/lce_" + fileName; 
+
+
+
+// Here we ...
+#ifdef benchmark_ordered_by_lce
+const string lSet = "../res/lce_" + fileName;
 const string lceSet[] = {lSet + "/i0", lSet + "/i1", lSet + "/i2", lSet + "/i3", lSet + "/i4", lSet + "/i5", lSet + "/i6", lSet + "/i7", lSet + "/i8", lSet + "/i9", lSet + "/i10", lSet + "/i11", lSet + "/i12", lSet + "/i13", lSet + "/i14", lSet + "/i15", lSet + "/i16",lSet + "/i17",lSet + "/i18", lSet + "/i19", lSet + "/iH"};
 const int NUMBEROFSETS = 21;
+const uint64_t NUMBEROFTESTS = 1'000'000ULL; 
+#endif
 
 
-const int SETPAD = 0;
-/* Up to 100000000 tests possible */
-const uint64_t NUMBEROFTESTS = 100000ULL;
+#ifdef benchmark_random
+const uint64_t NUMBEROFTESTS = 100'000'000ULL;
+#endif
+
+#ifdef benchmark_complete
+#endif
+
 
 double timestamp();
 
@@ -40,76 +56,78 @@ int main(int argc, char *argv[]) {
 	 ************************************/
 	 
 	/* Build data structures */
-	//size_t size = 13000000000ULL/9;
-	//LceNaive dataN(file);
-	//LcePrezza dataP(file);
+	LceNaive dataN(file);
+	LcePrezza dataP(file);
 	//rklce::LcePrezzaMersenne dataPM(file);
 	LceSyncSets dataSSS(file);
 
-	/*
-	const int NUMBEROFSTRUCTS = 2;
-	LceDataStructure * lceData[NUMBEROFSTRUCTS] {&dataN, &dataPM};
-	string algo[NUMBEROFSTRUCTS] {"naiveLCE",  "prezzaMersenneLCE"}; 
-	*/
 	
-	const int NUMBEROFSTRUCTS = 1;
-	LceDataStructure * lceData[NUMBEROFSTRUCTS] {&dataSSS};
-	string algo[NUMBEROFSTRUCTS] {"sssLCE"};
+	const int NUMBEROFSTRUCTS = 3;
+	LceDataStructure * lceData[NUMBEROFSTRUCTS] {&dataN, &dataP, &dataSSS};
+	string algo[NUMBEROFSTRUCTS] {"naiveLCE", "prezzaLCE", "sssLCE"};
 	
 	
 	/************************************
-	 *******PREPARE RANDOM INDEXES*******
+	 ******** PREPARE INDEXES ***********
 	 ************************************/
-	
-	/* LCE query test */
-	for(int k = SETPAD; k < NUMBEROFSETS; ++k) {
-		ifstream lc(lceSet[k], ios::in);
-		util::inputErrorHandling(&lc);
-		/* We use indexes which lead to lce results in defined ranges.
-		 * Here we extract the indexes and save them in a vector */
+
+#if defined(benchmark_ordered_by_lce)
+	for(int numberOfRuns = SETPAD; numberOfRuns < NUMBEROFSETS; ++numberOfRuns) {
 		vector<uint64_t> v;
-		string line;
+		uint64_t * lceI = new uint64_t[NUMBEROFTESTS*2];
 		
+		ifstream lc(lceSet[numberOfRuns], ios::in);
+		util::inputErrorHandling(&lc);
+		
+		string line;
 		string::size_type sz;
 		while(getline(lc, line)) {
 			v.push_back(stoi(line, &sz));
 		}
 		
-		/* We use a fixed size array in order to answer LCE queries,
-		 * because we do not want an overhead by checking
-		 * if we are out of bound of the vector */
-		
-		uint64_t * lceI = new uint64_t[NUMBEROFTESTS*2];
 		for(uint64_t k = 0; k < NUMBEROFTESTS * 2; ++k) {
 			lceI[k] = v[k % v.size()];
 		}
+#endif
 		
-		
+#if defined(benchmark_random)
+	for(int numberOfRuns = 0; numberOfRuns < 1; ++numberOfRuns) {
+		srand(time(NULL));
+		uint64_t * lceI = new uint64_t[NUMBEROFTESTS*2];
+		for(uint64_t k = 0; k < NUMBEROFTESTS*2; ++k) {
+			lceI[k] = rand() % lceData[0]->getSizeInBytes();
+		}
+#endif
+
+
 		/************************************
 		*************LCE QUERIES*************
 		************************************/
-		// Indexes for lce queries
-		uint64_t i, j;
+		
 		// Result of lce query
 		uint64_t lce = 0;
 		// Timestamps
 		double ts1, ts2;
-		// For every lce Datastructure..
-		for(int alg = 0; alg < NUMBEROFSTRUCTS; ++alg) { 
+		// For every lce data structure..
+		for(int alg = 0; alg < NUMBEROFSTRUCTS; ++alg) {
 			// ..do NUMBEROFTESTS LCE queries
 			ts1 = timestamp();
 			
+#if defined(benchmark_ordered_by_lce) || defined(benchmark_random)
+			// Indexes for lce queries
+			uint64_t i, j;
 			for(uint64_t k = 0; k < NUMBEROFTESTS*2; ++k) {
 				i = lceI[k];
 				j = lceI[++k];
 				lce += lceData[alg]->lce(i, j);
+			}
 				/* //ERROR-HUNT
 				  if(lceData[0]->lce(i,j) != lceData[1]->lce(i,j)) {
 					cout << "Lce: " << lceData[0]->lce(i,j) << endl;
 					cout << "wLce: " << lceData[1]->lce(i,j) << endl;
 					cout << "i: " << i << "  j: " << j << endl;
 				}*/
-			}
+			
 			ts2 = timestamp();
 			log << "RESULT"
 				<< " text=" << fileName
@@ -118,12 +136,35 @@ int main(int argc, char *argv[]) {
 				<< " time=" << ts2-ts1
 				<< " lce=" << lce
 				<< " aveLce=" << lce/NUMBEROFTESTS
-				<< " lceLog=" << k
+				#if defined(benchmark_ordered_by_lce)
+				<< " lceLog=" << numberOfRuns
+				#endif
 				<< endl;
 			lce = 0;
 		}
-		log << "---" << endl;
 		delete[] lceI;
+#endif
+
+#if defined(benchmark_complete)
+			const uint64_t maxIndex = 100000U < lceData[0]->getSizeInBytes() ? 100000U : lceData[0]->getSizeInBytes();
+			for(uint64_t i = 0; i < maxIndex; ++i) {
+				for(uint64_t j = 0; j < maxIndex; ++j) {
+					lce += lceData[alg]->lce(i, j);
+				}
+			}
+			ts2 = timestamp();
+			log << "RESULT"
+				<< " benchmark=" << "complete"
+				<< " text=" << fileName
+				<< " algo=" << algo[alg]
+				<< " time=" << ts2-ts1
+				<< " lce=" << lce
+				<< " aveLce=" << lce/(maxIndex*maxIndex)
+				<< endl;
+			lce = 0;
+#endif
+
+		log << "---" << endl;
 	}
 	return EXIT_SUCCESS;
 }

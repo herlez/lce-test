@@ -164,7 +164,10 @@ public:
 		return uint_to_char[C];
 
 	}
-
+	
+	uint64_t getSizeInBytes() {
+		return n;
+	}
 	/*
 	 * LCE between i-th and j-th suffixes
 	 *

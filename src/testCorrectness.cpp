@@ -4,6 +4,7 @@
 
 #include "structs/lceNaive.hpp"
 #include "structs/lcePrezza.hpp"
+#include "structs/lceSyncSets.hpp"
 
 //#define charTest
 //#define randomLce
@@ -14,7 +15,7 @@ using namespace std;
 
 const string fileNames{"english"};
 //const string files[] {"../../text/english"};
-const string files[] {"/scratch/text/dna"};
+const string files[] {"/scratch/text/benutzungsrichtlinie.txt"};
 
 double timestamp();
 
@@ -22,9 +23,10 @@ double timestamp();
 int main(int argc, char *argv[]) {
 	ofstream log("../testResults/correctness.txt", ios::out|ios::trunc);
 	LceNaive T1(files[0]);
-	LcePrezza T2(files[0]);
+	LceSyncSets T2(files[0]);
+	//LcePrezza T2(files[0]);
 	
-	log << "Prime: "; util::printInt128(T2.getPrime());
+	//log << "Prime: "; util::printInt128(T2.getPrime());
 	
 	uint64_t textSizeInBytes = T1.getSizeInBytes();
 	log << "Text: " << fileNames[0] << '\n'
@@ -61,7 +63,6 @@ int main(int argc, char *argv[]) {
 	int c = 0;
 	log << "Testing LCE (exhaustive)" << endl;
 	for(uint64_t i = 0; i < textSizeInBytes; ++i) {
-		if(c % 1000 == 0) log << i << endl;
 		for(uint64_t j = 0; j < textSizeInBytes; ++j) {
 		
 		uint64_t lce1 = T1.lce(i, j);

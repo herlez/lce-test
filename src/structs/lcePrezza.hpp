@@ -153,6 +153,10 @@ class LcePrezza : public LceDataStructure {
 			}
 			return (operator[](i + lceS) < operator[](j + lceS));
 		}
+		
+		uint64_t getSizeInBytes() {
+			return textLengthInBytes;
+		}
 	
 	private:
 		const uint64_t textLengthInBytes;

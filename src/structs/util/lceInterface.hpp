@@ -11,6 +11,7 @@ class LceDataStructure {
 		//virtual char getChar(const uint64_t i) = 0;
 		virtual char operator[](const uint64_t i) = 0;
 		virtual int isSmallerSuffix(const uint64_t i, const uint64_t j) = 0;
+		virtual uint64_t getSizeInBytes() = 0;
 };
 
 #endif

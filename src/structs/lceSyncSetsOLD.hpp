@@ -42,10 +42,17 @@ class LceSyncSets : public LceDataStructure {
 			}
 
 			/* strSync part */
-			std::vector<uint64_t>::iterator si = suc(i);
-			std::vector<uint64_t>::iterator sj = suc(j);
-			uint64_t l = lceT(si, sj);
-			return (*(si+l) - i) + lce(*(si+l), *(sj+l));
+			uint64_t si = suc(i);//get s_
+			uint64_t sj = suc(j);
+			
+			/*
+			for(unsigned int k = 0; k < (3*tau)-1; ++k) {
+				if (t[si+k] != t[sj+k]) {
+					return k + (si - i);
+				}
+			}*/
+			return (si - i) + lce(si, sj);
+			//return 3*tau + (si - i);
 		}
 		
 		char operator[](uint64_t i) {
@@ -62,7 +69,7 @@ class LceSyncSets : public LceDataStructure {
 		
 		
 	private:
-		const uint64_t tau = 512;
+		const uint64_t tau = 12;
 		
 		std::string t;
 		size_t tSize;
@@ -74,21 +81,6 @@ class LceSyncSets : public LceDataStructure {
 		std::unordered_set<uint64_t> r_or;
 		std::vector<uint64_t> s;
 		std::vector<uint64_t> t_;
-		
-		uint64_t lceT(std::vector<uint64_t>::iterator i, std::vector<uint64_t>::iterator j) {
-			uint64_t lceInTi = 0;
-			while(i != t_.end() && j != t_.end()) {
-				for(uint64_t k = 0; k < 3*tau-1; ++k) {
-					if(t[*i+k] != t[*j+k]) {
-						return lceInTi;
-					}
-				}
-				++lceInTi;
-				++i;
-				++j;
-			}
-			return lceInTi;
-		}
 		
 		/* Return the identifier of the text t[i..i+tau] */
 		inline std::string id(uint64_t i) {
@@ -114,8 +106,12 @@ class LceSyncSets : public LceDataStructure {
 		}
 
 		/* Calculates the period of the t[from..from + tau-1] */
-		/*
 		inline uint64_t per1tau(const uint64_t from) const{
+			/*
+			if(from > tSize-tau) {
+				std::cerr << "ERROR: period1 from " << from << " should not get calculated" << '\n';
+			}
+			*/
 			unsigned int iToCompare = 0;
 			unsigned int period = 1;
 			for(uint64_t i = 1; i < tau; ++i) {
@@ -131,43 +127,17 @@ class LceSyncSets : public LceDataStructure {
 			}
 			return period;
 		}
-		*/
-		// Returns if the period of T[from..from+tau-1] is greater than tau/3
-		inline bool per1tau(const uint64_t from) const{
-			unsigned int iToCompare = 0;
-			unsigned int period = 1;
-			uint64_t i;
-			for(i = 1; i < tau/3; ++i) {
-				if(t[from + iToCompare] == t[from + i]) {
-					++iToCompare;
-				} else {
-					if(iToCompare != 0) {
-						--i;
-					}
-					iToCompare = 0;
-					period = i + 1;
-				}
-			}
-			
-			for( ; i < tau; ++i) {
-				if(t[from + i] != t[from + i - period]) {
-					return false;
-				}
-			}
-			return true;
-		}
-		
 
 		/* Finds the smallest element that is greater or equal to i
 		Because s is ordered, that is equal to the 
 		first element greater than i */
-		inline std::vector<uint64_t>::iterator suc(const uint64_t i) {
-			for(auto it = s.begin(); it != s.end(); ++it) {
-				if (*it > i) {
-					return it;
+		inline uint64_t suc(uint64_t i) const{
+			for(uint64_t j = 0; j < s.size(); ++j) {
+				if(s[j] > i) {
+					return s[j];
 				}
 			}
-			return s.end();
+			return (tSize - 2*tau + 2);
 			//std::cerr << "ERROR: suc i=" << i << " not found" << '\n';
 		}
 		
@@ -186,19 +156,12 @@ class LceSyncSets : public LceDataStructure {
 			/* Fill Q */
 			q = std::vector<bool>(tSize, false);
 			for(uint64_t i = 0; i < (tSize - tau + 1); ++i) {
-				if(per1tau(i)) {  //if the period is smaller than tau/3, i is element of Q
+				if(per1tau(i) <= tau/3) {
 					q[i] = 1;
 				}
 			}
 			/* Print Q */
-			std::cout << "Q size: " << std::count(q.cbegin(), q.cend(), 1) << std::endl;
-			unsigned int numberOfI = 0;
-			for(unsigned int i = 0; (numberOfI < 5) && (numberOfI < q.size()); ++i) {
-				if(q[i]) {
-					std::cout << i << std::endl;
-					++numberOfI;
-				}
-			}
+			std::cout << "Q size: " << std::count(q.cbegin(), q.cend(), 1) << std::endl; 
 			
 			/* Calculate R based on Observation 8.1 */
 			r = std::vector<bool>(tSize, false);
@@ -218,13 +181,7 @@ class LceSyncSets : public LceDataStructure {
 			}
 			/* Print R */
 			std::cout << "R size: " << std::count(r.cbegin(), r.cend(), 1) << std::endl;
-			numberOfI = 0;
-			for(unsigned int i = 0; (numberOfI < 5) && (numberOfI < r.size()); ++i) {
-				if(r[i]) {
-					std::cout << i << std::endl;
-					++numberOfI;
-				}
-			}
+			
 			/* Calculate R based on the original definition of R */
 			/*
 			for(uint64_t i = 0; i < (tSize - 3*tau + 2); ++i) {
@@ -238,7 +195,7 @@ class LceSyncSets : public LceDataStructure {
 			
 			/* Fill S */
 			for (uint64_t i = 0; i < (tSize - (2*tau + 1)); ++i) {
-				if(i%1000000 == 0) std::cout << i << '\n';
+				if(i%100000000 == 0) std::cout << i << '\n';
 				int min = -1;
 				
 				/* We first check if i and i+tau are in q. If so, i is not element of s.*/
