@@ -9,6 +9,7 @@
 #include <sstream>
 #include <sys/time.h>
 #include <unordered_set>
+#include <thread>
 
 #define unlikely(x)    __builtin_expect(!!(x), 0) 
 #pragma once
@@ -171,6 +172,34 @@ class LceSyncSets : public LceDataStructure {
 			//std::cerr << "ERROR: suc i=" << i << " not found" << '\n';
 		}
 		
+		void fillS(uint64_t from, uint64_t to, std::vector<uint64_t> *v) {
+			for (uint64_t i = from; i < to; ++i) {
+				if(i%1000000 == 0) std::cout << i << '\n';
+				int min = -1;
+				
+				/* We first check if i and i+tau are in q. If so, i is not element of s.*/
+				if(q[i] == 0) {
+					min = 0;
+				}
+				if(q[i+tau] == 0) {
+					if(id(i).compare(id(i+tau)) > 0) {
+						min = tau;
+				}
+				if(min == -1)
+					continue;
+				}
+
+				/* Compare this id with every other index which is not in q */
+				for (unsigned int j = 1; j < tau; ++j) {
+					if(q[i+j]==0 && id(i+j).compare(id(i+min)) < 0) {
+						min = j;
+					}
+				}
+				if(min == 0 || min == tau) {
+					v->push_back(i);
+				}
+			}
+		}
 		
 		void buildStruct(std::string path) {
 			std::ifstream input(path);
@@ -237,40 +266,82 @@ class LceSyncSets : public LceDataStructure {
 			//std::cout << "RO size: " << r_or.size() << std::endl;
 			
 			/* Fill S */
-			for (uint64_t i = 0; i < (tSize - (2*tau + 1)); ++i) {
-				if(i%1000000 == 0) std::cout << i << '\n';
-				int min = -1;
-				
-				/* We first check if i and i+tau are in q. If so, i is not element of s.*/
-				if(q[i] == 0) {
-					min = 0;
-				}
-				if(q[i+tau] == 0) {
-					if(id(i).compare(id(i+tau)) > 0) {
-						min = tau;
-				}
-				if(min == -1)
-					continue;
-				}
-
-				/* Compare this id with every other index which is not in q */
-				for (unsigned int j = 1; j < tau; ++j) {
-					if(q[i+j]==0 && id(i+j).compare(id(i+min)) < 0) {
-						min = j;
-					}
-				}
-				if(min == 0 || min == tau) {
-					s.push_back(i);
-				}
+			/*
+			std::array<std::thread, 8> sThread;
+			std::array<std::vector<uint64_t>, 8> si;
+			
+			for(unsigned int i = 0; i < 8; ++i) {
+				std::thread s1 (&LceSyncSets::fillS, this, (i*8)*(tSize-(2*tau + 1)), ((i+1)*8)*(tSize-(2*tau + 1))-1, s);
 			}
+			*/
+			
+			// LOAD S FROM A FILE
+			
+			std::ifstream sLoad("../res/sss_dna.50MB", std::ios::in);
+			for (std::string line; std::getline(sLoad, line); ) {
+				s.push_back(stoi(line));
+			}
+			
+			
+				
+			//fillS(0, (tSize - (2*tau + 1)), &s);
+			
 			s.shrink_to_fit();
 			/* Print S */
-			std::cout << "S size: " << s.size() << std::endl; 
+			std::cout << "S size: " << s.size() << std::endl;
 			/*for( auto i : s ) {
 				std::cout << i << std::endl;
 				std::cout << id(t, i, tau*2) << std::endl;
 			}
 			*/
+			
+			// SAVE S IN A FILE
+			/*
+			std::ofstream sSet("../res/sss_dna.50MB", std::ios::out|std::ios::trunc);
+			for(uint64_t i = 0; i < s.size(); ++i) {
+				sSet << s[i] << std::endl;
+			}
+			*/
+			
+			/* Calculate fingerprints of the 3*tau long substrings and save fingerprints for every element in s */
+			const uint64_t prime = 18446744073709551557ULL;
+			std::cout << "Calculate fingerprints" << std::endl;
+			std::vector<uint64_t> fps(s.size());
+			unsigned __int128 fp = 0;
+			uint64_t indexS = 0;
+			uint64_t nextS = s[indexS];
+			uint64_t i;
+			for(i = 0; i < 3*tau; ++i) {
+				fp *= 256;
+				fp += (unsigned char) t[i];
+				fp %= prime;
+				if(i == nextS) {
+					fps.push_back((uint64_t) i);
+					++indexS;
+					nextS = s[indexS];
+				}
+			}
+			
+			
+			unsigned __int128 = 2^...
+			for( ; i < s[s.size() - 1]; ++i) {
+				fp *= 256;
+				fp += (unsigned char) t[i];
+				
+				unsigned __int128 oldFp = t[i-1] << 64;
+				 
+				
+				fp %= prime;
+				if(i == nextS) {
+					fps.push_back((uint64_t) i);
+					++indexS;
+					nextS = s[indexS];
+				}
+			}
+			
+			
+			std::cout << "Fingerprints calculated" << std::endl;
+			
 
 			/* Calculate T' */
 			t_ = s;	

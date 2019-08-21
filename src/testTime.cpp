@@ -16,8 +16,8 @@ using namespace std;
 
 //const string fileName = "benutzungsrichtlinie.txt";
 const string fileName = "dna.50MB";
-//const string file = "../../text/" + fileName;
-const string file = "/scratch/text/" + fileName;
+const string file = "../../text/" + fileName;
+//const string file = "/scratch/text/" + fileName;
 
 
 
@@ -50,7 +50,6 @@ int main(int argc, char *argv[]) {
     oss << std::put_time(&tm, "%Y-%m-%d-%H-%M-%S");
     auto str = oss.str();
 	ofstream log(string("../testResults/time-") + str + string(".txt"), ios::out|ios::trunc);
-	
 	/************************************
 	 ****PREPARE LCE DATA STRUCTURES*****
 	 ************************************/
@@ -63,6 +62,7 @@ int main(int argc, char *argv[]) {
 
 	
 	const int NUMBEROFSTRUCTS = 3;
+	cout << "structures build successfully" << std::endl;
 	LceDataStructure * lceData[NUMBEROFSTRUCTS] {&dataN, &dataP, &dataSSS};
 	string algo[NUMBEROFSTRUCTS] {"naiveLCE", "prezzaLCE", "sssLCE"};
 	
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
 	 ************************************/
 
 #if defined(benchmark_ordered_by_lce)
-	for(int numberOfRuns = SETPAD; numberOfRuns < NUMBEROFSETS; ++numberOfRuns) {
+	for(int numberOfRuns = 0; numberOfRuns < NUMBEROFSETS; ++numberOfRuns) {
 		vector<uint64_t> v;
 		uint64_t * lceI = new uint64_t[NUMBEROFTESTS*2];
 		
