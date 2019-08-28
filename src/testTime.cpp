@@ -8,16 +8,16 @@
 #include "structs/lcePrezzaMersenne.hpp"
 #include "structs/lceSyncSets.hpp"
 
-//#define benchmark_ordered_by_lce
-#define benchmark_random
-//define benchmark_complete
+#define benchmark_ordered_by_lce
+//#define benchmark_random
+//#define benchmark_complete
 
 using namespace std;
 
 //const string fileName = "benutzungsrichtlinie.txt";
 const string fileName = "dna.50MB";
-const string file = "../../text/" + fileName;
-//const string file = "/scratch/text/" + fileName;
+//const string file = "../../text/" + fileName;
+const string file = "/scratch/text/" + fileName;
 
 
 

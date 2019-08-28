@@ -217,45 +217,6 @@ class LceSyncSets : public LceDataStructure {
 			tSize = t.size();
 			std::cout << "T size: " << t.size() << std::endl;
 			
-			// Calculate fingerprints
-			std::cout << "Calculating FP" << std::endl;
-			unsigned __int128 fp = 0;
-			for(uint64_t i = 0; i < tau; ++i) {
-				fp *= 256;
-				fp += (unsigned char) t[i];
-				fp %= prime;
-			}
-			tFP.push_back((uint64_t) fp);
-			
-			for(uint64_t i = 0; i < tSize-tau; ++i) {
-				fp *= 256;
-				fp += (unsigned char) t[tau+i];
-				fp %= prime;
-				tFP.push_back((uint64_t) fp);
-			}
-			
-			// Calculate 3-tau FP for indexes in s
-			unsigned __int128 fp1 = 0;
-			unsigned __int128 fp2 = 0;
-			unsigned __int128 fp3 = 0;
-			for(uint64_t i = 0; i < sBit.size(); ++i) {
-				fp = tFP[i] * powOf2modPrime;
-				fp *= powOf2modPrime;
-			
-				fp %= prime;
-				
-				fp = tFP[i+tau] * powOf2modPrime;
-				fp += tFP[i+2*tau];
-				fp = tFP[i+tau] * powOf2modPrime;
-				fp += tFP[i+2*tau];
-				
-				
-				
-				if(sBit[i]) {
-					
-				}
-			
-			std::cout << "FP calculated" << std::endl;
 			
 			/* Fill Q */
 			q = std::vector<bool>(tSize, false);
@@ -264,7 +225,15 @@ class LceSyncSets : public LceDataStructure {
 					q[i] = 1;
 				}
 			}
-
+			/* Print Q */
+			std::cout << "Q size: " << std::count(q.cbegin(), q.cend(), 1) << std::endl;
+			unsigned int numberOfI = 0;
+			for(unsigned int i = 0; (numberOfI < 5) && (numberOfI < q.size()); ++i) {
+				if(q[i]) {
+					std::cout << i << std::endl;
+					++numberOfI;
+				}
+			}
 			
 			/* Calculate R based on Observation 8.1 */
 			r = std::vector<bool>(tSize, false);
@@ -284,13 +253,16 @@ class LceSyncSets : public LceDataStructure {
 			}
 			/* Print R */
 			std::cout << "R size: " << std::count(r.cbegin(), r.cend(), 1) << std::endl;
-			int numberOfI = 0;
+			numberOfI = 0;
 			for(unsigned int i = 0; (numberOfI < 5) && (numberOfI < r.size()); ++i) {
 				if(r[i]) {
 					std::cout << i << std::endl;
 					++numberOfI;
 				}
 			}
+
+			/* Print R */
+			//std::cout << "RO size: " << r_or.size() << std::endl;
 			
 			/* Fill S */
 			/*
@@ -331,8 +303,22 @@ class LceSyncSets : public LceDataStructure {
 			*/
 			
 			/* Calculate fingerprints of the 3*tau long substrings and save fingerprints for every element in s */
-			
 			std::cout << "Calculate fingerprints" << std::endl;
+			std::vector<uint64_t> fps(s.size());
+			unsigned __int128 fp = 0; //current fingerprint
+			uint64_t indexS = 0; //index of next element in s
+			uint64_t nextS = s[indexS]; //next element in s
+			uint64_t i;
+			for(i = 0; i < 3*tau; ++i) {
+				fp *= 256;
+				fp += (unsigned char) t[i];
+				fp %= prime;
+				if(i == nextS) {
+					fps.push_back((uint64_t) fp);
+					++indexS;
+					nextS = s[indexS];
+				}
+			}
 			
 			
 			powOf2modPrime = calculatePowerModulo(9);
@@ -347,6 +333,7 @@ class LceSyncSets : public LceDataStructure {
 					fp = prime - (firstCharInfluence - fp);
 				}
 				
+				
 				fp *= 256;
 				fp += (unsigned char) t[i];
 				fp %= prime;
@@ -356,6 +343,8 @@ class LceSyncSets : public LceDataStructure {
 					nextS = s[indexS];
 				}
 			}
+			
+			
 			std::cout << "Fingerprints calculated" << std::endl;
 			
 
