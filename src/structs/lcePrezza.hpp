@@ -2,7 +2,6 @@
 #include <algorithm> 
 #include "util/lceInterface.hpp"
 #include "util/util.hpp"
-#include "/home/alex/git/sdsl-lite/include/sdsl/bit_vectors.hpp"
 
 
 #define unlikely(x)    __builtin_expect(!!(x), 0)

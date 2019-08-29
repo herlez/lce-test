@@ -43,10 +43,12 @@ class LceSyncSets : public LceDataStructure {
 			}
 
 			/* strSync part */
-			std::vector<uint64_t>::iterator si = suc(i);
+			//std::vector<bool>::iterator si = suc(i);
+			uint64_t si = suc(i);
 			//std::cout << i << std::endl;
 			//std::cout << *si << std::endl;
-			std::vector<uint64_t>::iterator sj = suc(j);
+			//std::vector<bool>::iterator sj = suc(j);
+			uint64_t sj = suc(j);
 			//std::cout << j << std::endl;
 			//std::cout << *sj << std::endl;
 			
@@ -55,8 +57,8 @@ class LceSyncSets : public LceDataStructure {
 			//std::cout << t_[i] << std::endl;
 			//std::cout << t_[j] << std::endl;
 			
-			uint64_t l = lceT(si, sj);
-			return (*(si+l) - i) + lce(*(si+l), *(sj+l));
+			uint64_t l = i - lceT(si, sj);
+			return l + lce(i + l, j + l);
 		}
 		
 		char operator[](uint64_t i) {
@@ -81,8 +83,8 @@ class LceSyncSets : public LceDataStructure {
 		std::vector<bool> q;
 		std::vector<bool> r;
 		
-		std::vector<uint64_t> s;
-		std::vector<bool> sBit;
+		//std::vector<uint64_t> s;
+		std::vector<bool> s;
 		
 		std::vector<uint64_t> tFP;
 		const unsigned __int128 prime = 18446744073709551557ULL;
@@ -92,17 +94,15 @@ class LceSyncSets : public LceDataStructure {
 		
 		
 		
-		uint64_t lceT(std::vector<uint64_t>::iterator i, std::vector<uint64_t>::iterator j) {
-			uint64_t lceInTi = 0;
-			while(i != s.end() && j != s.end()) {
-				if(t_[*i] != t_[*j]) {
-					return lceInTi;
+		uint64_t lceT(uint64_t i, uint64_t j) {
+			while(i < s.size() && j < s.size()) {
+				if(t_[i] != t_[j]) {
+					return i;
 				}
-				++lceInTi;
-				++i;
-				++j;
+				i += tau;
+				j += tau;
 			}
-			return lceInTi;
+			return s.size() - 1;
 		}
 		
 		/* Return the identifier of the text t[i..i+tau] */
@@ -139,24 +139,21 @@ class LceSyncSets : public LceDataStructure {
 		/* Finds the smallest element that is greater or equal to i
 		Because s is ordered, that is equal to the 
 		first element greater than i */
-		inline std::vector<uint64_t>::iterator suc(const uint64_t i) {
-			for(auto it = s.begin(); it != s.end(); ++it) {
-				if (*it > i) {
-					return it;
-				}
+		inline uint64_t suc(uint64_t i) {
+			while(s[i] == 0 && i < s.size()) {
+				++i;
 			}
-			std::cerr << "ERROR: suc i=" << i << " not found" << '\n';
-			return s.end();
-			
+			return i;
+			//std::cerr << "ERROR: suc i=" << i << " not found" << '\n';
 		}
 		
-		
+		/*
 		void fillS(uint64_t from, uint64_t to, std::vector<uint64_t> *v) {
 			for (uint64_t i = from; i < to; ++i) {
 				if(i%1000000 == 0) std::cout << i << '\n';
 				int min = -1;
 				
-				/* We first check if i and i+tau are in q. If so, i is not element of s.*/
+				// We first check if i and i+tau are in q. If so, i is not element of s.
 				if(q[i] == 0) {
 					min = 0;
 				}
@@ -168,17 +165,18 @@ class LceSyncSets : public LceDataStructure {
 					continue;
 				}
 
-				/* Compare this id with every other index which is not in q */
+				// Compare this id with every other index which is not in q
 				for (unsigned int j = 1; j < tau; ++j) {
 					if(q[i+j]==0 && id(i+j) < id(i+min)) {
 						min = j;
 					}
 				}
 				if(min == 0 || min == tau) {
-					v->push_back(i);
+					v[i] = true;
 				}
 			}
 		}
+		*/
 		
 		void buildStruct(std::string path) {
 			std::ifstream input(path);
@@ -238,8 +236,8 @@ class LceSyncSets : public LceDataStructure {
 				fp3 = tFP[i+(2*tau)];
 				fp3 %= prime;
 				
-				if(sBit[i]) {
-				}
+				//if(sBit[i]) {
+				//}
 				
 				fp1 = (fp1 + fp2 + fp3) % prime;
 				t_.push_back((uint64_t) fp1);
@@ -265,7 +263,7 @@ class LceSyncSets : public LceDataStructure {
 			// LOAD S FROM A FILE
 			std::ifstream sLoad("../res/sss_dna.50MB", std::ios::in);
 			for (std::string line; std::getline(sLoad, line); ) {
-				s.push_back(stoi(line));
+				s[stoi(line)] = 1;
 			}
 			
 			
