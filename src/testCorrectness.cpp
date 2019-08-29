@@ -8,14 +8,14 @@
 
 //#define charTest
 //#define randomLce
-#define exhaustiveLce
+//#define exhaustiveLce
 
 
 using namespace std;
 
 const string fileNames{"english"};
-//const string files[] {"../../text/english"};
-const string files[] {"/scratch/text/benutzungsrichtlinie.txt"};
+const string files[] {"../../text/dna.50MB"};
+//const string files[] {"/scratch/text/benutzungsrichtlinie.txt"};
 
 double timestamp();
 
@@ -78,6 +78,19 @@ int main(int argc, char *argv[]) {
 		}
 	}
 #endif
+	uint64_t i = 3688999;
+	uint64_t j = 16927306;
+	uint64_t lce1 = T1.lce(i, j);
+	uint64_t lce2 = T2.lce(i, j);
+	
+	cout << "lceNaive  at " << i << " and " << j << ": " << lce1 << '\n';
+	cout << "lceSSS at " << i << " and " << j << ": " << lce2 << '\n';
+	
+
+
+
+
+
 	log << "Test finished" << endl;
 	return EXIT_SUCCESS;
 }

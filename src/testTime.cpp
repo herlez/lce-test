@@ -16,8 +16,8 @@ using namespace std;
 
 //const string fileName = "benutzungsrichtlinie.txt";
 const string fileName = "dna.50MB";
-//const string file = "../../text/" + fileName;
-const string file = "/scratch/text/" + fileName;
+const string file = "../../text/" + fileName;
+//const string file = "/scratch/text/" + fileName;
 
 
 

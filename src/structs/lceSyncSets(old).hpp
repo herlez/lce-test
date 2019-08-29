@@ -276,14 +276,16 @@ class LceSyncSets : public LceDataStructure {
 			
 			// LOAD S FROM A FILE
 			
+			/*
 			std::ifstream sLoad("../res/sss_dna.50MB", std::ios::in);
 			for (std::string line; std::getline(sLoad, line); ) {
 				s.push_back(stoi(line));
 			}
+			*/
 			
 			
 				
-			//fillS(0, (tSize - (2*tau + 1)), &s);
+			fillS(0, (tSize - (2*tau + 1)), &s);
 			
 			s.shrink_to_fit();
 			/* Print S */
@@ -295,12 +297,10 @@ class LceSyncSets : public LceDataStructure {
 			*/
 			
 			// SAVE S IN A FILE
-			/*
 			std::ofstream sSet("../res/sss_dna.50MB", std::ios::out|std::ios::trunc);
 			for(uint64_t i = 0; i < s.size(); ++i) {
 				sSet << s[i] << std::endl;
 			}
-			*/
 			
 			/* Calculate fingerprints of the 3*tau long substrings and save fingerprints for every element in s */
 			std::cout << "Calculate fingerprints" << std::endl;

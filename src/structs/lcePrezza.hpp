@@ -2,6 +2,8 @@
 #include <algorithm> 
 #include "util/lceInterface.hpp"
 #include "util/util.hpp"
+#include "/home/alex/git/sdsl-lite/include/sdsl/bit_vectors.hpp"
+
 
 #define unlikely(x)    __builtin_expect(!!(x), 0)
 /* This class builds Prezza's in-place LCE data structure and
@@ -188,7 +190,6 @@ class LcePrezza : public LceDataStructure {
 				uint64_t Y = (uint64_t) X;
 				
 				Y = Y <= currentFingerprint ? currentFingerprint - Y : prime - (Y - currentFingerprint);
-				
 				return Y + sBit*(uint64_t)prime;
 			}
 		}
