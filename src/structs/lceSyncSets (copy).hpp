@@ -62,7 +62,6 @@ class LceSyncSets : public LceDataStructure {
 		}
 		
 		char operator[](uint64_t i) {
-			if(i > tSize) {return '\00';}
 			return t[i];
 		}
 		
@@ -84,8 +83,8 @@ class LceSyncSets : public LceDataStructure {
 		std::vector<bool> q;
 		std::vector<bool> r;
 		
-		std::vector<uint64_t> s;
-		std::vector<bool> sBit;
+		//std::vector<uint64_t> s;
+		std::vector<bool> s;
 		
 		std::vector<uint64_t> tFP;
 		const unsigned __int128 prime = 18446744073709551557ULL;
@@ -141,15 +140,15 @@ class LceSyncSets : public LceDataStructure {
 		Because s is ordered, that is equal to the 
 		first element greater than i */
 		inline uint64_t suc(uint64_t i) {
-			while(sBit[i] == 0 && i < s.size()) {
+			while(s[i] == 0 && i < s.size()) {
 				++i;
 			}
 			return i;
 			//std::cerr << "ERROR: suc i=" << i << " not found" << '\n';
 		}
 		
-		
-		void fillS(uint64_t from, uint64_t to) {
+		/*
+		void fillS(uint64_t from, uint64_t to, std::vector<uint64_t> *v) {
 			for (uint64_t i = from; i < to; ++i) {
 				if(i%1000000 == 0) std::cout << i << '\n';
 				int min = -1;
@@ -173,12 +172,11 @@ class LceSyncSets : public LceDataStructure {
 					}
 				}
 				if(min == 0 || min == tau) {
-					sBit[i] = true;
-					s.push_back(i);
+					v[i] = true;
 				}
 			}
 		}
-		
+		*/
 		
 		void buildStruct(std::string path) {
 			std::ifstream input(path);
@@ -200,6 +198,7 @@ class LceSyncSets : public LceDataStructure {
 			}
 			tFP.push_back((uint64_t) fp);
 			
+			
 			powOf2modPrime = calculatePowerModulo(9);
 			for(uint64_t i = 0; i < tSize-tau; ++i) {
 				fp *= 256;
@@ -215,12 +214,38 @@ class LceSyncSets : public LceDataStructure {
 				} else {
 					fp = prime - (firstCharInfluence - fp);
 				}
+				
+				
 				tFP.push_back((uint64_t) fp);
 			}
 			
-			std::cout << "FP calculated" << std::endl;
-			std::cout << "FP Size: " << tFP.size() << std::endl;
+			// Calculate 3-tau FP for indexes in s
+			unsigned __int128 fp1 = 0;
+			unsigned __int128 fp2 = 0;
+			unsigned __int128 fp3 = 0;
 			
+			for(uint64_t i = 0; i < tSize-(3*tau)+1; ++i) {
+				fp1 = tFP[i] * powOf2modPrime;
+				fp1 %= prime;
+				fp1 *= powOf2modPrime;
+				fp1 %= prime;
+			
+				fp2 = tFP[i+tau] * powOf2modPrime;
+				fp2 %= prime;
+				
+				fp3 = tFP[i+(2*tau)];
+				fp3 %= prime;
+				
+				//if(sBit[i]) {
+				//}
+				
+				fp1 = (fp1 + fp2 + fp3) % prime;
+				t_.push_back((uint64_t) fp1);
+			}
+			std::cout << "FP calculated" << std::endl;
+			
+			std::cout << "FP Size: " << tFP.size() << std::endl;
+			std::cout << "T_ Size: " << t_.size() << std::endl;
 			
 			
 			// Fill Q
@@ -232,24 +257,26 @@ class LceSyncSets : public LceDataStructure {
 				}
 			}
 			std::cout << "Q size: " << std::count(q.begin(), q.end(), true) << std::endl;
+			fillS(0, (tSize - (2*tau + 1)), &s);
 			*/
-			
-			
-			
-			sBit.resize(tSize);
-			// Calculate S
-			fillS(0, (tSize - (2*tau + 1)));
-			
 
 			// LOAD S FROM A FILE
-			/*
 			std::ifstream sLoad("../res/sss_dna.50MB", std::ios::in);
 			for (std::string line; std::getline(sLoad, line); ) {
 				s[stoi(line)] = 1;
 			}
-			*/
+			
+			
+			
+	
+			
 			s.shrink_to_fit();
 			std::cout << "S size: " << s.size() << std::endl;
+			/*for( auto i : s ) {
+				std::cout << i << std::endl;
+				std::cout << id(t, i, tau*2) << std::endl;
+			}
+			*/
 			
 			// SAVE S IN A FILE
 			/*
@@ -260,44 +287,7 @@ class LceSyncSets : public LceDataStructure {
 			*/
 			
 			
-			// Construct SA for T_
-			std::vector<uint64_t> SA;
-			SA.resize(s.size());
-			for(uint64_t i = 0; i < s.size(); ++i) {
-				SA[i] = i;
-			}
-			std::sort(SA.begin(), SA.end(), [=](uint64_t i, uint64_t j) {
-								while(true) {
-									if(i > s.size()) {return true;}
-									if(j > s.size()) {return false;}
-									for(uint64_t k = 0; k < 3*tau; ++k) {
-										if(operator[](i+k) != operator[](j+k)) {
-											return operator[](i+k) < operator[](j+k);
-										}
-									}
-									i = suc(i);
-									j = suc(j);
-								}
-								return false;
-							});
 			
-			
-			// Constuct ISA for T_
-			std::vector<uint64_t> ISA;
-			ISA.resize(s.size());
-			for(uint64_t i = 0; i < s.size(); ++i) {
-				ISA[SA[i]] = i;
-			}
-			
-			// Construct LCP for T_
-			std::vector<uint64_t> LCP;
-			LCP.resize(s.size());
-			for(uint64_t i = 0; i < (s.size()-1); ++i) {
-				LCP[i] = lceT(SA[i], SA[i+1]);
-			}
-			
-			// Constuct MRQ
-
 		}
 		
 	uint64_t calculatePowerModulo(unsigned int power) {
