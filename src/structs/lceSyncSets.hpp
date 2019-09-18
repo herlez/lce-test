@@ -1,5 +1,7 @@
 #include "util/lceInterface.hpp"
 #include "util/util.hpp"
+#include "util/bit_vector_rank.hpp"
+
 #include <cstdio>
 #include <string>
 #include <iostream>
@@ -10,6 +12,10 @@
 #include <sys/time.h>
 #include <unordered_set>
 #include <thread>
+#include <cmath> 
+#include <ctgmath>
+
+
 
 #define unlikely(x)    __builtin_expect(!!(x), 0) 
 #pragma once
@@ -93,17 +99,33 @@ class LceSyncSets : public LceDataStructure {
 		
 		std::vector<uint64_t> t_;
 		
+		std::vector<uint64_t> ISA, LCP;
+		std::vector<std::vector<uint64_t> RMQ;
 		
 		
+		//naive lce in T
 		uint64_t lceT(uint64_t i, uint64_t j) {
-			while(i < s.size() && j < s.size()) {
-				if(t_[i] != t_[j]) {
-					return i;
-				}
-				i += tau;
-				j += tau;
+			const uint64_t startI = i;
+			while(i < t.size() && j < s.size() && t[i] == t[j]) {
+				i++;
+				j++;
 			}
-			return s.size() - 1;
+			return (i - startI)/(3*tau);
+		}
+		
+		//lce with lce data structure in T'
+		uint64_t lceT_(uint64_t i, uint64_t j) {
+			return LCP[rmq(ISA[i] + 1, ISA[j])];
+		}
+		
+		uint64_t rmq(uint64_t i, uint64_t j) {
+			if(i > j) {
+				uint64_t tempi = i;
+				i = j;
+				j = tempi
+			}
+			
+			
 		}
 		
 		/* Return the identifier of the text t[i..i+tau] */
@@ -152,7 +174,7 @@ class LceSyncSets : public LceDataStructure {
 		void fillS(uint64_t from, uint64_t to) {
 			for (uint64_t i = from; i < to; ++i) {
 				if(i%1000000 == 0) std::cout << i << '\n';
-				int min = -1;
+				unsigned int min = tau+1;
 				
 				// We first check if i and i+tau are in q. If so, i is not element of s.
 				if(q[i] == 0) {
@@ -162,7 +184,7 @@ class LceSyncSets : public LceDataStructure {
 					if(id(i) > id(i+tau)) {
 						min = tau;
 				}
-				if(min == -1)
+				if(min == tau+1)
 					continue;
 				}
 
@@ -238,19 +260,19 @@ class LceSyncSets : public LceDataStructure {
 			
 			sBit.resize(tSize);
 			// Calculate S
-			fillS(0, (tSize - (2*tau + 1)));
+			//fillS(0, (tSize - (2*tau + 1)));
 			
 
 			// LOAD S FROM A FILE
-			/*
+			
 			std::ifstream sLoad("../res/sss_dna.50MB", std::ios::in);
 			for (std::string line; std::getline(sLoad, line); ) {
-				s[stoi(line)] = 1;
+				s.push_back(stoi(line));
+				sBit[stoi(line)] = 1;
 			}
-			*/
-			s.shrink_to_fit();
-			std::cout << "S size: " << s.size() << std::endl;
 			
+			s.shrink_to_fit();
+			//std::cout << "S size: " << s.size() << std::endl;
 			// SAVE S IN A FILE
 			/*
 			std::ofstream sSet("../res/sss_dna.50MB", std::ios::out|std::ios::trunc);
@@ -280,23 +302,24 @@ class LceSyncSets : public LceDataStructure {
 								}
 								return false;
 							});
-			
+			std::cout << "SA calculated" << std::endl;
 			
 			// Constuct ISA for T_
-			std::vector<uint64_t> ISA;
 			ISA.resize(s.size());
 			for(uint64_t i = 0; i < s.size(); ++i) {
 				ISA[SA[i]] = i;
 			}
+			std::cout << "ISA calculated" << std::endl;
+			
 			
 			// Construct LCP for T_
-			std::vector<uint64_t> LCP;
 			LCP.resize(s.size());
 			for(uint64_t i = 0; i < (s.size()-1); ++i) {
-				LCP[i] = lceT(SA[i], SA[i+1]);
+				LCP[i] = lceT(s[SA[i]], s[SA[i+1]]);
 			}
-			
-			// Constuct MRQ
+			std::cout << "LCP calculated" << std::endl;
+			// Constuct RMQ
+			RMQ.resize
 
 		}
 		
