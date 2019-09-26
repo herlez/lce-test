@@ -25,7 +25,7 @@ const string file = "../../text/" + fileName;
 #ifdef benchmark_ordered_by_lce
 const string lSet = "../res/lce_" + fileName;
 const string lceSet[] = {lSet + "/i0", lSet + "/i1", lSet + "/i2", lSet + "/i3", lSet + "/i4", lSet + "/i5", lSet + "/i6", lSet + "/i7", lSet + "/i8", lSet + "/i9", lSet + "/i10", lSet + "/i11", lSet + "/i12", lSet + "/i13", lSet + "/i14", lSet + "/i15", lSet + "/i16",lSet + "/i17",lSet + "/i18", lSet + "/i19", lSet + "/iH"};
-const int NUMBEROFSETS = 21;
+const int NUMBEROFSETS = 15;
 const uint64_t NUMBEROFTESTS = 1'000'000ULL; 
 #endif
 

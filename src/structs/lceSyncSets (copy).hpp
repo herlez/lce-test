@@ -1,5 +1,8 @@
 #include "util/lceInterface.hpp"
 #include "util/util.hpp"
+#include "util/bit_vector_rank.hpp"
+#include "util/rmq.hpp"
+
 #include <cstdio>
 #include <string>
 #include <iostream>
@@ -10,6 +13,10 @@
 #include <sys/time.h>
 #include <unordered_set>
 #include <thread>
+#include <cmath> 
+#include <ctgmath>
+
+
 
 #define unlikely(x)    __builtin_expect(!!(x), 0) 
 #pragma once
@@ -44,11 +51,11 @@ class LceSyncSets : public LceDataStructure {
 
 			/* strSync part */
 			//std::vector<bool>::iterator si = suc(i);
-			uint64_t si = suc(i);
+			uint64_t i_ = suc(i);
 			//std::cout << i << std::endl;
 			//std::cout << *si << std::endl;
 			//std::vector<bool>::iterator sj = suc(j);
-			uint64_t sj = suc(j);
+			uint64_t j_ = suc(j);
 			//std::cout << j << std::endl;
 			//std::cout << *sj << std::endl;
 			
@@ -57,11 +64,12 @@ class LceSyncSets : public LceDataStructure {
 			//std::cout << t_[i] << std::endl;
 			//std::cout << t_[j] << std::endl;
 			
-			uint64_t l = i - lceT(si, sj);
-			return l + lce(i + l, j + l);
+			uint64_t l = lceT_(i_, j_);
+			return s[i_+l] - i + lce(s[i_+l], s[j_+l]);
 		}
 		
 		char operator[](uint64_t i) {
+			if(i > tSize) {return '\00';}
 			return t[i];
 		}
 		
@@ -83,8 +91,12 @@ class LceSyncSets : public LceDataStructure {
 		std::vector<bool> q;
 		std::vector<bool> r;
 		
-		//std::vector<uint64_t> s;
-		std::vector<bool> s;
+		std::vector<uint64_t> s;
+		std::vector<bool> sBit;
+		bit_vector * s_bv;
+		bit_vector_rank * s_bvr;
+		
+		
 		
 		std::vector<uint64_t> tFP;
 		const unsigned __int128 prime = 18446744073709551557ULL;
@@ -92,17 +104,39 @@ class LceSyncSets : public LceDataStructure {
 		
 		std::vector<uint64_t> t_;
 		
+		std::vector<uint64_t> ISA, LCP;
+		Rmq * rmq_ds;
 		
 		
+		
+		
+		
+		//naive lce in T
 		uint64_t lceT(uint64_t i, uint64_t j) {
-			while(i < s.size() && j < s.size()) {
-				if(t_[i] != t_[j]) {
-					return i;
-				}
-				i += tau;
-				j += tau;
+			const uint64_t startI = i;
+			while(i < t.size() && j < s.size() && t[i] == t[j]) {
+				i++;
+				j++;
 			}
-			return s.size() - 1;
+			return (i - startI)/(3*tau);
+		}
+		
+		//lce with lce data structure in T'
+		uint64_t lceT_(uint64_t i, uint64_t j) {
+			return LCP[rmq(ISA[i] + 1, ISA[j])];
+		}
+		
+		uint64_t rmq(uint64_t i, uint64_t j) {
+			if(i > j) {
+				uint64_t tempi = i;
+				i = j;
+				j = tempi;
+			}
+			
+			uint64_t range = j - i;
+			uint16_t logRange = log2(range);
+			
+			return std::min(RMQ[logRange][i], RMQ[logRange][j-pow(2, range)]);
 		}
 		
 		/* Return the identifier of the text t[i..i+tau] */
@@ -140,18 +174,18 @@ class LceSyncSets : public LceDataStructure {
 		Because s is ordered, that is equal to the 
 		first element greater than i */
 		inline uint64_t suc(uint64_t i) {
-			while(s[i] == 0 && i < s.size()) {
-				++i;
-			}
-			return i;
+			//while(i < sBit.size() && sBit[i] == 0) {
+			//	++i;
+			//}
+			return s_bvr->rank1(i) + 1;
 			//std::cerr << "ERROR: suc i=" << i << " not found" << '\n';
 		}
 		
-		/*
-		void fillS(uint64_t from, uint64_t to, std::vector<uint64_t> *v) {
+		
+		void fillS(uint64_t from, uint64_t to) {
 			for (uint64_t i = from; i < to; ++i) {
 				if(i%1000000 == 0) std::cout << i << '\n';
-				int min = -1;
+				unsigned int min = tau+1;
 				
 				// We first check if i and i+tau are in q. If so, i is not element of s.
 				if(q[i] == 0) {
@@ -161,7 +195,7 @@ class LceSyncSets : public LceDataStructure {
 					if(id(i) > id(i+tau)) {
 						min = tau;
 				}
-				if(min == -1)
+				if(min == tau+1)
 					continue;
 				}
 
@@ -172,11 +206,12 @@ class LceSyncSets : public LceDataStructure {
 					}
 				}
 				if(min == 0 || min == tau) {
-					v[i] = true;
+					sBit[i] = true;
+					s.push_back(i);
 				}
 			}
 		}
-		*/
+		
 		
 		void buildStruct(std::string path) {
 			std::ifstream input(path);
@@ -198,7 +233,6 @@ class LceSyncSets : public LceDataStructure {
 			}
 			tFP.push_back((uint64_t) fp);
 			
-			
 			powOf2modPrime = calculatePowerModulo(9);
 			for(uint64_t i = 0; i < tSize-tau; ++i) {
 				fp *= 256;
@@ -214,38 +248,12 @@ class LceSyncSets : public LceDataStructure {
 				} else {
 					fp = prime - (firstCharInfluence - fp);
 				}
-				
-				
 				tFP.push_back((uint64_t) fp);
 			}
 			
-			// Calculate 3-tau FP for indexes in s
-			unsigned __int128 fp1 = 0;
-			unsigned __int128 fp2 = 0;
-			unsigned __int128 fp3 = 0;
-			
-			for(uint64_t i = 0; i < tSize-(3*tau)+1; ++i) {
-				fp1 = tFP[i] * powOf2modPrime;
-				fp1 %= prime;
-				fp1 *= powOf2modPrime;
-				fp1 %= prime;
-			
-				fp2 = tFP[i+tau] * powOf2modPrime;
-				fp2 %= prime;
-				
-				fp3 = tFP[i+(2*tau)];
-				fp3 %= prime;
-				
-				//if(sBit[i]) {
-				//}
-				
-				fp1 = (fp1 + fp2 + fp3) % prime;
-				t_.push_back((uint64_t) fp1);
-			}
 			std::cout << "FP calculated" << std::endl;
-			
 			std::cout << "FP Size: " << tFP.size() << std::endl;
-			std::cout << "T_ Size: " << t_.size() << std::endl;
+			
 			
 			
 			// Fill Q
@@ -257,27 +265,30 @@ class LceSyncSets : public LceDataStructure {
 				}
 			}
 			std::cout << "Q size: " << std::count(q.begin(), q.end(), true) << std::endl;
-			fillS(0, (tSize - (2*tau + 1)), &s);
 			*/
+			
+			
+			
+			sBit.resize(tSize);
+			// Calculate S
+			//fillS(0, (tSize - (2*tau + 1)));
+			
 
 			// LOAD S FROM A FILE
+			
 			std::ifstream sLoad("../res/sss_dna.50MB", std::ios::in);
 			for (std::string line; std::getline(sLoad, line); ) {
-				s[stoi(line)] = 1;
+				s.push_back(stoi(line));
+				sBit[stoi(line)] = 1;
 			}
-			
-			
-			
-	
 			
 			s.shrink_to_fit();
-			std::cout << "S size: " << s.size() << std::endl;
-			/*for( auto i : s ) {
-				std::cout << i << std::endl;
-				std::cout << id(t, i, tau*2) << std::endl;
+			s_bv = new bit_vector(sBit.size());
+			for(uint64_t i = 0; i < sBit.size(); ++i) {
+				s_bv->bitset(i, sBit[i]);
 			}
-			*/
-			
+			s_bvr = new bit_vector_rank(*s_bv);
+			//std::cout << "S size: " << s.size() << std::endl;
 			// SAVE S IN A FILE
 			/*
 			std::ofstream sSet("../res/sss_dna.50MB", std::ios::out|std::ios::trunc);
@@ -287,7 +298,63 @@ class LceSyncSets : public LceDataStructure {
 			*/
 			
 			
+			// Construct SA for T_
+			std::vector<uint64_t> SA;
+			SA.resize(s.size());
+			for(uint64_t i = 0; i < s.size(); ++i) {
+				SA[i] = i;
+			}
+			std::sort(SA.begin(), SA.end(), [=](uint64_t i, uint64_t j) {
+								while(true) {
+									if(i > s.size()) {return true;}
+									if(j > s.size()) {return false;}
+									for(uint64_t k = 0; k < 3*tau; ++k) {
+										if(operator[](i+k) != operator[](j+k)) {
+											return operator[](i+k) < operator[](j+k);
+										}
+									}
+									i = suc(i);
+									j = suc(j);
+								}
+								return false;
+							});
+			std::cout << "SA calculated" << std::endl;
 			
+			// Constuct ISA for T_
+			ISA.resize(s.size());
+			for(uint64_t i = 0; i < s.size(); ++i) {
+				ISA[SA[i]] = i;
+			}
+			std::cout << "ISA calculated" << std::endl;
+			
+			
+			// Construct LCP for T_
+			LCP.resize(s.size());
+			for(uint64_t i = 0; i < (s.size()-1); ++i) {
+				LCP[i] = lceT(s[SA[i]], s[SA[i+1]]);
+			}
+			std::cout << "LCP calculated" << std::endl;
+			// Constuct RMQ
+			const unsigned  int numberOfLevels = log2(LCP.size()) + 1;
+			const uint64_t maxRmqRange = LCP.size();
+			RMQ.resize(numberOfLevels);
+			RMQ[0].resize(maxRmqRange);
+			//fill first rmq array
+			for(uint64_t i = 0; i < maxRmqRange; ++i) {
+				RMQ[0][i] = LCP[i];
+				}
+			
+			std::cout << "LCP size: " << LCP.size() << '\n'	
+				<< "#levels: " << numberOfLevels << '\n'
+				<< "maxRmqRange: " << maxRmqRange << std::endl;
+			//calculate the rest of the rmq array
+			for(unsigned int i = 1; i < numberOfLevels; ++i) {
+				RMQ[i].resize(maxRmqRange - pow(2, i));
+				for(uint64_t j = 0; j < maxRmqRange - pow(2, i); ++j) {
+				RMQ[i][j] = std::min(RMQ[i-1][j], RMQ[i-1][j+pow(2, i-1)]);
+				}
+			}
+			std::cout << "RMQ calculated" << std::endl;
 		}
 		
 	uint64_t calculatePowerModulo(unsigned int power) {
