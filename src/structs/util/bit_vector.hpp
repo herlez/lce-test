@@ -11,7 +11,7 @@ private:
 public:
     inline bit_vector(size_t size) : m_size(size) {
         /* BVCC - Allokation */
-        m_bv = std::vector<uint64_t>((size/64)+1);
+        m_bv = std::vector<uint64_t>(((size-1)/512+1)*8);
     }
 
     inline void bitset(size_t i, bool b) {

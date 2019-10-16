@@ -30,13 +30,15 @@ private:
 		}
 	}
 	
-	// invariant: i <= j
 	uint64_t rmq(uint64_t i, uint64_t j) const {
+		if (i > j) {
+			uint64_t temp = i;
+			i = j;
+			j = temp;
+		}
+		
 		uint64_t range = j-i + 1;
 		uint64_t range_log2 = log2(range);
-		
-		//std::cout << "i: " << i << "  j: " << j << std::endl;
-		//std::cout << range << "  " << range_log2 << std::endl;
 		return std::min(table[range_log2][i], table[range_log2][j+1-pow(2, range_log2)]);
 	}
 	
@@ -44,7 +46,7 @@ private:
 		return size;
 	}
 	
-	void print_table() {
+	void printTable() {
 		for(uint64_t i = 0; i < table.size(); ++i) {
 			for(uint64_t j = 0; j < table[i].size(); ++j) {
 				std::cout << table[i][j] << " ";

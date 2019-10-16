@@ -1,7 +1,6 @@
 #include "util/lceInterface.hpp"
 #include "util/util.hpp"
 #include "util/bit_vector_rank.hpp"
-#include "util/rmq.hpp"
 #include "util/lce-rmq.hpp"
 
 #include <cstdio>
@@ -158,7 +157,7 @@ class LceSyncSets : public LceDataStructure {
 		
 		void fillS(uint64_t from, uint64_t to) {
 			for (uint64_t i = from; i < to; ++i) {
-				if(i%1000000 == 0) std::cout << i << '\n';
+				//if(i%10 == 0) std::cout << i << '\n';
 				unsigned int min = tau+1;
 				
 				// We first check if i and i+tau are in q. If so, i is not element of s.
@@ -175,12 +174,11 @@ class LceSyncSets : public LceDataStructure {
 
 				// Compare this id with every other index which is not in q
 				for (unsigned int j = 1; j < tau; ++j) {
-					if(q[i+j]==0 && id(i+j) < id(i+min)) {
+					if(q[i+j]==0 && (id(i+j) < id(i+min))) {
 						min = j;
 					}
 				}
 				if(min == 0 || min == tau) {
-					s_bv->bitset(i, true);
 					s.push_back(i);
 				}
 			}
@@ -197,11 +195,7 @@ class LceSyncSets : public LceDataStructure {
 			tSize = t.size();
 			std::cout << "T size: " << t.size() << std::endl;
 			
-			lce_rmq = new Lce_rmq(&t, &s);
-			
-			s_bv = new bit_vector(s.size());
-			
-			
+
 			// Calculate fingerprints
 			std::cout << "Calculating FP" << std::endl;
 			unsigned __int128 fp = 0;
@@ -236,7 +230,6 @@ class LceSyncSets : public LceDataStructure {
 			
 			
 			// Fill Q
-			/*
 			q = std::vector<bool>(tSize, false);
 			for(uint64_t i = 0; i < (tSize - tau + 1); ++i) {
 				if(per1tau(i)) {  //if the period is smaller than tau/3, i is element of Q
@@ -244,32 +237,40 @@ class LceSyncSets : public LceDataStructure {
 				}
 			}
 			std::cout << "Q size: " << std::count(q.begin(), q.end(), true) << std::endl;
-			*/
+			
 			
 			
 			
 			// Calculate S
-			//fillS(0, (tSize - (2*tau + 1)));
+			fillS(0, (tSize - (2*tau + 1)));
 			
-
 			// LOAD S FROM A FILE
-			
+			/*
 			std::ifstream sLoad("../res/sss_dna.50MB", std::ios::in);
 			for (std::string line; std::getline(sLoad, line); ) {
 				s.push_back(stoi(line));
 				s_bv->bitset(stoi(line), true);
 			}
-			
+			*/
+			std::cout << "S size: " << s.size() << std::endl;
 			s.shrink_to_fit();
+			
+			s_bv = new bit_vector(tSize);
+			for(size_t i = 0; i < s.size(); ++i) {
+				s_bv->bitset(s[i], 1);
+			}
 			s_bvr = new bit_vector_rank(*s_bv);
-			//std::cout << "S size: " << s.size() << std::endl;
+			
+			
+			lce_rmq = new Lce_rmq(&t, &s);
+			
 			// SAVE S IN A FILE
-			/*
-			std::ofstream sSet("../res/sss_dna.50MB", std::ios::out|std::ios::trunc);
+			
+			std::ofstream sSet("../res/ecoli.fa", std::ios::out|std::ios::trunc);
 			for(uint64_t i = 0; i < s.size(); ++i) {
 				sSet << s[i] << std::endl;
 			}
-			*/
+			
 			
 		}
 		

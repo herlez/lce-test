@@ -50,14 +50,21 @@ public:
 						return i > j;
 					});
 		std::cout << "SA: " << sa.size() << std::endl;
+		for(uint64_t i = 0; i < sa.size(); ++i) {
+			std::cout << sa[i] << ' ';
+		} std::cout << std::endl;
+		
+		
 		
 		//Calculate ISA
 		isa.resize(sa.size());
 		for(uint64_t i = 0; i < sa.size(); ++i) {
 			isa[sa[i]] = i;
 		}
-		std::cout << "ISA: " << isa.size() << std::endl;
-
+		std::cout << "ISA" << std::endl;
+		for(uint64_t i = 0; i < isa.size(); ++i) {
+			std::cout << isa[i] << ' ';
+		} std::cout << std::endl;
 		
 		
 		
@@ -66,13 +73,14 @@ public:
 		for(uint64_t i = 1; i < sa.size(); ++i) {
 			lcp[i] = lce_in_text(sync_set->at(sa[i-1]), sync_set->at(sa[i]));
 		}
-		std::cout << "LCP: " << lcp.size() << std::endl;
-
+		std::cout << "LCP" << std::endl;
+		for(uint64_t i = 0; i < lcp.size(); ++i) {
+			std::cout << lcp[i] << ' ';
+		} std::cout << std::endl;
 		
 		//Build RMQ data structure
 		rmq_ds = new Rmq(lcp);
 		std::cout << "RMQ" << std::endl;
-		//rmq_ds->print_table();
 	}
 	
 	
@@ -84,7 +92,7 @@ public:
 		if(isa[i] < isa[j]) {
 			return rmq_ds->rmq(isa[i]+1, isa[j]);
 		} else {
-			return rmq_ds->rmq(isa[j]+1, isa[i]);
+			return rmq_ds->rmq(isa[i], isa[j]+1);
 		}
 	}
 	
