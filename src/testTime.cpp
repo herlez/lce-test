@@ -15,7 +15,7 @@
 using namespace std;
 
 //const string fileName = "benutzungsrichtlinie.txt";
-const string fileName = "ecoli.fa";
+const string fileName = "dna.50MB";
 //const string file = "../../text/" + fileName;
 const string file = "/scratch/text/" + fileName;
 
@@ -25,7 +25,7 @@ const string file = "/scratch/text/" + fileName;
 #ifdef benchmark_ordered_by_lce
 const string lSet = "../res/lce_" + fileName;
 const string lceSet[] = {lSet + "/i0", lSet + "/i1", lSet + "/i2", lSet + "/i3", lSet + "/i4", lSet + "/i5", lSet + "/i6", lSet + "/i7", lSet + "/i8", lSet + "/i9", lSet + "/i10", lSet + "/i11", lSet + "/i12", lSet + "/i13", lSet + "/i14", lSet + "/i15", lSet + "/i16",lSet + "/i17",lSet + "/i18", lSet + "/i19", lSet + "/iH"};
-const int NUMBEROFSETS = 12;
+const int NUMBEROFSETS = 15;
 const uint64_t NUMBEROFTESTS = 1'000'000ULL; 
 #endif
 
@@ -146,7 +146,7 @@ int main(int argc, char *argv[]) {
 #endif
 
 #if defined(benchmark_complete)
-			const uint64_t maxIndex = 100000U < lceData[0]->getSizeInBytes() ? 100000U : lceData[0]->getSizeInBytes();
+			const uint64_t maxIndex = 1000U < lceData[0]->getSizeInBytes() ? 1000U : lceData[0]->getSizeInBytes();
 			for(uint64_t i = 0; i < maxIndex; ++i) {
 				for(uint64_t j = 0; j < maxIndex; ++j) {
 					lce += lceData[alg]->lce(i, j);

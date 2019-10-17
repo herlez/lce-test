@@ -18,7 +18,7 @@ private:
 		const uint64_t maxLce = text_size - (i > j ? i : j); 
 		uint64_t lce_naive = 0;
 		while (lce_naive < maxLce) {
-			if (text->at(i) != text->at(j)) {
+			if (text->at(i+lce_naive) != text->at(j+lce_naive)) {
 				return lce_naive;
 			}
 			++lce_naive;
@@ -81,6 +81,12 @@ public:
 			return text_size - i;
 		}
 		
+		//std::cout << "sss_i: " << sync_set->at(i) << "  sss_j: " << sync_set->at(j) << std::endl;
+		//std::cout << "lce_in_text: " << lce_in_text(sync_set->at(i), sync_set->at(j)) << std::endl;
+		//std::cout << "isa[i]: " << isa[i] << "  isa[j]: " << isa[j] << std::endl;
+		//for(size_t k = isa[i]-2; k < isa[i]+3; ++k) {
+		//	std::cout << "lcp[" << isa[k] << "] = " << lcp[isa[k]] << std::endl;
+		//}
 		if(isa[i] < isa[j]) {
 			return rmq_ds->rmq(isa[i]+1, isa[j]);
 		} else {

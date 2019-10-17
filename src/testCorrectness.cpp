@@ -13,9 +13,9 @@
 
 using namespace std;
 
-const string fileNames{"english"};
-const string files[] {"../../text/dna.50MB"};
-//const string files[] {"/scratch/text/benutzungsrichtlinie.txt"};
+const string fileNames{"ecoli.fa"};
+//const string files[] {"../../text/dna.50MB"};
+const string files[] {"/scratch/text/ecoli.fa"};
 
 double timestamp();
 
@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
 	//log << "Prime: "; util::printInt128(T2.getPrime());
 	
 	uint64_t textSizeInBytes = T1.getSizeInBytes();
-	log << "Text: " << fileNames[0] << '\n'
+	log << "Text: " << fileNames << '\n'
 	    << "Size: " << textSizeInBytes << '\n';
 
 	    
@@ -63,8 +63,9 @@ int main(int argc, char *argv[]) {
 	int c = 0;
 	log << "Testing LCE (exhaustive)" << endl;
 	for(uint64_t i = 0; i < textSizeInBytes; ++i) {
+		//std::cout << i << std::endl;
 		for(uint64_t j = 0; j < textSizeInBytes; ++j) {
-		
+		//std::cout << j << std::endl;
 		uint64_t lce1 = T1.lce(i, j);
 		uint64_t lce2 = T2.lce(i, j);
 		
@@ -78,19 +79,13 @@ int main(int argc, char *argv[]) {
 		}
 	}
 #endif
-	uint64_t i = 3688999;
-	uint64_t j = 16927306;
+	uint64_t i = 3200771;
+	uint64_t j = 3083212;
 	uint64_t lce1 = T1.lce(i, j);
 	uint64_t lce2 = T2.lce(i, j);
 	
 	cout << "lceNaive  at " << i << " and " << j << ": " << lce1 << '\n';
 	cout << "lceSSS at " << i << " and " << j << ": " << lce2 << '\n';
-	
-
-
-
-
-
 	log << "Test finished" << endl;
 	return EXIT_SUCCESS;
 }

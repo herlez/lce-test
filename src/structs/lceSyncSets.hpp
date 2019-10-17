@@ -53,8 +53,13 @@ class LceSyncSets : public LceDataStructure {
 			//std::vector<bool>::iterator si = suc(i);
 			uint64_t i_ = suc(i);
 			uint64_t j_ = suc(j);
+			//std::cout << "i: " << i << "  j: " << j << std::endl;
+			//std::cout << "i_: " << i_ << "  j_: " << j_ << std::endl;
+			//std::cout << "s[i_]: " << s[i_] << "  s[j]: " << s[j_] << std::endl;
 			uint64_t l = lce_rmq->lce(i_, j_);
+			//std::cout << "l: " << l << std::endl;
 			//return s[i_+l] - i + lce(s[i_+l], s[j_+l]);
+			return l + s[i_] - i;
 			uint64_t newI = s[i_+l];
 			uint64_t newJ = s[j_+l];
 			for(uint64_t k = 0; k < 3*tau; ++k) {
@@ -151,7 +156,7 @@ class LceSyncSets : public LceDataStructure {
 		Because s is ordered, that is equal to the 
 		first element greater than i */
 		inline uint64_t suc(uint64_t i) const {
-			return s_bvr->rank1(i) + 1;
+			return s_bvr->rank1(i);
 		}
 		
 		
@@ -270,8 +275,6 @@ class LceSyncSets : public LceDataStructure {
 			for(uint64_t i = 0; i < s.size(); ++i) {
 				sSet << s[i] << std::endl;
 			}
-			
-			
 		}
 		
 	uint64_t calculatePowerModulo(unsigned int power) {
