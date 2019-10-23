@@ -12,8 +12,6 @@
 
 class util{
 
-    
-    
 public:
 
     /* Prints the 64-bit long integer in HEX*/
@@ -28,7 +26,6 @@ public:
         printf("%016lX%016lX\n", numberHalf[1], numberHalf[0]);
     }
     
-
     /* Returns the length of the file in bytes */
     static uint64_t calculateSizeOfInputFile(std::fstream* stream) {
         uint64_t fileStart, fileEnd;
@@ -89,7 +86,6 @@ public:
 		randIndex += rand();
 	
 		randIndex = randIndex % max;
-		if(max == randIndex) { std::cout << "?????????????????????????????"; }
 		return randIndex;
 	}
     

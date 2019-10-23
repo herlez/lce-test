@@ -6,6 +6,5 @@ project (lceTest)
   
 set(CMAKE_CXX_FLAGS " -Wall -std=c++17 -O3 -pthread -ftemplate-backtrace-limit=0")
 #set(CMAKE_CXX_FLAGS "-O0 -ggdb")  
-add_executable(testTime ./src/testTime.cpp)
-add_executable(testSss ./src/testSss.cpp)
-add_executable(testCorrectness ./src/testCorrectness.cpp)
+add_executable(testTime ./src/test_time.cpp)
+#add_executable(testCorrectness ./src/test_correctness.cpp)
