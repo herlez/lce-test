@@ -1,3 +1,4 @@
+#pragma once
 #include "./rmq.hpp"
 #include <vector>
 #include <algorithm> //std::sort
@@ -18,7 +19,7 @@ private:
 		const uint64_t maxLce = text_size - (i > j ? i : j); 
 		uint64_t lce_naive = 0;
 		while (lce_naive < maxLce) {
-			if (text->at(i+lce_naive) != text->at(j+lce_naive)) {
+			if (text->operator[](i+lce_naive) != text->operator[](j+lce_naive)) {
 				return lce_naive;
 			}
 			++lce_naive;
@@ -38,13 +39,13 @@ public:
 		
 		std::sort(sa.begin(), sa.end(), [=](uint64_t i, uint64_t j) {
 						
-						const uint64_t start_i = sync_set->at(i);
-						const uint64_t start_j = sync_set->at(j);
+						const uint64_t start_i = sync_set->operator[](i);
+						const uint64_t start_j = sync_set->operator[](j);
 						uint64_t max_lce = text_size - (start_i > start_j ? start_i : start_j);
 						
 						for(uint64_t k = 0; k < max_lce; ++k) {
-							if (text->at(start_i + k) != text->at(start_j + k)) {
-								return (text->at(start_i + k) < text->at(start_j + k));
+							if (text->operator[](start_i + k) != text->operator[](start_j + k)) {
+								return (text->operator[](start_i + k) < text->operator[](start_j + k));
 							}
 						}
 						return i > j;
@@ -64,7 +65,7 @@ public:
 		//Calculate LCP array
 		lcp.resize(sa.size());
 		for(uint64_t i = 1; i < sa.size(); ++i) {
-			lcp[i] = lce_in_text(sync_set->at(sa[i-1]), sync_set->at(sa[i]));
+			lcp[i] = lce_in_text(sync_set->operator[](sa[i-1]), sync_set->operator[](sa[i]));
 		}
 		std::cout << "LCP: " << lcp.size() << std::endl;
 
@@ -81,8 +82,8 @@ public:
 			return text_size - i;
 		}
 		
-		//std::cout << "sss_i: " << sync_set->at(i) << "  sss_j: " << sync_set->at(j) << std::endl;
-		//std::cout << "lce_in_text: " << lce_in_text(sync_set->at(i), sync_set->at(j)) << std::endl;
+		//std::cout << "sss_i: " << sync_set->operator[](i) << "  sss_j: " << sync_set->operator[](j) << std::endl;
+		//std::cout << "lce_in_text: " << lce_in_text(sync_set->operator[](i), sync_set->operator[](j)) << std::endl;
 		//std::cout << "isa[i]: " << isa[i] << "  isa[j]: " << isa[j] << std::endl;
 		//for(size_t k = isa[i]-2; k < isa[i]+3; ++k) {
 		//	std::cout << "lcp[" << isa[k] << "] = " << lcp[isa[k]] << std::endl;

@@ -152,7 +152,11 @@ class LceSyncSets : public LceDataStructure {
 				} else if(q_[i+kTau] == 0) {
 					min = kTau;
 				} else {
-					continue;
+					for (unsigned int j = 1; j < kTau; ++j) {
+						if(q_[i+j]==0) {
+							min = j;
+						}
+					}
 				}
 
 
