@@ -12,11 +12,7 @@
 #include "structs/lce_synchronizing_sets.hpp"
 #include "structs/lce_semi_synchronizing_sets.hpp"
 
-#include "malloc_count/malloc_count.h"
-#include "malloc_count/stack_count.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+
 
 
 using namespace std;

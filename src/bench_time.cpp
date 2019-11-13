@@ -2,7 +2,6 @@
 #include <sys/time.h>
 #include <vector>
 #include <iomanip>
-#include <ctime>
 
 #include "structs/lce_naive.hpp"
 #include "structs/lce_naive_ultra.hpp"
@@ -10,7 +9,7 @@
 #include "structs/lce_prezza.hpp"
 #include "structs/lce_prezza_mersenne.hpp"
 
-#include "structs/lce_synchronizing_sets.hpp"
+//#include "structs/lce_synchronizing_sets.hpp"
 #include "structs/lce_semi_synchronizing_sets.hpp"
 
 
@@ -43,7 +42,6 @@ const uint64_t kNumberOfTests = 100'000'000ULL;
 #endif
 
 
-double timestamp();
 
 int main(int argc, char *argv[]) {
 	// Set up log to measure time
@@ -62,24 +60,24 @@ int main(int argc, char *argv[]) {
 	/* Build data structures */
 	double ts1, ts2;
 	
-	ts1 = timestamp();
+	ts1 = util::timestamp();
 	LceUltraNaive dataUN(file);
-	ts2 = timestamp();
+	ts2 = util::timestamp();
 	log << "RESULT algo=ultraNaiveLCE time=" << ts2 - ts1 << std::endl;
 
-	ts1 = timestamp();
+	ts1 = util::timestamp();
 	LceNaive dataN(file);
-	ts2 = timestamp();
+	ts2 = util::timestamp();
 	log << "RESULT algo=naiveLCE time=" << ts2 - ts1 << std::endl;
 	
-	ts1 = timestamp();
+	ts1 = util::timestamp();
 	LcePrezza dataP(file);
-	ts2 = timestamp();
+	ts2 = util::timestamp();
 	log << "RESULT algo=prezzaLCE time=" << ts2 - ts1 << std::endl;
 	
-	ts1 = timestamp();
+	ts1 = util::timestamp();
 	LceSemiSyncSets dataSSS(file);
-	ts2 = timestamp();
+	ts2 = util::timestamp();
 	log << "RESULT algo=sssLCE time=" << ts2 - ts1 << std::endl;
 	
 	log << "structures build successfully" << std::endl;
@@ -134,7 +132,8 @@ int main(int argc, char *argv[]) {
 		// For every lce data structure..
 		for(unsigned int alg = 0; alg < lce_data_structures.size(); ++alg) {
 			// ..do NUMBEROFTESTS LCE queries
-			ts1 = timestamp();
+			dataSSS.resetTimer();
+			ts1 = util::timestamp();
 			
 #if defined(benchmark_ordered_by_lce) || defined(benchmark_random)
 			// Indexes for lce queries
@@ -150,8 +149,8 @@ int main(int argc, char *argv[]) {
 					cout << "wLce: " << lce_data_structures[1]->lce(i,j) << endl;
 					cout << "i: " << i << "  j: " << j << endl;
 				}*/
-			
-			ts2 = timestamp();
+				
+			ts2 = util::timestamp();
 			log << "RESULT"
 				<< " text=" << file_name
 				<< " algo=" << algo[alg]
@@ -165,6 +164,11 @@ int main(int argc, char *argv[]) {
 				<< endl;
 			lce = 0;
 		}
+		log << "RESULT"
+			<< " algo= ssssLce"
+			<< " naive_part=" << dataSSS.getTimeNaive()
+			<< " sss_part=" << dataSSS.getTimeSSS()
+			<< endl;
 		delete[] lce_indices;
 #endif
 
@@ -175,7 +179,7 @@ int main(int argc, char *argv[]) {
 					lce += lce_data_structures[alg]->lce(i, j);
 				}
 			}
-			ts2 = timestamp();
+			ts2 = util::timestamp();
 			log << "RESULT"
 				<< " benchmark=" << "complete"
 				<< " text=" << fileName
@@ -193,8 +197,4 @@ int main(int argc, char *argv[]) {
 }
 
 
-double timestamp() {
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
-	return tv.tv_sec + tv.tv_usec / 1e6;
-}
+

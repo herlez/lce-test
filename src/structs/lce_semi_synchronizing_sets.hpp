@@ -3,6 +3,7 @@
 #include "util/synchronizing_sets/bit_vector_rank.hpp"
 #include "util/synchronizing_sets/lce-rmq.hpp"
 
+
 #include <cstdio>
 #include <string>
 #include <iostream>
@@ -11,8 +12,6 @@
 #include <fstream>
 #include <sstream>
 #include <sys/time.h>
-#include <unordered_set>
-#include <thread>
 #include <cmath>
 #include <ctgmath>
 
@@ -39,6 +38,8 @@ class LceSemiSyncSets : public LceDataStructure {
 		
 		/* Answers the lce query for position i and j */
 		inline uint64_t lce(const uint64_t i, const uint64_t j) {
+			ts1 = ts2 = 0.0;
+			ts1 = util::timestamp();
 			if (i==j) {
 				return text_length_in_bytes_ - i;
 			}
@@ -48,11 +49,59 @@ class LceSemiSyncSets : public LceDataStructure {
 					return k;
 				}
 			}
-
+			//~ const uint64_t max_length = text_length_in_bytes_ - ((i < j) ? j : i);
+			//~ uint64_t lce = 0;
+			//~ const unsigned __int128 * text_blocks_i = (unsigned __int128*) (text_.c_str() + i);
+			//~ const unsigned __int128 * text_blocks_j = (unsigned __int128*) (text_.c_str() + j);
+			
+			//~ if(max_length <= 3*kTau) {
+				//~ // Accelerate search by comparing 16-byte blocks
+				
+				//~ for(; lce < max_length/16; ++lce) {
+					//~ if(text_blocks_i[lce] != text_blocks_j[lce]) {
+						//~ break;
+					//~ }
+				//~ }
+				//~ lce *= 16;
+				//~ // The last block did not match. Here we compare its single characters
+				//~ uint64_t lce_end = lce + ((16 < max_length) ? 16 : max_length);
+				//~ for (; lce < lce_end; ++lce) {
+					//~ if(text_[i + lce] != text_[j + lce]) {
+						//~ break;
+					//~ }
+				//~ }
+				//~ return lce;
+			//~ }
+			
+			
+			//~ // Accelerate search by comparing 16-byte blocks
+			//~ //util::printInt128(text_blocks_i[0]);
+			//~ //std::cout << text_blocks_j << std::endl;
+			//~ for(; lce < 1024/16*3; ++lce) {
+				//~ //std::cout << "lce" << lce << std::endl;
+				//~ if(text_blocks_i[lce] != text_blocks_j[lce]) {
+					//~ break;
+				//~ }
+			//~ }
+			//~ lce *= 16;
+			//~ // The last block did not match. Here we compare its single characters
+			//~ for (; lce < 1024; ++lce) {
+				//~ if(text_[i + lce] != text_[j + lce]) {
+					//~ return lce;
+				//~ }
+			//~ }
+			
+			
+			ts2 = util::timestamp();
+			tsNaive += (ts2 - ts1);
+			
+			ts1 = util::timestamp();
 			/* strSync part */
 			uint64_t i_ = suc(i);
 			uint64_t j_ = suc(j);
 			uint64_t l = lce_rmq_->lce(i_, j_);
+			ts2 = util::timestamp();
+			tsSSS += (ts2 - ts1);
 			return l + s_[i_] - i;
 		}
 		
@@ -70,6 +119,19 @@ class LceSemiSyncSets : public LceDataStructure {
 		}
 		
 		
+		double getTimeNaive() {
+			return tsNaive;
+		}
+		
+		double getTimeSSS() {
+			return tsSSS;
+		}
+		
+		void resetTimer() {
+			tsNaive = 0.0;
+			tsSSS = 0.0;
+		}
+		
 	private:
 		std::string text_;
 		size_t text_length_in_bytes_;
@@ -85,6 +147,8 @@ class LceSemiSyncSets : public LceDataStructure {
 		
 		Lce_rmq * lce_rmq_;
 		
+		double ts1, ts2, tsNaive, tsSSS;
+
 
 		/* Finds the smallest element that is greater or equal to i
 		Because s_ is ordered, that is equal to the 
@@ -161,26 +225,28 @@ class LceSemiSyncSets : public LceDataStructure {
 				}
 				t_fp.push_back((uint64_t) fp);
 			}
-			
 			std::cout << "FP calculated" << std::endl;
 			std::cout << "FP Size: " << t_fp.size() << std::endl;
+
+
 		
 			//Calculate S
 			fillS(0, (text_length_in_bytes_ - (2*kTau)), t_fp);
 			
 			// LOAD S FROM A FILE
-			//std::ifstream sLoad("../res/ecoli.fa", std::ios::in);
-			//for (std::string line; std::getline(sLoad, line); ) {
-				//s_.push_back(stoi(line));
-			//}
+			//~ std::ifstream sLoad("../res/ecoli.fa", std::ios::in);
+			//~ for (std::string line; std::getline(sLoad, line); ) {
+				//~ s_.push_back(stoi(line));
+			//~ }
 			
 			std::cout << "S size: " << s_.size() << std::endl;
 			s_.shrink_to_fit();
+			
 			// SAVE S IN A FILE
-			std::ofstream s_set("../res/ecoli.fa", std::ios::out|std::ios::trunc);
-			for(uint64_t i = 0; i < s_.size(); ++i) {
-				s_set << s_[i] << std::endl;
-			}
+			//~ std::ofstream s_set("../res/ecoli.fa", std::ios::out|std::ios::trunc);
+			//~ for(uint64_t i = 0; i < s_.size(); ++i) {
+				//~ s_set << s_[i] << std::endl;
+			//~ }
 			
 			
 			
@@ -188,9 +254,9 @@ class LceSemiSyncSets : public LceDataStructure {
 			for(size_t i = 0; i < s_.size(); ++i) {
 				s_bv_->bitset(s_[i], 1);
 			}
+			
 			s_bvr_ = new bit_vector_rank(*s_bv_);
 			lce_rmq_ = new Lce_rmq(&text_, &s_);
-			
 		}
 		
 		uint64_t calculatePowerModulo(unsigned int power) {
@@ -201,5 +267,4 @@ class LceSemiSyncSets : public LceDataStructure {
 				}
 				return (uint64_t) x;
 			}
-		
 };

@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm> //std::sort
 #include <string>
+#include "RMQRMM64.h"
 
 class Lce_rmq {
 private:
@@ -14,6 +15,7 @@ private:
 	std::vector<uint64_t> isa;
 	std::vector<uint64_t> lcp;
 	Rmq * rmq_ds;
+	RMQRMM64 * rmq_ds1;
 	
 	uint64_t lce_in_text(uint64_t i, uint64_t j) {
 		const uint64_t maxLce = text_size - (i > j ? i : j); 
@@ -31,10 +33,12 @@ public:
 	Lce_rmq(std::string * v_text, std::vector<uint64_t> * v_syncSet) 
 							: text(v_text), text_size(v_text->size()), sync_set(v_syncSet) {
 		//Construct SA
+		
 		std::vector<uint64_t> sa(sync_set->size());
 		for(uint64_t i = 0; i < sa.size(); ++i) {
 			sa[i] = i;
 		}
+		
 		
 		
 		std::sort(sa.begin(), sa.end(), [=](uint64_t i, uint64_t j) {
@@ -58,7 +62,6 @@ public:
 			isa[sa[i]] = i;
 		}
 		std::cout << "ISA: " << isa.size() << std::endl;
-
 		
 		
 		
@@ -68,14 +71,26 @@ public:
 			lcp[i] = lce_in_text(sync_set->operator[](sa[i-1]), sync_set->operator[](sa[i]));
 		}
 		std::cout << "LCP: " << lcp.size() << std::endl;
-
 		
 		//Build RMQ data structure
+		
 		rmq_ds = new Rmq(lcp);
+		rmq_ds1 = new RMQRMM64(lcp.data(), 64, lcp.size(), false);
+		rmq_ds1 = new RMQRMM64((long int*)lcp.data(), lcp.size());
+		
+		std::cout << rmq_ds1->getSize() << std::endl;
+		for(int i = 500; i < 508; ++i) {
+			std::cout << lcp.data()[i] <<std::endl;
+			std::cout << lcp[i] << std::endl;
+			std::cout << rmq_ds->rmq(i, i)  << "    " << rmq_ds1->queryRMQ(i, i+10) << "     " << rmq_ds1->rmqi(i, i+10) << std::endl; 
+		}
+		
+		
+		
 		std::cout << "RMQ" << std::endl;
-		//rmq_ds->print_table();
 	}
 	
+
 	
 	uint64_t lce(uint64_t i, uint64_t j) {
 		if(i == j) {
@@ -89,9 +104,14 @@ public:
 		//	std::cout << "lcp[" << isa[k] << "] = " << lcp[isa[k]] << std::endl;
 		//}
 		if(isa[i] < isa[j]) {
+			if(rmq_ds->rmq(isa[i]+1, isa[j]) != rmq_ds1->rmqi(isa[i]+1, isa[j])) {
+				//std::cout << "i: " << i << "  j:" << j << "  rmq_ds: " << rmq_ds->rmq(isa[i]+1, isa[j]) << "  rmq_ds1: " << rmq_ds1->queryRMQ(isa[i]+1, isa[j]) << std::endl;
+			}
 			return rmq_ds->rmq(isa[i]+1, isa[j]);
+			//return rmq_ds1->queryRMQ(isa[i]+1, isa[j]);
 		} else {
-			return rmq_ds->rmq(isa[j]+1, isa[i]);
+			return rmq_ds->rmq(isa[i]+1, isa[j]);
+			//return rmq_ds1->queryRMQ(isa[j]+1, isa[i]);
 		}
 	}
 	

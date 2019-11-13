@@ -1,11 +1,15 @@
-#ifndef UTIL_INCLUDED    
-#define UTIL_INCLUDED     
+#pragma once   
 #include <iostream> 
 #include <inttypes.h>
 #include <cstdio>
 #include <fstream>
+#include <ctime>
 
-
+//#include "../../malloc_count/malloc_count.h"
+//#include "../../malloc_count/stack_count.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 /* This header contains useful methods, which are used for my implementation of Prezza's lce data structure */
 
 
@@ -14,6 +18,14 @@ class util{
 
 public:
 
+	// Returns timestamp, used for benchmarking
+	static double timestamp() {
+		struct timeval tv;
+		gettimeofday(&tv, NULL);
+		return tv.tv_sec + tv.tv_usec / 1e6;
+	}
+	
+	
     /* Prints the 64-bit long integer in HEX*/
     static void printInt64(uint64_t n) {
             printf("%016lX\n", n);
@@ -148,5 +160,6 @@ public:
         } 
     }
     
-};
-#endif 
+    
+    
+}; 

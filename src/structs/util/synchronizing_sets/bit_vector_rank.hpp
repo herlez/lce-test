@@ -21,13 +21,40 @@
  * }
  */
 
+// Code from the TLX, as this is used in the original implementation
+
+
+
 #pragma once
 
-#include "defines.hpp"
 #include "bit_vector.hpp"
-#include "popcount.hpp"
 #include <vector>
 #include <array>
+#include <cstdint>
+#include <iostream>
+
+#if defined(__GNUC__) || defined(__clang__)
+#define TLX_LIKELY(c)   __builtin_expect((c), 1)
+#define TLX_UNLIKELY(c) __builtin_expect((c), 0)
+#else
+#define TLX_LIKELY(c)   c
+#define TLX_UNLIKELY(c) c
+#endif
+
+#if defined(__GNUC__) || defined(__clang__)
+#define TLX_ATTRIBUTE_PACKED __attribute__ ((packed))
+#else
+#define TLX_ATTRIBUTE_PACKED
+#endif
+
+template <size_t Words>
+uint64_t popcount(uint64_t const * const buffer) {
+  uint64_t popcount = 0;
+  for (size_t i = 0; i < Words; ++i) {
+    popcount += __builtin_popcountll(buffer[i]);
+  }
+  return popcount;
+}
 
 struct l12_entry {
   l12_entry(uint32_t const _l1, std::array<uint16_t, 3> const _l2)
