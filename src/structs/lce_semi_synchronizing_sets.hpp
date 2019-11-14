@@ -38,8 +38,8 @@ class LceSemiSyncSets : public LceDataStructure {
 		
 		/* Answers the lce query for position i and j */
 		inline uint64_t lce(const uint64_t i, const uint64_t j) {
-			ts1 = ts2 = 0.0;
-			ts1 = util::timestamp();
+			
+			timer.reset();
 			if (i==j) {
 				return text_length_in_bytes_ - i;
 			}
@@ -91,17 +91,18 @@ class LceSemiSyncSets : public LceDataStructure {
 				//~ }
 			//~ }
 			
+			ts_naive += timer.elapsed();
 			
-			ts2 = util::timestamp();
-			tsNaive += (ts2 - ts1);
-			
-			ts1 = util::timestamp();
+			timer.reset();
 			/* strSync part */
 			uint64_t i_ = suc(i);
 			uint64_t j_ = suc(j);
+			ts_rank += timer.elapsed();
+			
+			timer.reset();
 			uint64_t l = lce_rmq_->lce(i_, j_);
-			ts2 = util::timestamp();
-			tsSSS += (ts2 - ts1);
+			ts_rmq_lce += timer.elapsed();
+			
 			return l + s_[i_] - i;
 		}
 		
@@ -120,16 +121,18 @@ class LceSemiSyncSets : public LceDataStructure {
 		
 		
 		double getTimeNaive() {
-			return tsNaive;
+			return ts_naive;
 		}
-		
-		double getTimeSSS() {
-			return tsSSS;
+		double getTimeRank() {
+			return ts_rank;
 		}
-		
+		double getTimeRmq() {
+			return ts_rmq_lce;
+		}
 		void resetTimer() {
-			tsNaive = 0.0;
-			tsSSS = 0.0;
+			ts_naive = 0.0;
+			ts_rank = 0.0;
+			ts_rmq_lce = 0.0;
 		}
 		
 	private:
@@ -147,8 +150,8 @@ class LceSemiSyncSets : public LceDataStructure {
 		
 		Lce_rmq * lce_rmq_;
 		
-		double ts1, ts2, tsNaive, tsSSS;
-
+		double ts_naive, ts_rank, ts_rmq_lce;
+		util::Timer timer;
 
 		/* Finds the smallest element that is greater or equal to i
 		Because s_ is ordered, that is equal to the 
@@ -158,7 +161,7 @@ class LceSemiSyncSets : public LceDataStructure {
 		}
 		
 		
-		void fillS(const uint64_t from, const uint64_t to, const vector<uint64_t> fingerprints) {
+		void fillS(const uint64_t from, const uint64_t to, const vector<uint64_t> &fingerprints) {
 			
 			uint64_t min;
 			for (uint64_t i = from; i < to; ) {
@@ -197,6 +200,8 @@ class LceSemiSyncSets : public LceDataStructure {
 			text_length_in_bytes_ = text_.size();
 			std::cout << "T size: " << text_.size() << std::endl;
 			
+			// Timer for benchmark
+			util::Timer timer{};
 
 			// Calculate fingerprints
 			std::cout << "Calculating FP" << std::endl;
@@ -247,8 +252,6 @@ class LceSemiSyncSets : public LceDataStructure {
 			//~ for(uint64_t i = 0; i < s_.size(); ++i) {
 				//~ s_set << s_[i] << std::endl;
 			//~ }
-			
-			
 			
 			s_bv_ = new bit_vector(text_length_in_bytes_);
 			for(size_t i = 0; i < s_.size(); ++i) {

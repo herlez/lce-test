@@ -1,5 +1,0 @@
-FILE: ../../text/dna   SIZE(Byte): 403927746
----
-RESULT algo=ultraNaiveLCE time=0.125522
-RESULT algo=naiveLCE time=0.114469
-RESULT algo=prezzaLCE time=0.888018

@@ -9,7 +9,6 @@
 #include "structs/lce_prezza.hpp"
 #include "structs/lce_prezza_mersenne.hpp"
 
-//#include "structs/lce_synchronizing_sets.hpp"
 #include "structs/lce_semi_synchronizing_sets.hpp"
 
 
@@ -21,7 +20,7 @@ using namespace std;
 
 const string file_name = "dna";
 const string file = "../../text/" + file_name;
-//const string file = "/scratch/text/" + fileName;
+//const string file = "/scratch/text/" + file_name;
 
 
 
@@ -53,40 +52,84 @@ int main(int argc, char *argv[]) {
 	ofstream log(string("../test_results/time-") + str + string(".txt"), ios::out|ios::trunc);
 	log << "FILE: " << file << "   SIZE(Byte): " << util::calculateSizeOfInputFile(file) << std::endl;
 	log << "---" << std::endl;
+	
+	// FOR FUTURE COMMAND LINE COMPABILITY:
+	// a flag for every data structure, decides if this data structure will be tested
+	const bool f1 = false, f2 = true, f3 = true, f4 = true, f5 = true;
+	// a flag for the mode of the benchmark
+	//const bool benchmark_lce_set1 = true;
+	//const bool benchmark_random1 = benchmark_lce_set1;
+	//const bool benchmark_complete1 = false;
+	
+	
+	
+	
+	
 	/************************************
 	 ****PREPARE LCE DATA STRUCTURES*****
 	 ************************************/
 	 
 	/* Build data structures */
-	double ts1, ts2;
+	// Timer to keep track of construction time
+	util::Timer timer{}; 
+	// time for construction is saved in ts
+	double ts; 
 	
-	ts1 = util::timestamp();
-	LceUltraNaive dataUN(file);
-	ts2 = util::timestamp();
-	log << "RESULT algo=ultraNaiveLCE time=" << ts2 - ts1 << std::endl;
+	// pointer to every tested data structure
+	std::vector<LceDataStructure*> lce_data_structures{};
+	// names of tested data structure
+	std::vector<string> lce_data_structure_names{};
+	
+	
+	if(f1) {
+		timer.reset();
+		LceUltraNaive * dataUN = new LceUltraNaive{file};
+		ts = timer.elapsed();
+		log << "RESULT algo=construction structure=ultra_naive_lce time=" << ts << std::endl;
+		lce_data_structures.push_back(dataUN);
+		lce_data_structure_names.push_back("ds_ultra_naive_lce");
+	}
 
-	ts1 = util::timestamp();
-	LceNaive dataN(file);
-	ts2 = util::timestamp();
-	log << "RESULT algo=naiveLCE time=" << ts2 - ts1 << std::endl;
+	if(f2) {
+		timer.reset();
+		LceNaive * dataN = new LceNaive{file};
+		ts = timer.elapsed();
+		log << "RESULT algo=construction structure=naive_lce time=" << ts << std::endl;
+		lce_data_structures.push_back(dataN);
+		lce_data_structure_names.push_back("ds_naive_lce");
+	}
 	
-	ts1 = util::timestamp();
-	LcePrezza dataP(file);
-	ts2 = util::timestamp();
-	log << "RESULT algo=prezzaLCE time=" << ts2 - ts1 << std::endl;
+	if(f3) {
+		timer.reset();
+		rklce::LcePrezzaMersenne * dataPM = new rklce::LcePrezzaMersenne{file};
+		ts = timer.elapsed();
+		log << "RESULT algo=construction structure=prezza_mersenne_lce=" << ts << std::endl;
+		lce_data_structures.push_back(dataPM);
+		lce_data_structure_names.push_back("ds_prezza_mersenne_lce");
+	}
 	
-	ts1 = util::timestamp();
-	LceSemiSyncSets dataSSS(file);
-	ts2 = util::timestamp();
-	log << "RESULT algo=sssLCE time=" << ts2 - ts1 << std::endl;
+	if(f4) {
+		timer.reset();
+		LcePrezza * dataP = new LcePrezza{file};
+		ts = timer.elapsed();
+		log << "RESULT algo=construction structure=prezza_lce time=" << ts << std::endl;
+		lce_data_structures.push_back(dataP);
+		lce_data_structure_names.push_back("ds_prezza_lce");
+	}
 	
-	log << "structures build successfully" << std::endl;
-	log << "---" << std::endl;
+	if(f5) {
+		timer.reset();
+		LceSemiSyncSets * dataSSS = new LceSemiSyncSets{file};
+		ts = timer.elapsed();
+		log << "RESULT algo=construction structure=sss_lce time=" << ts << std::endl;
+		lce_data_structures.push_back(dataSSS);
+		lce_data_structure_names.push_back("ds_sss_lce");
+	}
 	
+	log << lce_data_structures.size() << " datastructure(s) build successfully:" << std::endl;
+	for(string& s : lce_data_structure_names) { log << s << "; "; }
+	log << std::endl << "---" << std::endl;
 	
-	std::array<LceDataStructure*, 3> lce_data_structures {&dataN, 
-	&dataP, &dataSSS};
-	string algo[lce_data_structures.size()] {"naiveLCE", "prezzaLCE", "ssssLCE"};
 	
 	/************************************
 	 ******** PREPARE INDEXES ***********
@@ -95,7 +138,9 @@ int main(int argc, char *argv[]) {
 #if defined(benchmark_ordered_by_lce)
 	for(unsigned int number_of_runs = 0; number_of_runs < lce_set.size(); ++number_of_runs) {
 		vector<uint64_t> v;
-		uint64_t * lce_indices = new uint64_t[kNumberOfTests*2];
+		vector<uint64_t> lce_indices;
+		lce_indices.resize(kNumberOfTests*2);
+		//uint64_t * lce_indices = new uint64_t[kNumberOfTests*2];
 		
 		ifstream lc(lce_set[number_of_runs], ios::in);
 		util::inputErrorHandling(&lc);
@@ -128,12 +173,12 @@ int main(int argc, char *argv[]) {
 		// Result of lce query
 		uint64_t lce = 0;
 		// Timestamps
-		double ts1, ts2;
+		double ts;
 		// For every lce data structure..
 		for(unsigned int alg = 0; alg < lce_data_structures.size(); ++alg) {
 			// ..do NUMBEROFTESTS LCE queries
-			dataSSS.resetTimer();
-			ts1 = util::timestamp();
+			//dataSSS.resetTimer();
+			timer.reset();
 			
 #if defined(benchmark_ordered_by_lce) || defined(benchmark_random)
 			// Indexes for lce queries
@@ -150,12 +195,12 @@ int main(int argc, char *argv[]) {
 					cout << "i: " << i << "  j: " << j << endl;
 				}*/
 				
-			ts2 = util::timestamp();
+			ts = timer.elapsed();
 			log << "RESULT"
 				<< " text=" << file_name
-				<< " algo=" << algo[alg]
+				<< " algo=" << lce_data_structure_names[alg]
 				<< " lceQueries=" << kNumberOfTests
-				<< " time=" << ts2-ts1
+				<< " time=" << ts
 				<< " lce=" << lce
 				<< " aveLce=" << lce/kNumberOfTests
 				#if defined(benchmark_ordered_by_lce)
@@ -164,12 +209,13 @@ int main(int argc, char *argv[]) {
 				<< endl;
 			lce = 0;
 		}
-		log << "RESULT"
-			<< " algo= ssssLce"
-			<< " naive_part=" << dataSSS.getTimeNaive()
-			<< " sss_part=" << dataSSS.getTimeSSS()
-			<< endl;
-		delete[] lce_indices;
+		//log << "RESULT"
+		//	<< " algo= ssssLce"
+		//	<< " naive_part=" << dataSSS.getTimeNaive()
+		//	<< " rank_part=" << dataSSS.getTimeRank()
+		//	<< " sss_part=" << dataSSS.getTimeRmq()
+		//	<< endl;
+		//delete[] lce_indices;
 #endif
 
 #if defined(benchmark_complete)
@@ -179,12 +225,12 @@ int main(int argc, char *argv[]) {
 					lce += lce_data_structures[alg]->lce(i, j);
 				}
 			}
-			ts2 = util::timestamp();
+			ts = time.elapsed();
 			log << "RESULT"
 				<< " benchmark=" << "complete"
 				<< " text=" << fileName
-				<< " algo=" << algo[alg]
-				<< " time=" << ts2-ts1
+				<< " algo=" << lce_data_structure_names[alg]
+				<< " time=" << ts
 				<< " lce=" << lce
 				<< " aveLce=" << lce/(max_index*max_index)
 				<< endl;

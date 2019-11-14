@@ -4,7 +4,7 @@ project (lceTest)
 # configure a header file to pass some of the CMake settings
 # to the source code
   
-set(CMAKE_CXX_FLAGS " -Wall -std=c++17 -O3 -ftemplate-backtrace-limit=0")
+set(CMAKE_CXX_FLAGS " -Wall -std=c++17 -O3")
 
 #LINK_DIRECTORIES(${CMAKE_BINARY_DIR}/res)
 #set(CMAKE_CXX_FLAGS "-O0 -ggdb") 

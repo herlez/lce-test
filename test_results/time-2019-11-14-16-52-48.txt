@@ -1,0 +1,3 @@
+FILE: ../../text/dna   SIZE(Byte): 403927746
+---
+RESULT algo=construction structure=naive_lce time=0.141947

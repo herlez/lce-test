@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <fstream>
 #include <ctime>
+#include <chrono>
 
 //#include "../../malloc_count/malloc_count.h"
 //#include "../../malloc_count/stack_count.h"
@@ -17,14 +18,20 @@
 class util{
 
 public:
-
-	// Returns timestamp, used for benchmarking
-	static double timestamp() {
-		struct timeval tv;
-		gettimeofday(&tv, NULL);
-		return tv.tv_sec + tv.tv_usec / 1e6;
-	}
 	
+	class Timer {
+	public:
+		Timer() : beg_(clock_::now()) {}
+		void reset() { beg_ = clock_::now(); }
+		double elapsed() const { 
+			return std::chrono::duration_cast<second_>
+				(clock_::now() - beg_).count(); }
+
+	private:
+		typedef std::chrono::high_resolution_clock clock_;
+		typedef std::chrono::duration<double, std::ratio<1> > second_;
+		std::chrono::time_point<clock_> beg_;
+	};
 	
     /* Prints the 64-bit long integer in HEX*/
     static void printInt64(uint64_t n) {

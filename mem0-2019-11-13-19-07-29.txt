@@ -1,6 +1,0 @@
----
-memory after FP: 0
-memory after S: Construction: 0
-memory after bv: 0
-memory after bv_r: 0
-memory after lce_rmq: 0
