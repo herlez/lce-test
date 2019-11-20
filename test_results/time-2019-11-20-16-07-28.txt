@@ -1,0 +1,6 @@
+FILE: ../../text/dna   SIZE(Byte): 403927746
+---
+0 datastructure(s) build successfully:
+
+---
+---

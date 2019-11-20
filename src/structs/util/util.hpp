@@ -33,6 +33,18 @@ public:
 		std::chrono::time_point<clock_> beg_;
 	};
 	
+	
+	static std::string getFileName(std::string filePath, bool withExtension = true, char seperator = '/') {
+		// Get last dot position
+		std::size_t dotPos = filePath.rfind('.');
+		std::size_t sepPos = filePath.rfind(seperator);
+		if(sepPos != std::string::npos) {
+			return filePath.substr(sepPos + 1, filePath.size() - (withExtension || dotPos != std::string::npos ? 1 : dotPos) );
+		}
+		return "";
+	}
+
+
     /* Prints the 64-bit long integer in HEX*/
     static void printInt64(uint64_t n) {
             printf("%016lX\n", n);

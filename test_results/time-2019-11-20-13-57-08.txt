@@ -1,0 +1,109 @@
+FILE: ../../text/dna   SIZE(Byte): 403927746
+---
+RESULT algo=construction structure=naive_lce time=3.55727
+RESULT algo=construction structure=prezza_mersenne_lce=23.1936
+RESULT algo=construction structure=prezza_lce time=1.49293
+RESULT algo=construction structure=sss_lce time=31.4639
+4 datastructure(s) build successfully:
+ds_naive_lce; ds_prezza_mersenne_lce; ds_prezza_lce; ds_sss_lce; 
+---
+RESULT text=dna algo=ds_naive_lce lceQueries=1000000 time=0.00259085 lce=0 aveLce=0 lceLog=0
+RESULT text=dna algo=ds_prezza_mersenne_lce lceQueries=1000000 time=0.131251 lce=0 aveLce=0 lceLog=0
+RESULT text=dna algo=ds_prezza_lce lceQueries=1000000 time=0.10649 lce=0 aveLce=0 lceLog=0
+RESULT text=dna algo=ds_sss_lce lceQueries=1000000 time=0.0208457 lce=0 aveLce=0 lceLog=0
+---
+RESULT text=dna algo=ds_naive_lce lceQueries=1000000 time=0.00337062 lce=1000000 aveLce=1 lceLog=1
+RESULT text=dna algo=ds_prezza_mersenne_lce lceQueries=1000000 time=0.133519 lce=1000000 aveLce=1 lceLog=1
+RESULT text=dna algo=ds_prezza_lce lceQueries=1000000 time=0.105771 lce=1000000 aveLce=1 lceLog=1
+RESULT text=dna algo=ds_sss_lce lceQueries=1000000 time=0.0227004 lce=1000000 aveLce=1 lceLog=1
+---
+RESULT text=dna algo=ds_naive_lce lceQueries=1000000 time=0.00902162 lce=2754818 aveLce=2 lceLog=2
+RESULT text=dna algo=ds_prezza_mersenne_lce lceQueries=1000000 time=0.137266 lce=2754818 aveLce=2 lceLog=2
+RESULT text=dna algo=ds_prezza_lce lceQueries=1000000 time=0.124027 lce=2754818 aveLce=2 lceLog=2
+RESULT text=dna algo=ds_sss_lce lceQueries=1000000 time=0.0290779 lce=2754818 aveLce=2 lceLog=2
+---
+RESULT text=dna algo=ds_naive_lce lceQueries=1000000 time=0.0485593 lce=6398099 aveLce=6 lceLog=3
+RESULT text=dna algo=ds_prezza_mersenne_lce lceQueries=1000000 time=0.24051 lce=6398099 aveLce=6 lceLog=3
+RESULT text=dna algo=ds_prezza_lce lceQueries=1000000 time=0.216176 lce=6398099 aveLce=6 lceLog=3
+RESULT text=dna algo=ds_sss_lce lceQueries=1000000 time=0.109845 lce=6398099 aveLce=6 lceLog=3
+---
+RESULT text=dna algo=ds_naive_lce lceQueries=1000000 time=0.105417 lce=14375020 aveLce=14 lceLog=4
+RESULT text=dna algo=ds_prezza_mersenne_lce lceQueries=1000000 time=0.242256 lce=14375020 aveLce=14 lceLog=4
+RESULT text=dna algo=ds_prezza_lce lceQueries=1000000 time=0.290775 lce=14375020 aveLce=14 lceLog=4
+RESULT text=dna algo=ds_sss_lce lceQueries=1000000 time=0.125678 lce=14375020 aveLce=14 lceLog=4
+---
+RESULT text=dna algo=ds_naive_lce lceQueries=1000000 time=0.0514135 lce=26433010 aveLce=26 lceLog=5
+RESULT text=dna algo=ds_prezza_mersenne_lce lceQueries=1000000 time=0.153988 lce=26433010 aveLce=26 lceLog=5
+RESULT text=dna algo=ds_prezza_lce lceQueries=1000000 time=0.331093 lce=26433010 aveLce=26 lceLog=5
+RESULT text=dna algo=ds_sss_lce lceQueries=1000000 time=0.075494 lce=26433010 aveLce=26 lceLog=5
+---
+RESULT text=dna algo=ds_naive_lce lceQueries=1000000 time=0.0670357 lce=39376610 aveLce=39 lceLog=6
+RESULT text=dna algo=ds_prezza_mersenne_lce lceQueries=1000000 time=2.6699 lce=39376610 aveLce=39 lceLog=6
+RESULT text=dna algo=ds_prezza_lce lceQueries=1000000 time=0.466387 lce=39376610 aveLce=39 lceLog=6
+RESULT text=dna algo=ds_sss_lce lceQueries=1000000 time=0.102124 lce=39376610 aveLce=39 lceLog=6
+---
+RESULT text=dna algo=ds_naive_lce lceQueries=1000000 time=0.108328 lce=86065850 aveLce=86 lceLog=7
+RESULT text=dna algo=ds_prezza_mersenne_lce lceQueries=1000000 time=3.05228 lce=86071010 aveLce=86 lceLog=7
+RESULT text=dna algo=ds_prezza_lce lceQueries=1000000 time=0.822186 lce=86065850 aveLce=86 lceLog=7
+RESULT text=dna algo=ds_sss_lce lceQueries=1000000 time=0.134869 lce=86065850 aveLce=86 lceLog=7
+---
+RESULT text=dna algo=ds_naive_lce lceQueries=1000000 time=0.082023 lce=174215330 aveLce=174 lceLog=8
+RESULT text=dna algo=ds_prezza_mersenne_lce lceQueries=1000000 time=3.26416 lce=174251050 aveLce=174 lceLog=8
+RESULT text=dna algo=ds_prezza_lce lceQueries=1000000 time=1.43873 lce=174215330 aveLce=174 lceLog=8
+RESULT text=dna algo=ds_sss_lce lceQueries=1000000 time=0.163009 lce=174215330 aveLce=174 lceLog=8
+---
+RESULT text=dna algo=ds_naive_lce lceQueries=1000000 time=0.0772955 lce=360298600 aveLce=360 lceLog=9
+RESULT text=dna algo=ds_prezza_mersenne_lce lceQueries=1000000 time=3.54791 lce=360465300 aveLce=360 lceLog=9
+RESULT text=dna algo=ds_prezza_lce lceQueries=1000000 time=2.81204 lce=360298600 aveLce=360 lceLog=9
+RESULT text=dna algo=ds_sss_lce lceQueries=1000000 time=0.244518 lce=360298600 aveLce=360 lceLog=9
+---
+RESULT text=dna algo=ds_naive_lce lceQueries=1000000 time=0.100378 lce=734947140 aveLce=734 lceLog=10
+RESULT text=dna algo=ds_prezza_mersenne_lce lceQueries=1000000 time=3.82206 lce=735351350 aveLce=735 lceLog=10
+RESULT text=dna algo=ds_prezza_lce lceQueries=1000000 time=5.54346 lce=734947140 aveLce=734 lceLog=10
+RESULT text=dna algo=ds_sss_lce lceQueries=1000000 time=0.442935 lce=734947140 aveLce=734 lceLog=10
+---
+RESULT text=dna algo=ds_naive_lce lceQueries=1000000 time=0.129366 lce=1461464460 aveLce=1461 lceLog=11
+RESULT text=dna algo=ds_prezza_mersenne_lce lceQueries=1000000 time=4.10935 lce=1461479460 aveLce=1461 lceLog=11
+RESULT text=dna algo=ds_prezza_lce lceQueries=1000000 time=10.5566 lce=1461464460 aveLce=1461 lceLog=11
+RESULT text=dna algo=ds_sss_lce lceQueries=1000000 time=0.829897 lce=1461464460 aveLce=1461 lceLog=11
+---
+RESULT text=dna algo=ds_naive_lce lceQueries=1000000 time=0.20426 lce=2945187470 aveLce=2945 lceLog=12
+RESULT text=dna algo=ds_prezza_mersenne_lce lceQueries=1000000 time=4.32274 lce=2945187470 aveLce=2945 lceLog=12
+RESULT text=dna algo=ds_prezza_lce lceQueries=1000000 time=11.165 lce=2945187470 aveLce=2945 lceLog=12
+RESULT text=dna algo=ds_sss_lce lceQueries=1000000 time=1.64527 lce=2945187470 aveLce=2945 lceLog=12
+---
+RESULT text=dna algo=ds_naive_lce lceQueries=1000000 time=0.347419 lce=5827512230 aveLce=5827 lceLog=13
+RESULT text=dna algo=ds_prezza_mersenne_lce lceQueries=1000000 time=4.5992 lce=5827512230 aveLce=5827 lceLog=13
+RESULT text=dna algo=ds_prezza_lce lceQueries=1000000 time=11.6563 lce=5827512230 aveLce=5827 lceLog=13
+RESULT text=dna algo=ds_sss_lce lceQueries=1000000 time=2.01308 lce=5827512230 aveLce=5827 lceLog=13
+---
+RESULT text=dna algo=ds_naive_lce lceQueries=1000000 time=0.655646 lce=11581020090 aveLce=11581 lceLog=14
+RESULT text=dna algo=ds_prezza_mersenne_lce lceQueries=1000000 time=4.85442 lce=11581020090 aveLce=11581 lceLog=14
+RESULT text=dna algo=ds_prezza_lce lceQueries=1000000 time=12.4021 lce=11581020090 aveLce=11581 lceLog=14
+RESULT text=dna algo=ds_sss_lce lceQueries=1000000 time=1.98867 lce=11581020090 aveLce=11581 lceLog=14
+---
+RESULT text=dna algo=ds_naive_lce lceQueries=1000000 time=1.26262 lce=22996029740 aveLce=22996 lceLog=15
+RESULT text=dna algo=ds_prezza_mersenne_lce lceQueries=1000000 time=5.16575 lce=22996029740 aveLce=22996 lceLog=15
+RESULT text=dna algo=ds_prezza_lce lceQueries=1000000 time=12.7572 lce=22996029740 aveLce=22996 lceLog=15
+RESULT text=dna algo=ds_sss_lce lceQueries=1000000 time=1.97592 lce=22996029740 aveLce=22996 lceLog=15
+---
+RESULT text=dna algo=ds_naive_lce lceQueries=1000000 time=2.41503 lce=46502962300 aveLce=46502 lceLog=16
+RESULT text=dna algo=ds_prezza_mersenne_lce lceQueries=1000000 time=5.52848 lce=46502962300 aveLce=46502 lceLog=16
+RESULT text=dna algo=ds_prezza_lce lceQueries=1000000 time=13.525 lce=46502962300 aveLce=46502 lceLog=16
+RESULT text=dna algo=ds_sss_lce lceQueries=1000000 time=1.95598 lce=46502962300 aveLce=46502 lceLog=16
+---
+RESULT text=dna algo=ds_naive_lce lceQueries=1000000 time=4.78921 lce=92581075653 aveLce=92581 lceLog=17
+RESULT text=dna algo=ds_prezza_mersenne_lce lceQueries=1000000 time=5.68968 lce=92581075653 aveLce=92581 lceLog=17
+RESULT text=dna algo=ds_prezza_lce lceQueries=1000000 time=13.796 lce=92581075653 aveLce=92581 lceLog=17
+RESULT text=dna algo=ds_sss_lce lceQueries=1000000 time=1.94004 lce=92581075653 aveLce=92581 lceLog=17
+---
+RESULT text=dna algo=ds_naive_lce lceQueries=1000000 time=10.19 lce=195505579720 aveLce=195505 lceLog=18
+RESULT text=dna algo=ds_prezza_mersenne_lce lceQueries=1000000 time=5.98528 lce=195505579720 aveLce=195505 lceLog=18
+RESULT text=dna algo=ds_prezza_lce lceQueries=1000000 time=14.502 lce=195505579720 aveLce=195505 lceLog=18
+RESULT text=dna algo=ds_sss_lce lceQueries=1000000 time=1.94027 lce=195505579720 aveLce=195505 lceLog=18
+---
+RESULT text=dna algo=ds_naive_lce lceQueries=1000000 time=20.6731 lce=392544470370 aveLce=392544 lceLog=19
+RESULT text=dna algo=ds_prezza_mersenne_lce lceQueries=1000000 time=6.23053 lce=392544470370 aveLce=392544 lceLog=19
+RESULT text=dna algo=ds_prezza_lce lceQueries=1000000 time=14.7873 lce=392544470370 aveLce=392544 lceLog=19
+RESULT text=dna algo=ds_sss_lce lceQueries=1000000 time=1.98881 lce=392544470370 aveLce=392544 lceLog=19
+---

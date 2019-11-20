@@ -1,0 +1,6 @@
+[submodule "libs/tlx"]
+	path = libs/tlx
+	url = https://github.com/tlx/tlx
+[submodule "libs/rmq"]
+	path = libs/rmq
+	url = https://github.com/hferrada/rmq

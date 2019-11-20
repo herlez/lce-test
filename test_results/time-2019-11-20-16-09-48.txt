@@ -1,0 +1,16 @@
+FILE: ../../text/dna   SIZE(Byte): 403927746
+---
+RESULT algo=construction structure=ultra_naive_lce time=0.181501
+RESULT algo=construction structure=naive_lce time=0.13073
+RESULT algo=construction structure=prezza_mersenne_lce=26.0145
+RESULT algo=construction structure=prezza_lce time=1.49287
+RESULT algo=construction structure=sss_lce time=31.3378
+5 datastructure(s) build successfully:
+ds_ultra_naive_lce; ds_naive_lce; ds_prezza_mersenne_lce; ds_prezza_lce; ds_sss_lce; 
+---
+RESULT benchmark=complete text=../../text/dna algo=ds_ultra_naive_lce time=0.00482679 lce=403927790014 aveLce=403927
+RESULT benchmark=complete text=../../text/dna algo=ds_naive_lce time=0.00478242 lce=403927790014 aveLce=403927
+RESULT benchmark=complete text=../../text/dna algo=ds_prezza_mersenne_lce time=0.130478 lce=403927790014 aveLce=403927
+RESULT benchmark=complete text=../../text/dna algo=ds_prezza_lce time=0.109553 lce=403927790014 aveLce=403927
+RESULT benchmark=complete text=../../text/dna algo=ds_sss_lce time=0.0234494 lce=403927790014 aveLce=403927
+---

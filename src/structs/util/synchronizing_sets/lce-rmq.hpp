@@ -3,7 +3,7 @@
 #include <vector>
 #include <algorithm> //std::sort
 #include <string>
-#include "RMQRMM64.h"
+#include <rmq/includes/RMQRMM64.h>
 
 class Lce_rmq {
 private:
