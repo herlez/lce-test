@@ -4,3 +4,6 @@
 [submodule "libs/rmq"]
 	path = libs/rmq
 	url = https://github.com/hferrada/rmq
+[submodule "libs/stash"]
+	path = libs/stash
+	url = https://github.com/pdinklag/stash/
