@@ -27,6 +27,7 @@ bool benchmark_ordered = false;
 bool benchmark_random = false;
 bool benchmark_complete = false;
 
+uint64_t prefix_length = 0;
 unsigned int lce_from = 0;
 unsigned int lce_to = 21;
 
@@ -50,7 +51,6 @@ int main(int argc, char *argv[]) {
     
     // File for LCE data structure
     cp.add_param_string("file", file, "The file from which the LCE data structures are build");
-    file_name = util::getFileName(file);
     
     // Benchmark results will be stored here
     cp.add_string("output_path", output_path, "result file will be saved here");
@@ -59,6 +59,7 @@ int main(int argc, char *argv[]) {
     std::string mode;
     cp.add_string('M', "mode", mode, "test mode: random, complete, sorted");
     
+	cp.add_bytes("pre", prefix_length, "only a prefix of prefix_length bytes will be read");
     cp.add_uint("from", lce_from, "if mode:sorted, start from lce queries which return at least 2^from)");
     cp.add_uint("to", lce_to, "if mode:sorted, end with lce queries which return less than 2^from). Maximum:21");
     
@@ -73,6 +74,7 @@ int main(int argc, char *argv[]) {
         return -1; // some error occurred and help was always written to user.
     }
 
+	file_name = util::getFileName(file);
     if (mode == "complete" || mode == "c" || mode == "comp" || mode == "compl") {
         benchmark_complete = true;
         number_of_runs = 1;
@@ -81,13 +83,24 @@ int main(int argc, char *argv[]) {
     } else if (mode == "ord" || mode == "o" || mode == "order" || mode == "ordered") {
         benchmark_ordered = true;
         number_of_lce_queries = 1'000'000ULL;
-        ++lce_to;
+		lce_from = lce_from;
+		lce_to = lce_to;
     } else if (mode == "rand" || mode == "r" || mode == "random") {
         benchmark_random = true;
         number_of_lce_queries = 10'000'000ULL;
         lce_from = 0;
         lce_to = 1;
     }
+    
+    if(prefix_length == 0) {
+		prefix_length = util::calculateSizeOfInputFile(file);
+	}
+	if(prefix_length > util::calculateSizeOfInputFile(file)) {
+		std::cerr << "File is only " << util::calculateSizeOfInputFile(file) << " bytes long."
+		<< " Reading " << prefix_length << " bytes is not possible." << std::endl;
+		return EXIT_FAILURE;
+	}
+	
     if(!benchmark_complete && !benchmark_ordered && !benchmark_random) {
         benchmark_ordered = true;
     }
@@ -102,15 +115,15 @@ int main(int argc, char *argv[]) {
     std::cout << "Command line parsed okay." << std::endl;
 
     // output for debugging
-    //cp.print_result();
+    cp.print_result();
 
     
     // We load the path to the precomputed lce queries
-    const string lce_path = "../res/lce_" + file_name;
-    const array<string, 21> lce_set{lce_path + "/i0", lce_path + "/i1", lce_path + "/i2", lce_path + "/i3", lce_path + "/i4", lce_path + "/i5", lce_path + "/i6", lce_path + "/i7", lce_path + "/i8", lce_path + "/i9", lce_path + "/i10", lce_path + "/i11", lce_path + "/i12", lce_path + "/i13", lce_path + "/i14", lce_path + "/i15", lce_path + "/i16",lce_path + "/i17",lce_path + "/i18", lce_path + "/i19", lce_path + "/iH"};
+    const string lce_path = "../res/" + file_name + "_" + std::to_string(prefix_length);
+    const array<string, 21> lce_set{lce_path + "/lce_0", lce_path + "/lce_1", lce_path + "/lce_2", lce_path + "/lce_3", lce_path + "/lce_4", lce_path + "/lce_5", lce_path + "/lce_6", lce_path + "/lce_7", lce_path + "/lce_8", lce_path + "/lce_9", lce_path + "/lce_10", lce_path + "/lce_11", lce_path + "/lce_12", lce_path + "/lce_13", lce_path + "/lce_14", lce_path + "/lce_15", lce_path + "/lce_16",lce_path + "/lce_17",lce_path + "/lce_18", lce_path + "/lce_19", lce_path + "/lce_X"};
     
     if(benchmark_ordered) {
-       build_lce_range(file, std::string("../res/") + file_name, 50);
+       build_lce_range(file, std::string("../res/") + file_name, prefix_length);
     }
     
     
@@ -122,7 +135,7 @@ int main(int argc, char *argv[]) {
     oss << std::put_time(&tm, "%Y-%m-%d-%H-%M-%S");
     auto str = oss.str();
     ofstream log(output_path + string("/time-") + str + string(".txt"), ios::out|ios::trunc);
-    log << "FILE: " << file << "   SIZE(Byte): " << util::calculateSizeOfInputFile(file) << std::endl;
+    log << "FILE: " << file << "   SIZE(Byte): " << util::calculateSizeOfInputFile(file) << "   PREFIX(Byte): " << prefix_length << std::endl;
     log << "---" << std::endl;
     
 
@@ -144,7 +157,7 @@ int main(int argc, char *argv[]) {
     
     if(test_ultra_naive) {
         timer.reset();
-        LceUltraNaive * dataUN = new LceUltraNaive{file};
+        LceUltraNaive * dataUN = new LceUltraNaive{file, prefix_length};
         ts = timer.elapsed();
         log << "RESULT algo=construction structure=ultra_naive_lce time=" << ts << std::endl;
         lce_data_structures.push_back(dataUN);
@@ -153,7 +166,7 @@ int main(int argc, char *argv[]) {
 
     if(test_naive) {
         timer.reset();
-        LceNaive * dataN = new LceNaive{file};
+        LceNaive * dataN = new LceNaive{file, prefix_length};
         ts = timer.elapsed();
         log << "RESULT algo=construction structure=naive_lce time=" << ts << std::endl;
         lce_data_structures.push_back(dataN);
@@ -162,7 +175,7 @@ int main(int argc, char *argv[]) {
     
     if(test_prezza_mersenne) {
         timer.reset();
-        rklce::LcePrezzaMersenne * dataPM = new rklce::LcePrezzaMersenne{file};
+        rklce::LcePrezzaMersenne * dataPM = new rklce::LcePrezzaMersenne{file, prefix_length};
         ts = timer.elapsed();
         log << "RESULT algo=construction structure=prezza_mersenne_lce=" << ts << std::endl;
         lce_data_structures.push_back(dataPM);
@@ -213,9 +226,13 @@ int main(int argc, char *argv[]) {
                 v.push_back(stoi(line, &sz));
             }
             
-            for(uint64_t i = 0; i < number_of_lce_queries * 2; ++i) {
-                lce_indices[i] = v[i % v.size()];
-            }
+            if(v.size() == 0) {
+				continue;
+			}
+			for(uint64_t i = 0; i < number_of_lce_queries * 2; ++i) {
+				lce_indices[i] = v[i % v.size()];
+			}
+			
         }
 
         if(benchmark_random) {

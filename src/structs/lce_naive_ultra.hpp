@@ -24,7 +24,7 @@ class LceUltraNaive : public LceDataStructure {
 		
 		/* Loads a prefix of the file located at PATH */
 		LceUltraNaive(const std::string path, const uint64_t number_of_chars) : 
-					text_length_in_bytes_{util::calculateSizeOfInputFile(path)}, 
+					text_length_in_bytes_{number_of_chars}, 
 					text_{new char[number_of_chars]} {
 			std::ifstream input(path, std::ios::in|std::ios::binary);
 			util::inputErrorHandling(&input);
@@ -34,7 +34,7 @@ class LceUltraNaive : public LceDataStructure {
 				exit(EXIT_FAILURE);
 			}
 			input.seekg(0);
-			input.read(text_, text_length_in_bytes_);
+			input.read(text_, number_of_chars);
 		}
 		
 		~LceUltraNaive() {

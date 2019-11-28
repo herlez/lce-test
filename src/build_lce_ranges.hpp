@@ -2,11 +2,12 @@
 #include <fstream>
 #include <iostream>
 #include <stdio.h>
+#include <cstring>
 
 #include <sys/types.h>
 #include <sys/stat.h>
 
-void build_lce_range(std::string file, std::string output_folder, long prefix_length=0) {
+void build_lce_range(std::string& file, std::string output_folder, long prefix_length=0) {
     
     long text_length;
     
@@ -19,11 +20,13 @@ void build_lce_range(std::string file, std::string output_folder, long prefix_le
     if (prefix_length == 0) {
         output_folder_name = output_folder;
     } else {
-        output_folder_name = output_folder + std::to_string(prefix_length);
+        output_folder_name = output_folder + "_" + std::to_string(prefix_length);
     }
-    std::cout << output_folder_name << std::endl;   
+
     if(mkdir(output_folder_name.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
-        std::cout << "Folder for sorted lce queries could not get created" << std::endl;}
+        std::cout << "Folder for sorted lce queries could not get created. If it was already created and you want to calculate new values, delete the folder first." << std::endl;
+		return;
+	}
 
     
     
@@ -79,27 +82,29 @@ void build_lce_range(std::string file, std::string output_folder, long prefix_le
     
     
     /* Extract LCE */
-  FILE *lce0 = fopen("./english/i0", "w");
-  FILE *lce1 = fopen("./english/i1", "w");
-  FILE *lce2 = fopen("./english/i2", "w");
-  FILE *lce3 = fopen("./english/i3", "w");
-  FILE *lce4 = fopen("./english/i4", "w");
-  FILE *lce5 = fopen("./english/i5", "w");
-  FILE *lce6 = fopen("./english/i6", "w");
-  FILE *lce7 = fopen("./english/i7", "w");
-  FILE *lce8 = fopen("./english/i8", "w");
-  FILE *lce9 = fopen("./english/i9", "w");
-  FILE *lce10 = fopen("./english/i10", "w");
-  FILE *lce11 = fopen("./english/i11", "w");
-  FILE *lce12 = fopen("./english/i12", "w");
-  FILE *lce13 = fopen("./english/i13", "w");
-  FILE *lce14 = fopen("./english/i14", "w");
-  FILE *lce15 = fopen("./english/i15", "w");
-  FILE *lce16 = fopen("./english/i16", "w");
-  FILE *lce17 = fopen("./english/i17", "w");
-  FILE *lce18 = fopen("./english/i18", "w");
-  FILE *lce19 = fopen("./english/i19", "w");
-  FILE *lceX = fopen("./english/iH", "w");
+	std::ofstream of0 {output_folder_name + "/lce_0", std::ofstream::out};
+	std::ofstream of1 {output_folder_name + "/lce_1", std::ofstream::out};
+	std::ofstream of2 {output_folder_name + "/lce_2", std::ofstream::out};
+	std::ofstream of3 {output_folder_name + "/lce_3", std::ofstream::out};
+	std::ofstream of4 {output_folder_name + "/lce_4", std::ofstream::out};
+	std::ofstream of5 {output_folder_name + "/lce_5", std::ofstream::out};
+	std::ofstream of6 {output_folder_name + "/lce_6", std::ofstream::out};
+	std::ofstream of7 {output_folder_name + "/lce_7", std::ofstream::out};
+	std::ofstream of8 {output_folder_name + "/lce_8", std::ofstream::out};
+	std::ofstream of9 {output_folder_name + "/lce_9", std::ofstream::out};
+	std::ofstream of10 {output_folder_name + "/lce_10", std::ofstream::out};
+	std::ofstream of11 {output_folder_name + "/lce_11", std::ofstream::out};
+	std::ofstream of12 {output_folder_name + "/lce_12", std::ofstream::out};
+	std::ofstream of13 {output_folder_name + "/lce_13", std::ofstream::out};
+	std::ofstream of14 {output_folder_name + "/lce_14", std::ofstream::out};
+	std::ofstream of15 {output_folder_name + "/lce_15", std::ofstream::out};
+	std::ofstream of16 {output_folder_name + "/lce_16", std::ofstream::out};
+	std::ofstream of17 {output_folder_name + "/lce_17", std::ofstream::out};
+	std::ofstream of18 {output_folder_name + "/lce_18", std::ofstream::out};
+	std::ofstream of19 {output_folder_name + "/lce_19", std::ofstream::out};
+	std::ofstream ofX {output_folder_name + "/lce_X", std::ofstream::out};
+	
+  //FILE *lce0 = fopen( strcat(output_folder_name.c_str(), "/lce_0"), "w");
     
     const int limita = 100001;
   int limit[21] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -111,107 +116,107 @@ void build_lce_range(std::string file, std::string output_folder, long prefix_le
 		if(LCP[i] < (1L << lstart++)) {
 			limit[0]++;
 			if(limit[0] < limita) {
-				fprintf(lce0, "%d\n%d\n", SA[i-1],SA[i]);
+				of0 << SA[i-1] << '\n'; of0 << SA[i] << '\n';
 			}
 		} else if (LCP[i] < (1L << lstart++)) {
 			limit[1]++;
 			if(limit[1] < limita) {
-				fprintf(lce1, "%d\n%d\n", SA[i-1],SA[i]);
+				of1 << SA[i-1] << '\n'; of1 << SA[i] << '\n';
 			}
 		} else if (LCP[i] < (1L << lstart++)) {
 			limit[2]++;
 			if(limit[2] < limita) {
-				fprintf(lce2, "%d\n%d\n", SA[i-1],SA[i]);
+				of2 << SA[i-1] << '\n'; of2 << SA[i] << '\n';
 			}
 		} else if (LCP[i] < (1L << lstart++)) {
 			limit[3]++;
 			if(limit[3] < limita) {
-				fprintf(lce3, "%d\n%d\n", SA[i-1],SA[i]);
+				of3 << SA[i-1] << '\n'; of3 << SA[i] << '\n';
 			}
 		} else if (LCP[i] < (1L << lstart++)) {
 			limit[4]++;
 			if(limit[4] < limita) {
-				fprintf(lce4, "%d\n%d\n", SA[i-1],SA[i]);
+				of4 << SA[i-1] << '\n'; of4 << SA[i] << '\n';
 			}
 		} else if (LCP[i] < (1L << lstart++)) {
 			limit[5]++;
 			if(limit[5] < limita) {
-				fprintf(lce5, "%d\n%d\n", SA[i-1],SA[i]);
+				of5 << SA[i-1] << '\n'; of5 << SA[i] << '\n';
 			}
 		} else if (LCP[i] < (1L << lstart++)) {
 			limit[6]++;
 			if(limit[6] < limita) {
-				fprintf(lce6, "%d\n%d\n", SA[i-1],SA[i]);
+				of6 << SA[i-1] << '\n'; of6 << SA[i] << '\n';
 			}
 		} else if (LCP[i] < (1L << lstart++)) {
 			limit[7]++;
 			if(limit[7] < limita) {
-				fprintf(lce7, "%d\n%d\n", SA[i-1],SA[i]);
+				of7 << SA[i-1] << '\n'; of7 << SA[i] << '\n';
 			}
 		} else if (LCP[i] < (1L << lstart++)) {
 			limit[8]++;
 			if(limit[8] < limita) {
-				fprintf(lce8, "%d\n%d\n", SA[i-1],SA[i]);
+				of8 << SA[i-1] << '\n'; of8 << SA[i] << '\n';
 			}
 		} else if (LCP[i] < (1L << lstart++)) {
 			limit[9]++;
 			if(limit[9] < limita) {
-				fprintf(lce9, "%d\n%d\n", SA[i-1],SA[i]);
+				of9 << SA[i-1] << '\n'; of9 << SA[i] << '\n';
 			}
 		} else if (LCP[i] < (1L << lstart++)) {
 			limit[10]++;
 			if(limit[10] < limita) {
-				fprintf(lce10, "%d\n%d\n", SA[i-1],SA[i]);
+				of10 << SA[i-1] << '\n'; of10 << SA[i] << '\n';
 			}
 		} else if (LCP[i] < (1L << lstart++)) {
 			limit[11]++;
 			if(limit[11] < limita) {
-				fprintf(lce11, "%d\n%d\n", SA[i-1],SA[i]);
+				of11 << SA[i-1] << '\n'; of11 << SA[i] << '\n';
 			}
 		} else if (LCP[i] < (1L << lstart++)) {
 			limit[12]++;
 			if(limit[12] < limita) {
-				fprintf(lce12, "%d\n%d\n", SA[i-1],SA[i]);
+				of12 << SA[i-1] << '\n'; of12 << SA[i] << '\n';
 			}
 		} else if (LCP[i] < (1L << lstart++)) {
 			limit[13]++;
 			if(limit[13] < limita) {
-				fprintf(lce13, "%d\n%d\n", SA[i-1],SA[i]);
+				of13 << SA[i-1] << '\n'; of13 << SA[i] << '\n';
 			}
 		} else if (LCP[i] < (1L << lstart++)) {
 			limit[14]++;
 			if(limit[14] < limita) {
-				fprintf(lce14, "%d\n%d\n", SA[i-1],SA[i]);
+				of14 << SA[i-1] << '\n'; of14 << SA[i] << '\n';
 			}
 		} else if (LCP[i] < (1L << lstart++)) {
 			limit[15]++;
 			if(limit[15] < limita) {
-				fprintf(lce15, "%d\n%d\n", SA[i-1],SA[i]);
+				of15 << SA[i-1] << '\n'; of15 << SA[i] << '\n';
 			}
 		} else if (LCP[i] < (1L << lstart++)) {
 			limit[16]++;
 			if(limit[16] < limita) {
-				fprintf(lce16, "%d\n%d\n", SA[i-1],SA[i]);
+				of16 << SA[i-1] << '\n'; of16 << SA[i] << '\n';
 			}
 		} else if (LCP[i] < (1L << lstart++)) {
 			limit[17]++;
 			if(limit[17] < limita) {
-				fprintf(lce17, "%d\n%d\n", SA[i-1],SA[i]);
+				of17 << SA[i-1] << '\n'; of17 << SA[i] << '\n';
 			}
 		} else if (LCP[i] < (1L << lstart++)) {
 			limit[18]++;
 			if(limit[18] < limita) {
-				fprintf(lce18, "%d\n%d\n", SA[i-1],SA[i]);
+				of18 << SA[i-1] << '\n'; of18 << SA[i] << '\n';
 			}
 		} else if (LCP[i] < (1L << lstart++)) {
 			limit[19]++;
 			if(limit[19] < limita) {
-				fprintf(lce19, "%d\n%d\n", SA[i-1],SA[i]);
+				of19 << SA[i-1] << '\n'; of19 << SA[i] << '\n';
 			}
 		} else {
-			limit[17]++;
-			if(limit[17] < limita) {
-				fprintf(lceX, "%d\n%d\n", SA[i-1],SA[i]);
+			limit[20]++;
+			if(limit[20] < limita) {
+				ofX << SA[i-1] << '\n'; ofX << SA[i] << '\n';
 			}
 		}
 	}
@@ -223,31 +228,4 @@ void build_lce_range(std::string file, std::string output_folder, long prefix_le
   free(SA);
   free(LCP);
   free(T);
-    /*
-    ofstream lce1(output_path + string("/i0"), ios::out|ios::trunc);
-    ofstream lce2(output_path + string("/i0"), ios::out|ios::trunc);
-    ofstream lce3(output_path + string("/i0"), ios::out|ios::trunc);
-    ofstream lce4(output_path + string("/i0"), ios::out|ios::trunc);
-    ofstream lce5(output_path + string("/i0"), ios::out|ios::trunc);
-    FILE *lce1 = fopen("./english/i1", "w");
-    FILE *lce2 = fopen("./english/i2", "w");
-    FILE *lce3 = fopen("./english/i3", "w");
-    FILE *lce4 = fopen("./english/i4", "w");
-    FILE *lce5 = fopen("./english/i5", "w");
-    FILE *lce6 = fopen("./english/i6", "w");
-    FILE *lce7 = fopen("./english/i7", "w");
-    FILE *lce8 = fopen("./english/i8", "w");
-    FILE *lce9 = fopen("./english/i9", "w");
-    FILE *lce10 = fopen("./english/i10", "w");
-    FILE *lce11 = fopen("./english/i11", "w");
-    FILE *lce12 = fopen("./english/i12", "w");
-    FILE *lce13 = fopen("./english/i13", "w");
-    FILE *lce14 = fopen("./english/i14", "w");
-    FILE *lce15 = fopen("./english/i15", "w");
-    FILE *lce16 = fopen("./english/i16", "w");
-    FILE *lce17 = fopen("./english/i17", "w");
-    FILE *lce18 = fopen("./english/i18", "w");
-    FILE *lce19 = fopen("./english/i19", "w");
-    FILE *lceX = fopen("./english/iH", "w");
-    */
 }

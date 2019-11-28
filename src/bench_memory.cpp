@@ -24,8 +24,9 @@ int main(int argc, char *argv[]) {
     std::ostringstream oss;
     oss << std::put_time(&tm, "%Y-%m-%d-%H-%M-%S");
     auto str = oss.str();
+	uint64_t file_size = util::calculateSizeOfInputFile(file);
 	ofstream log(string("../test_results/mem-") + str + string(".txt"), ios::out|ios::trunc);
-	log << "FILE: " << file << "   SIZE(Byte): " << util::calculateSizeOfInputFile(file) << std::endl;
+	log << "FILE: " << file << "   SIZE(Byte): " << file_size << std::endl;
 	log << "---" << std::endl;
 	
 	uint64_t mem1, mem2, mem3;
@@ -53,7 +54,7 @@ int main(int argc, char *argv[]) {
     log << "RESULT ds=ssss " << "construction_mem=" << mem3-mem1 << std::endl; 
 	
 	mem1 = malloc_count_current();
-	rklce::LcePrezzaMersenne dataPM(file);
+	rklce::LcePrezzaMersenne dataPM(file, file_size);
 	mem2 = malloc_count_current();
     mem3 = malloc_count_peak();
 	log << "RESULT ds=prezza_mersenne " << "mem=" << mem2-mem1 << std::endl;
