@@ -13,3 +13,6 @@
 [submodule "libs/sais-lite-lcp"]
 	path = libs/sais-lite-lcp
 	url = https://github.com/kurpicz/sais-lite-lcp
+[submodule "libs/rk-lce"]
+	path = libs/rk-lce
+	url = https://github.com/nicolaprezza/rk-lce
