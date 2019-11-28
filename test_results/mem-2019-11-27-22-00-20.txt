@@ -1,0 +1,4 @@
+FILE: ../../text/english.1024MB   SIZE(Byte): 1073741824
+---
+RESULT ds=naive mem=1073741824
+RESULT ds=naive construction_mem=1073750594

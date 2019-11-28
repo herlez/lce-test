@@ -1,6 +1,0 @@
----
-memory after FP: 10737437287
-memory after S: Construction: 6313648
-memory after bv: 134217752
-memory after bv_r: 4194368
-memory after lce_rmq: 130320048

@@ -1,0 +1,8 @@
+FILE: ../../text/dna   SIZE(Byte): 403927746
+---
+RESULT algo=construction structure=naive_lce time=0.12576
+1 datastructure(s) build successfully:
+ds_naive_lce; 
+---
+RESULT text= algo=ds_naive_lce lceQueries=10000000 time=0.423795 lce=3504272 aveLce=0 lceLog=0
+---
