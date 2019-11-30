@@ -1,4 +1,14 @@
+/*******************************************************************************
+ * structs/lce_semi_synchronizing_sets.hpp
+ *
+ * Copyright (C) 2019 Alexander Herlez <alexander.herlez@tu-dortmund.de>
+ * Copyright (C) 2019 Florian Kurpicz <florian.kurpicz@tu-dortmund.de>
+ *
+ * All rights reserved. Published under the BSD-2 license in the LICENSE file.
+ ******************************************************************************/
+
 #pragma once
+
 #include "./rmq.hpp"
 #include <vector>
 #include <algorithm> //std::sort
@@ -6,11 +16,77 @@
 #include <rmq/includes/RMQRMM64.h>
 
 class Lce_rmq {
+
+public:
+  Lce_rmq(uint8_t const * const v_text, uint64_t const v_text_size,
+          std::vector<uint64_t> const& sync_set) 
+    : text(v_text), text_size(v_text_size) {
+    //Construct SA
+		
+    std::vector<uint64_t> sa(sync_set.size());
+    for(uint64_t i = 0; i < sa.size(); ++i) {
+      sa[i] = i;
+    }
+		
+		
+		
+    std::sort(sa.begin(), sa.end(), [=](uint64_t i, uint64_t j) {
+      const uint64_t start_i = sync_set[i];
+      const uint64_t start_j = sync_set[j];
+      uint64_t max_lce = text_size - (start_i > start_j ? start_i : start_j);
+						
+      for(uint64_t k = 0; k < max_lce; ++k) {
+        if (text[start_i + k] != text[start_j + k]) {
+          return (text[start_i + k] < text[start_j + k]);
+        }
+      }
+      return i > j;
+    });
+    std::cout << "SA: " << sa.size() << std::endl;
+		
+    //Calculate ISA
+    isa.resize(sa.size());
+    for(uint64_t i = 0; i < sa.size(); ++i) {
+      isa[sa[i]] = i;
+    }
+    std::cout << "ISA: " << isa.size() << std::endl;
+		
+		
+		
+    //Calculate LCP array
+    lcp.resize(sa.size());
+    for(uint64_t i = 1; i < sa.size(); ++i) {
+      lcp[i] = lce_in_text(sync_set[sa[i-1]], sync_set[sa[i]]);
+    }
+    std::cout << "LCP: " << lcp.size() << std::endl;
+		
+    //Build RMQ data structure
+    rmq_ds = new Rmq(lcp);
+    rmq_ds1 = new RMQRMM64((long int*)lcp.data(), lcp.size());
+    std::cout << "RMQ" << std::endl;
+  }
+	
+
+	
+  uint64_t lce(uint64_t i, uint64_t j) const {
+    if(i == j) {
+      return text_size - i;
+    }
+    if(isa[i] < isa[j]) {
+      return lcp[rmq_ds1->queryRMQ(isa[i]+1, isa[j])];
+    } else {
+      return lcp[rmq_ds1->queryRMQ(isa[j]+1, isa[i])];
+    }
+  }
+	
+  uint64_t get_size() {
+    return text_size;
+  }
+
 private:
   const uint64_t tau = 512;
   uint8_t const * const text;
   uint64_t text_size;
-  std::vector<uint64_t> * sync_set;
 	
   std::vector<uint64_t> isa;
   std::vector<uint64_t> lcp;
@@ -28,70 +104,6 @@ private:
     }
     return lce_naive;
   }
-	
-public:
-  Lce_rmq(uint8_t const * const v_text, uint64_t const v_text_size, std::vector<uint64_t> * v_syncSet) 
-    : text(v_text), text_size(v_text_size), sync_set(v_syncSet) {
-    //Construct SA
-		
-    std::vector<uint64_t> sa(sync_set->size());
-    for(uint64_t i = 0; i < sa.size(); ++i) {
-      sa[i] = i;
-    }
-		
-		
-		
-    std::sort(sa.begin(), sa.end(), [=](uint64_t i, uint64_t j) {
-						
-                                      const uint64_t start_i = sync_set->operator[](i);
-                                      const uint64_t start_j = sync_set->operator[](j);
-                                      uint64_t max_lce = text_size - (start_i > start_j ? start_i : start_j);
-						
-                                      for(uint64_t k = 0; k < max_lce; ++k) {
-                                        if (text[start_i + k] != text[start_j + k]) {
-                                          return (text[start_i + k] < text[start_j + k]);
-                                        }
-                                      }
-                                      return i > j;
-                                    });
-    std::cout << "SA: " << sa.size() << std::endl;
-		
-    //Calculate ISA
-    isa.resize(sa.size());
-    for(uint64_t i = 0; i < sa.size(); ++i) {
-      isa[sa[i]] = i;
-    }
-    std::cout << "ISA: " << isa.size() << std::endl;
-		
-		
-		
-    //Calculate LCP array
-    lcp.resize(sa.size());
-    for(uint64_t i = 1; i < sa.size(); ++i) {
-      lcp[i] = lce_in_text(sync_set->operator[](sa[i-1]), sync_set->operator[](sa[i]));
-    }
-    std::cout << "LCP: " << lcp.size() << std::endl;
-		
-    //Build RMQ data structure
-    rmq_ds = new Rmq(lcp);
-    rmq_ds1 = new RMQRMM64((long int*)lcp.data(), lcp.size());
-    std::cout << "RMQ" << std::endl;
-  }
-	
-
-	
-  uint64_t lce(uint64_t i, uint64_t j) {
-    if(i == j) {
-      return text_size - i;
-    }
-    if(isa[i] < isa[j]) {
-      return lcp[rmq_ds1->queryRMQ(isa[i]+1, isa[j])];
-    } else {
-      return lcp[rmq_ds1->queryRMQ(isa[j]+1, isa[i])];
-    }
-  }
-	
-  uint64_t get_size() {
-    return text_size;
-  }
 };
+
+/******************************************************************************/

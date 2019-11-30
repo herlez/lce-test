@@ -135,7 +135,7 @@ int main(int argc, char *argv[]) {
 	std::vector<string> lce_data_structure_names{};
 	
 	
-        std::vector<uint8_t> text = load_text(file);
+        std::vector<uint8_t> const text = load_text(file);
 
 
 	if(test_ultra_naive) {

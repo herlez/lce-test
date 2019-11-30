@@ -1,3 +1,12 @@
+/*******************************************************************************
+ * structs/lce_semi_synchronizing_sets.hpp
+ *
+ * Copyright (C) 2019 Alexander Herlez <alexander.herlez@tu-dortmund.de>
+ * Copyright (C) 2019 Florian Kurpicz <florian.kurpicz@tu-dortmund.de>
+ *
+ * All rights reserved. Published under the BSD-2 license in the LICENSE file.
+ ******************************************************************************/
+
 #pragma once
 
 #include "util/lce_interface.hpp"
@@ -49,7 +58,7 @@ public:
 			
     s_bvr_ = std::make_unique<bit_vector_rank>(*s_bv_);
     lce_rmq_ = std::make_unique<Lce_rmq>(text_, text_length_in_bytes_,
-                                         &sync_set_);
+                                         sync_set_);
   }
 
   /* Answers the lce query for position i and j */
@@ -154,3 +163,5 @@ private:
     }
   }
 };
+
+/******************************************************************************/
