@@ -133,6 +133,9 @@ int main(int argc, char *argv[]) {
 	std::vector<string> lce_data_structure_names{};
 	
 	
+        std::vector<uint8_t> text;
+
+
 	if(test_ultra_naive) {
 		timer.reset();
 		LceUltraNaive * dataUN = new LceUltraNaive{file};
@@ -171,7 +174,7 @@ int main(int argc, char *argv[]) {
 	
 	if(test_sss) {
 		timer.reset();
-		LceSemiSyncSets * dataSSS = new LceSemiSyncSets{file};
+		LceSemiSyncSets * dataSSS = new LceSemiSyncSets(text);
 		ts = timer.elapsed();
 		log << "RESULT algo=construction structure=sss_lce time=" << ts << std::endl;
 		lce_data_structures.push_back(dataSSS);

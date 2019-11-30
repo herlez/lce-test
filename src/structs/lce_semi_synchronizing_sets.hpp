@@ -17,6 +17,7 @@
 #include <sys/time.h>
 #include <cmath>
 #include <ctgmath>
+#include <memory>
 
 #define unlikely(x)    __builtin_expect(!!(x), 0) 
 
@@ -60,15 +61,14 @@ private:
 class LceSemiSyncSets : public LceDataStructure {
 public:
   /* Loads the full file located at PATH. */
-  LceSemiSyncSets(std::string path) {
-    buildStruct(path);
-  }
-		
-  /* Loads a prefix of the file located at PATH */ 
-  LceSemiSyncSets(std::string path, uint64_t number_of_chars) {
-  }
+  // LceSemiSyncSets(std::string path) {
+  //   buildStruct(path);
+  // }
+
+  LceSemiSyncSets(std::vector<uint8_t> const& text) : s_bv_(std::make_unique<bit_vector>(text.size())) { }
 		
   ~LceSemiSyncSets() {
+    
   }
 		
   /* Answers the lce query for position i and j */
@@ -113,22 +113,6 @@ public:
     return text_length_in_bytes_;
   }
 		
-		
-  double getTimeNaive() {
-    return ts_naive;
-  }
-  double getTimeRank() {
-    return ts_rank;
-  }
-  double getTimeRmq() {
-    return ts_rmq_lce;
-  }
-  void resetTimer() {
-    ts_naive = 0.0;
-    ts_rank = 0.0;
-    ts_rmq_lce = 0.0;
-  }
-		
 private:
   std::string text_;
   size_t text_length_in_bytes_;
@@ -140,10 +124,10 @@ private:
 		
   std::vector<uint64_t> s_;
   std::vector<uint64_t> sync_set_;
-  bit_vector * s_bv_;
-  bit_vector_rank * s_bvr_;
+  std::unique_ptr<bit_vector> s_bv_;
+  std::unique_ptr<bit_vector_rank> s_bvr_;
 		
-  Lce_rmq * lce_rmq_;
+  std::unique_ptr<Lce_rmq> lce_rmq_;
 		
   double ts_naive, ts_rank, ts_rmq_lce;
   util::Timer timer;
@@ -236,22 +220,21 @@ private:
     two_pow_tau_mod_q_ = calculatePowerModulo(10);
     fill_synchronizing_set(0, (text_length_in_bytes_ - (2*kTau)), fp, fingerprints);
     sync_set_.shrink_to_fit();
-			
-    s_bv_ = new bit_vector(text_length_in_bytes_);
+
+    //s_bv_ = bit_vector(text_length_in_bytes_);
     for(size_t i = 0; i < sync_set_.size(); ++i) {
       s_bv_->bitset(sync_set_[i], 1);
     }
 			
-    s_bvr_ = new bit_vector_rank(*s_bv_);
-    lce_rmq_ = new Lce_rmq(&text_, &sync_set_);
+    s_bvr_ = std::make_unique<bit_vector_rank>(*s_bv_);
+    lce_rmq_ = std::make_unique<Lce_rmq>(&text_, &sync_set_);
   }
 		
   uint64_t calculatePowerModulo(unsigned int power) {
-    //powerTable = new uint64_t[numberOfLevels];
     unsigned __int128 x = 256;
     for (unsigned int i = 0; i < power; i++) {
       x = (x*x) % kPrime;
     }
-    return (uint64_t) x;
+    return static_cast<uint64_t>(x);
   }
 };
