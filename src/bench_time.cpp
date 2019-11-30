@@ -5,6 +5,8 @@
 
 #include <tlx/cmdline_parser.hpp>
 
+#include "structs/util/io.hpp"
+
 #include "structs/lce_naive.hpp"
 #include "structs/lce_naive_ultra.hpp"
 
@@ -133,7 +135,7 @@ int main(int argc, char *argv[]) {
 	std::vector<string> lce_data_structure_names{};
 	
 	
-        std::vector<uint8_t> text;
+        std::vector<uint8_t> text = load_text(file);
 
 
 	if(test_ultra_naive) {

@@ -3,79 +3,58 @@
 #include "util/lce_interface.hpp"
 #include "util/util.hpp"
 #include "util/synchronizing_sets/bit_vector_rank.hpp"
+#include "util/synchronizing_sets/ring_buffer.hpp"
 #include "util/synchronizing_sets/lce-rmq.hpp"
 
-#include <tlx/math/round_to_power_of_two.hpp>
-
-#include <cstdio>
-#include <string>
-#include <iostream>
 #include <vector>
-#include <algorithm>
-#include <fstream>
-#include <sstream>
-#include <sys/time.h>
-#include <cmath>
-#include <ctgmath>
 #include <memory>
 
-#define unlikely(x)    __builtin_expect(!!(x), 0) 
-
-template <typename DataType>
-class ring_buffer {
-public:
-  ring_buffer(uint64_t const buffer_size)
-    : buffer_size_(tlx::round_up_to_power_of_two(buffer_size)),
-      mod_mask_(buffer_size_ - 1), size_(0), data_(buffer_size_) { }
-
-  void push_back(DataType const data) {
-    uint64_t const insert_pos = size_++ & mod_mask_;
-    data_[insert_pos] = data;
+static constexpr uint64_t calculatePowerModulo(unsigned int const power,
+                                               __int128 const kPrime) {
+  unsigned __int128 x = 256;
+  for (unsigned int i = 0; i < power; i++) {
+    x = (x*x) % kPrime;
   }
-
-  size_t size() const {
-    return size_;
-  }
-
-  DataType operator[](size_t const index) {
-    return data_[index & mod_mask_];
-  }
-
-  DataType operator[](size_t const index) const {
-    return data_[index & mod_mask_];
-  }
-
-private:
-  uint64_t const buffer_size_;
-  uint64_t const mod_mask_;
-
-  uint64_t size_;
-
-  std::vector<DataType> data_;
-
-}; // class ring_buffer
+  return static_cast<uint64_t>(x);
+}
 
 /* This class stores a text as an array of characters and 
  * answers LCE-queries with the naive method. */
 
 class LceSemiSyncSets : public LceDataStructure {
-public:
-  /* Loads the full file located at PATH. */
-  // LceSemiSyncSets(std::string path) {
-  //   buildStruct(path);
-  // }
 
-  LceSemiSyncSets(std::vector<uint8_t> const& text) : s_bv_(std::make_unique<bit_vector>(text.size())) { }
-		
-  ~LceSemiSyncSets() {
-    
+public:
+  static constexpr __int128 kPrime = 18446744073709551557ULL;
+  static constexpr uint64_t kTau = 1024;
+  static constexpr uint64_t TwoPowTauModQ = calculatePowerModulo(10, kPrime);
+
+public:
+  LceSemiSyncSets(std::vector<uint8_t> const& text)
+    : text_(text.data()), text_length_in_bytes_(text.size()),
+      s_bv_(std::make_unique<bit_vector>(text_length_in_bytes_)) {
+    unsigned __int128 fp = 0;
+    for(uint64_t i = 0; i < kTau; ++i) {
+      fp *= 256;
+      fp += (unsigned char) text_[i];
+      fp %= kPrime;
+    }
+    ring_buffer<uint64_t> fingerprints(3*kTau);
+    fingerprints.push_back(static_cast<uint64_t>(fp));
+    fill_synchronizing_set(0, (text_length_in_bytes_ - (2*kTau)), fp,
+                           fingerprints);
+
+    for(size_t i = 0; i < sync_set_.size(); ++i) {
+      s_bv_->bitset(sync_set_[i], 1);
+    }
+			
+    s_bvr_ = std::make_unique<bit_vector_rank>(*s_bv_);
+    lce_rmq_ = std::make_unique<Lce_rmq>(text_, text_length_in_bytes_,
+                                         &sync_set_);
   }
-		
+
   /* Answers the lce query for position i and j */
   inline uint64_t lce(const uint64_t i, const uint64_t j) {
-			
-    timer.reset();
-    if (i==j) {
+    if (i == j) {
       return text_length_in_bytes_ - i;
     }
     /* naive part */
@@ -85,18 +64,10 @@ public:
       }
     }
 			
-    ts_naive += timer.elapsed();
-			
-    timer.reset();
     /* strSync part */
-    uint64_t i_ = suc(i);
-    uint64_t j_ = suc(j);
-    ts_rank += timer.elapsed();
-			
-    timer.reset();
-    uint64_t l = lce_rmq_->lce(i_, j_);
-    ts_rmq_lce += timer.elapsed();
-			
+    uint64_t const i_ = suc(i);
+    uint64_t const j_ = suc(j);
+    uint64_t const l = lce_rmq_->lce(i_, j_);			
     return l + sync_set_[i_] - i;
   }
 		
@@ -114,23 +85,13 @@ public:
   }
 		
 private:
-  std::string text_;
-  size_t text_length_in_bytes_;
-		
-  const unsigned __int128 kPrime = 18446744073709551557ULL;
-  const uint64_t kTau = 1024;
-  uint64_t two_pow_tau_mod_q_;
+  uint8_t const * const text_;
+  size_t const text_length_in_bytes_;
 
-		
-  std::vector<uint64_t> s_;
   std::vector<uint64_t> sync_set_;
   std::unique_ptr<bit_vector> s_bv_;
   std::unique_ptr<bit_vector_rank> s_bvr_;
-		
   std::unique_ptr<Lce_rmq> lce_rmq_;
-		
-  double ts_naive, ts_rank, ts_rmq_lce;
-  util::Timer timer;
 
   /* Finds the smallest element that is greater or equal to i
      Because s_ is ordered, that is equal to the 
@@ -143,7 +104,7 @@ private:
                               unsigned __int128& fp,
                               ring_buffer<uint64_t>& fingerprints) {
 
-    uint64_t min;
+    uint64_t min = 0;
     for (uint64_t i = from; i < to; ) {
       // Compare this id with every other index which is not in q
       min = 0;
@@ -181,7 +142,7 @@ private:
       fp %= kPrime;
 				
       unsigned __int128 first_char_influence = text_[fingerprints.size() - 1];
-      first_char_influence *= two_pow_tau_mod_q_;
+      first_char_influence *= TwoPowTauModQ;
       first_char_influence %= kPrime;
 				
       if(first_char_influence < fp) {
@@ -191,50 +152,5 @@ private:
       }
       fingerprints.push_back(static_cast<uint64_t>(fp));
     }
-  }
-		
-		
-  void buildStruct(std::string path) {
-    std::ifstream input(path);
-    input.seekg(0);
-    util::inputErrorHandling(&input);
-    std::stringstream buffer;
-    buffer << input.rdbuf();
-    text_ = buffer.str();
-    text_length_in_bytes_ = text_.size();
-    std::cout << "T size: " << text_.size() << std::endl;
-			
-    // Timer for benchmark
-    util::Timer timer{};
-
-    // Calculate fingerprints
-    std::cout << "Calculating FP" << std::endl;
-    unsigned __int128 fp = 0;
-    for(uint64_t i = 0; i < kTau; ++i) {
-      fp *= 256;
-      fp += (unsigned char) text_[i];
-      fp %= kPrime;
-    }
-    ring_buffer<uint64_t> fingerprints(3*kTau);
-    fingerprints.push_back(static_cast<uint64_t>(fp));
-    two_pow_tau_mod_q_ = calculatePowerModulo(10);
-    fill_synchronizing_set(0, (text_length_in_bytes_ - (2*kTau)), fp, fingerprints);
-    sync_set_.shrink_to_fit();
-
-    //s_bv_ = bit_vector(text_length_in_bytes_);
-    for(size_t i = 0; i < sync_set_.size(); ++i) {
-      s_bv_->bitset(sync_set_[i], 1);
-    }
-			
-    s_bvr_ = std::make_unique<bit_vector_rank>(*s_bv_);
-    lce_rmq_ = std::make_unique<Lce_rmq>(&text_, &sync_set_);
-  }
-		
-  uint64_t calculatePowerModulo(unsigned int power) {
-    unsigned __int128 x = 256;
-    for (unsigned int i = 0; i < power; i++) {
-      x = (x*x) % kPrime;
-    }
-    return static_cast<uint64_t>(x);
   }
 };

@@ -3,7 +3,7 @@ project (lceTest)
 
 # configure a header file to pass some of the CMake settings
 # to the source code
-  
+
 set(CMAKE_CXX_FLAGS " -Wall -std=c++17 -O3")
 
 # include ferrada's rmq implementation
@@ -27,8 +27,6 @@ target_include_directories(tlx_command_line PUBLIC
 
 
 add_executable(bench_time ./src/bench_time.cpp)
-target_link_libraries(bench_time ferrada_rmq)
-target_link_libraries(bench_time tlx_command_line)
+target_link_libraries(bench_time ferrada_rmq stdc++fs tlx_command_line)
 
 #add_executable(testCorrectness ./src/test_correctness.cpp)
-
