@@ -15,6 +15,8 @@
 #include <string>
 #include <rmq/includes/RMQRMM64.h>
 
+#include "../timer.hpp"
+
 class Lce_rmq {
 
 public:
@@ -22,13 +24,15 @@ public:
           std::vector<uint64_t> const& sync_set) 
     : text(v_text), text_size(v_text_size) {
     //Construct SA
+
+    timer t;
 		
     std::vector<uint64_t> sa(sync_set.size());
     for(uint64_t i = 0; i < sa.size(); ++i) {
       sa[i] = i;
     }
-		
-		
+
+    size_t const fill_sa_time = t.get_and_reset();
 		
     std::sort(sa.begin(), sa.end(), [=](uint64_t i, uint64_t j) {
       const uint64_t start_i = sync_set[i];
@@ -43,27 +47,34 @@ public:
       return i > j;
     });
     std::cout << "SA: " << sa.size() << std::endl;
-		
+
+    size_t const sort_sa_time = t.get_and_reset();
+
     //Calculate ISA
     isa.resize(sa.size());
     for(uint64_t i = 0; i < sa.size(); ++i) {
       isa[sa[i]] = i;
     }
     std::cout << "ISA: " << isa.size() << std::endl;
-		
-		
-		
+
     //Calculate LCP array
     lcp.resize(sa.size());
     for(uint64_t i = 1; i < sa.size(); ++i) {
       lcp[i] = lce_in_text(sync_set[sa[i-1]], sync_set[sa[i]]);
     }
     std::cout << "LCP: " << lcp.size() << std::endl;
-		
+
+    size_t const lcp_time = t.get_and_reset();
+
     //Build RMQ data structure
     rmq_ds = new Rmq(lcp);
     rmq_ds1 = new RMQRMM64((long int*)lcp.data(), lcp.size());
     std::cout << "RMQ" << std::endl;
+
+    std::cout << "fill_sa_time " << fill_sa_time << std::endl;
+    std::cout << "sort_sa_time " << sort_sa_time << std::endl;
+    std::cout << "lcp_time " << lcp_time << std::endl;
+    
   }
 	
 

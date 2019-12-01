@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
 
 	if(test_ultra_naive) {
 		timer.reset();
-		LceUltraNaive * dataUN = new LceUltraNaive{file};
+		LceUltraNaive * dataUN = new LceUltraNaive(text);
 		ts = timer.elapsed();
 		log << "RESULT algo=construction structure=ultra_naive_lce time=" << ts << std::endl;
 		lce_data_structures.push_back(dataUN);
