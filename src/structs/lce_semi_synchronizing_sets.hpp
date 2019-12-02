@@ -11,6 +11,7 @@
 
 #include "util/lce_interface.hpp"
 #include "util/util.hpp"
+#include "util/timer.hpp"
 #include "util/synchronizing_sets/bit_vector_rank.hpp"
 #include "util/synchronizing_sets/ring_buffer.hpp"
 #include "util/synchronizing_sets/lce-rmq.hpp"
@@ -41,6 +42,8 @@ public:
   LceSemiSyncSets(std::vector<uint8_t> const& text)
     : text_(text.data()), text_length_in_bytes_(text.size()),
       s_bv_(std::make_unique<bit_vector>(text_length_in_bytes_)) {
+    timer t;
+
     unsigned __int128 fp = 0;
     for(uint64_t i = 0; i < kTau; ++i) {
       fp *= 256;
@@ -57,6 +60,10 @@ public:
     }
 			
     s_bvr_ = std::make_unique<bit_vector_rank>(*s_bv_);
+
+    size_t const tmp = t.get_and_reset();
+    std::cout << "tmp " << tmp << std::endl;
+
     lce_rmq_ = std::make_unique<Lce_rmq>(text_, text_length_in_bytes_,
                                          sync_set_);
   }
