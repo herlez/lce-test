@@ -9,12 +9,10 @@
 
 #pragma once
 
-#include "util/io.hpp"
 #include "util/lce_interface.hpp"
 #include "util/synchronizing_sets/bit_vector_rank.hpp"
 #include "util/synchronizing_sets/ring_buffer.hpp"
 #include "util/synchronizing_sets/lce-rmq.hpp"
-#include "util/timer.hpp"
 #include "util/util.hpp"
 
 #include <vector>
@@ -40,8 +38,8 @@ public:
   static constexpr uint64_t TwoPowTauModQ = calculatePowerModulo(10, kPrime);
 
 public:
-  LceSemiSyncSets(std::string const& file_name)
-    : text_(load_text(file_name)), text_length_in_bytes_(text_.size()),
+  LceSemiSyncSets(std::vector<uint8_t> const& text)
+    : text_(text), text_length_in_bytes_(text_.size()),
       s_bv_(std::make_unique<bit_vector>(text_length_in_bytes_)) {
 
     timer t;
@@ -94,7 +92,8 @@ public:
     return text_[i];
   }
 		
-  int isSmallerSuffix(const uint64_t i, const uint64_t j) {
+  int isSmallerSuffix([[maybe_unused]] const uint64_t i,
+                      [[maybe_unused]] const uint64_t j) {
     return 0;
   }
 		
@@ -103,13 +102,6 @@ public:
   }
 		
 private:
-  std::vector<uint8_t> const text_;
-  size_t const text_length_in_bytes_;
-
-  std::vector<uint64_t> sync_set_;
-  std::unique_ptr<bit_vector> s_bv_;
-  std::unique_ptr<bit_vector_rank> s_bvr_;
-  std::unique_ptr<Lce_rmq> lce_rmq_;
 
   /* Finds the smallest element that is greater or equal to i
      Because s_ is ordered, that is equal to the 
@@ -174,6 +166,15 @@ private:
       fingerprints.push_back(static_cast<uint64_t>(fp));
     }
   }
+
+private:
+  std::vector<uint8_t> const& text_;
+  size_t const text_length_in_bytes_;
+
+  std::vector<uint64_t> sync_set_;
+  std::unique_ptr<bit_vector> s_bv_;
+  std::unique_ptr<bit_vector_rank> s_bvr_;
+  std::unique_ptr<Lce_rmq> lce_rmq_;
 };
 
 /******************************************************************************/

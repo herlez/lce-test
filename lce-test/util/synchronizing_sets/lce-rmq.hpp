@@ -17,8 +17,6 @@
 #include <string>
 #include "RMQRMM64.h"
 
-#include "../timer.hpp"
-
 #include "sais.h"
 
 class indexed_string {
@@ -86,7 +84,7 @@ public:
       sa[i] = i;
     }
 
-    timer t;
+//    timer t;
 
     std::vector<rank_tuple> rank_tuples;
     rank_tuples.reserve(s_fingerprints.size());
@@ -114,8 +112,8 @@ public:
                 return a.index < b.index;
     });
 
-    size_t const fp_sort = t.get_and_reset();
-    std::cout << "fp_sort " << fp_sort << std::endl;
+    // size_t const fp_sort = t.get_and_reset();
+    // std::cout << "fp_sort " << fp_sort << std::endl;
 
     // std::vector<indexed_string> strings_to_sort;
     // for (uint64_t i = 0; i < sync_set.size(); ++i) {
@@ -183,8 +181,8 @@ public:
     new_text.push_back(0);
     sais_int(new_text.data(), new_sa.data(), new_text.size(), cur_rank + 1);
 
-    size_t const sais_time = t.get_and_reset();
-    std::cout << "sais_time " << sais_time << std::endl;
+    // size_t const sais_time = t.get_and_reset();
+    // std::cout << "sais_time " << sais_time << std::endl;
     
 
     std::sort(sa.begin(), sa.end(), [=](uint64_t i, uint64_t j) {
@@ -200,8 +198,8 @@ public:
       return i > j;
     });
 
-    size_t const old_sort_sa_time = t.get_and_reset();
-    std::cout << "old_sort_sa_time " << old_sort_sa_time << std::endl;
+    // size_t const old_sort_sa_time = t.get_and_reset();
+    // std::cout << "old_sort_sa_time " << old_sort_sa_time << std::endl;
 
     // bool sa_correct = true;
     // for (size_t i = 0;  i < new_sa.size() - 1; ++i) {
@@ -246,8 +244,8 @@ public:
       lcp[i] = lce_in_text(sync_set[sa[i-1]], sync_set[sa[i]]);
     }
 
-    size_t const lcp_time = t.get_and_reset();
-    std::cout << "lcp_time " << lcp_time << std::endl;
+    // size_t const lcp_time = t.get_and_reset();
+    // std::cout << "lcp_time " << lcp_time << std::endl;
 
     // bool lcp_correct = true;
     // for (size_t i = 0; i < lcp.size() - 1; ++i) {
@@ -266,8 +264,8 @@ public:
     //Build RMQ data structure
     // rmq_ds = new Rmq(lcp);
     rmq_ds1 = new RMQRMM64((long int*)lcp.data(), lcp.size());
-    size_t const rmq_time = t.get_and_reset();
-    std::cout << "rmq_time " << rmq_time << std::endl;
+    // size_t const rmq_time = t.get_and_reset();
+    // std::cout << "rmq_time " << rmq_time << std::endl;
   }
 	
 
