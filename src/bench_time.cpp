@@ -24,23 +24,22 @@ using namespace std;
 
 
 
-bool benchmark_ordered = false;
-bool benchmark_random = false;
-bool benchmark_complete = false;
-
-std::string file{};
-std::string file_name{};
-std::string output_path{};
-
-uint64_t number_of_lce_queries;
-uint64_t number_of_runs;
-
-bool test_ultra_naive = false, test_naive = false, test_prezza_mersenne = false, test_prezza = false, test_sss = false;
-
-
-
 int main(int argc, char *argv[]) {
-	// Set up command line parser
+  // bool benchmark_ordered = false;
+  // bool benchmark_random = false;
+  // bool benchmark_complete = false;
+
+  std::string file{};
+  std::string file_name{};
+  std::string output_path{};
+
+  // uint64_t number_of_lce_queries;
+  // uint64_t number_of_runs;
+
+  bool test_ultra_naive = false, test_naive = false, test_prezza_mersenne = false, test_prezza = false, test_sss = false;
+  
+  
+  // Set up command line parser
 	tlx::CmdlineParser cp;
 	cp.set_description("This programs measures construction time and lce-query time"
 						" for several LCE data structures.");
@@ -60,22 +59,6 @@ int main(int argc, char *argv[]) {
 	std::string mode;
 	cp.add_string('M', "mode", mode, "test mode: random, complete, sorted");
 
-	if (mode.compare("complete") || mode.compare("c") || mode.compare("comp") || mode.compare("compl")) {
-		benchmark_complete = true;
-		number_of_runs = 1;
-	} else if (mode.compare("ord") || mode.compare("o") || mode.compare("order") || mode.compare("ordered")) {
-		benchmark_ordered = true;
-		number_of_lce_queries = 1'000'000ULL;
-		number_of_runs = 21;
-	} else if (mode.compare("rand") || mode.compare("r") || mode.compare("random")) {
-		benchmark_random = true;
-		number_of_lce_queries = 100'000'000ULL;
-		number_of_runs = 1;
-	}
-	if(!benchmark_complete && !benchmark_ordered && !benchmark_random) {
-		benchmark_ordered = true;
-	}
-	
 	cp.add_flag("ultra_naive", test_ultra_naive, "Benchmark ultra naive LCE implementation");
 	cp.add_flag("naive", test_naive, "Benchmark naive LCE implementation");
 	cp.add_flag("prezza_mersenne", test_prezza_mersenne, "Benchmark Prezza's Mersenne-LCE implementation");
@@ -86,10 +69,29 @@ int main(int argc, char *argv[]) {
 	}
 	
 	if (!cp.process(argc, argv)) {
-        return -1; // some error occurred and help was always written to user.
+          return -1; // some error occurred and help was always written to user.
 	}
 
     std::cout << "Command line parsed okay." << std::endl;
+
+
+    	// if (mode.compare("complete") || mode.compare("c") || mode.compare("comp") || mode.compare("compl")) {
+	// 	benchmark_complete = true;
+	// 	number_of_runs = 1;
+	// } else if (mode.compare("ord") || mode.compare("o") || mode.compare("order") || mode.compare("ordered")) {
+	// 	benchmark_ordered = true;
+	// 	number_of_lce_queries = 1'000'000ULL;
+	// 	number_of_runs = 21;
+	// } else if (mode == "rand" || mode == "r" || mode == "random") {
+        // std::cout << "MY BENCH MODE" << std::endl;
+        //       benchmark_random = true;
+	//       number_of_lce_queries = 100'000'000ULL;
+	//       number_of_runs = 1;
+	// }
+	// if(!benchmark_complete && !benchmark_ordered && !benchmark_random) {
+	// 	benchmark_ordered = true;
+	// }
+	
 
     // output for debugging
     //cp.print_result();
@@ -158,7 +160,7 @@ int main(int argc, char *argv[]) {
 	
 	if(test_prezza_mersenne) {
 		timer.reset();
-		rklce::LcePrezzaMersenne * dataPM = new rklce::LcePrezzaMersenne{file};
+		rklce::LcePrezzaMersenne * dataPM = new rklce::LcePrezzaMersenne(file);
 		ts = timer.elapsed();
 		log << "RESULT algo=construction structure=prezza_mersenne_lce=" << ts << std::endl;
 		lce_data_structures.push_back(dataPM);
@@ -183,116 +185,115 @@ int main(int argc, char *argv[]) {
 		lce_data_structure_names.push_back("ds_sss_lce");
 	}
 	
-	log << lce_data_structures.size() << " datastructure(s) build successfully:" << std::endl;
-	for(string& s : lce_data_structure_names) { log << s << "; "; }
-	log << std::endl << "---" << std::endl;
+	// log << lce_data_structures.size() << " datastructure(s) build successfully:" << std::endl;
+	// for(string& s : lce_data_structure_names) { log << s << "; "; }
+	// log << std::endl << "---" << std::endl;
 	
-	
-
-	for(uint64_t number_of_run = 0; number_of_run < number_of_runs; ++number_of_run) {
+	// for(uint64_t number_of_run = 0; number_of_run < number_of_runs; ++number_of_run) {
+	// 	std::cout << "ME" << std::endl;
+	// 	/************************************
+	// 	******** PREPARE INDEXES ***********
+	// 	************************************/
+        //         std::cout << "number_of_lce_queries " << number_of_lce_queries << std::endl;
+	// 	vector<uint64_t> lce_indices(number_of_lce_queries*2);
 		
-		/************************************
-		******** PREPARE INDEXES ***********
-		************************************/
-		vector<uint64_t> lce_indices;
+	// 	// if(benchmark_ordered) {
+	// 	// 	vector<uint64_t> v;
+	// 	// 	lce_indices.resize(number_of_lce_queries*2);
+			
+	// 	// 	ifstream lc(lce_set[number_of_run], ios::in);
+	// 	// 	util::inputErrorHandling(&lc);
+			
+	// 	// 	string line;
+	// 	// 	string::size_type sz;
+	// 	// 	while(getline(lc, line)) {
+	// 	// 		v.push_back(stoi(line, &sz));
+	// 	// 	}
+			
+	// 	// 	for(uint64_t i = 0; i < number_of_lce_queries * 2; ++i) {
+	// 	// 		lce_indices[i] = v[i % v.size()];
+	// 	// 	}
+	// 	// }
+
+	// 	//if(benchmark_random) {
+        //           std::cout << "HOER2" << std::endl;
+	// 		srand(time(NULL));
+	// 		for(uint64_t i = 0; i < number_of_lce_queries * 2; ++i) {
+	// 			lce_indices[i] = rand() % text.size();
+	// 		}
+	// 	//}
+        //                 std::cout << "HOER3" << std::endl;
+
+
+	// 	/************************************
+	// 	*************LCE QUERIES*************
+	// 	************************************/
 		
-		if(benchmark_ordered) {
-			vector<uint64_t> v;
-			lce_indices.resize(number_of_lce_queries*2);
+	// 	// Result of lce query
+	// 	uint64_t lce = 0;
+	// 	// For every lce data structure..
+	// 	for(unsigned int alg = 0; alg < lce_data_structures.size(); ++alg) {
+	// 		// ..do NUMBEROFTESTS LCE queries
+	// 		//dataSSS.resetTimer();
+	// 		timer.reset();
 			
-			ifstream lc(lce_set[number_of_run], ios::in);
-			util::inputErrorHandling(&lc);
-			
-			string line;
-			string::size_type sz;
-			while(getline(lc, line)) {
-				v.push_back(stoi(line, &sz));
-			}
-			
-			for(uint64_t i = 0; i < number_of_lce_queries * 2; ++i) {
-				lce_indices[i] = v[i % v.size()];
-			}
-		}
-
-		if(benchmark_random) {
-			srand(time(NULL));
-			uint64_t * lce_indices = new uint64_t[number_of_lce_queries*2];
-			for(uint64_t i = 0; i < number_of_lce_queries * 2; ++i) {
-				lce_indices[i] = rand() % util::calculateSizeOfInputFile(file);
-			}
-		}
-
-
-
-		/************************************
-		*************LCE QUERIES*************
-		************************************/
-		
-		// Result of lce query
-		uint64_t lce = 0;
-		// For every lce data structure..
-		for(unsigned int alg = 0; alg < lce_data_structures.size(); ++alg) {
-			// ..do NUMBEROFTESTS LCE queries
-			//dataSSS.resetTimer();
-			timer.reset();
-			
-			if(benchmark_ordered || benchmark_random) {
-				// Indexes for lce queries
-				uint64_t i, j;
-				for(uint64_t k = 0; k < number_of_lce_queries*2; ++k) {
-					i = lce_indices[k];
-					j = lce_indices[++k];
-					lce += lce_data_structures[alg]->lce(i, j);
-				}
-					/* //ERROR-HUNT
-					if(lce_data_structures[0]->lce(i,j) != lce_data_structures[1]->lce(i,j)) {
-						cout << "Lce: " << lce_data_structures[0]->lce(i,j) << endl;
-						cout << "wLce: " << lce_data_structures[1]->lce(i,j) << endl;
-						cout << "i: " << i << "  j: " << j << endl;
-					}*/
+	// 		if(benchmark_ordered || benchmark_random) {
+	// 			// Indexes for lce queries
+	// 			uint64_t i, j;
+	// 			for(uint64_t k = 0; k < number_of_lce_queries*2; ++k) {
+	// 				i = lce_indices[k];
+	// 				j = lce_indices[++k];
+	// 				lce += lce_data_structures[alg]->lce(i, j);
+	// 			}
+	// 				/* //ERROR-HUNT
+	// 				if(lce_data_structures[0]->lce(i,j) != lce_data_structures[1]->lce(i,j)) {
+	// 					cout << "Lce: " << lce_data_structures[0]->lce(i,j) << endl;
+	// 					cout << "wLce: " << lce_data_structures[1]->lce(i,j) << endl;
+	// 					cout << "i: " << i << "  j: " << j << endl;
+	// 				}*/
 					
-				ts = timer.elapsed();
-				log << "RESULT"
-					<< " text=" << file_name
-					<< " algo=" << lce_data_structure_names[alg]
-					<< " lceQueries=" << number_of_lce_queries
-					<< " time=" << ts
-					<< " lce=" << lce
-					<< " aveLce=" << lce/number_of_lce_queries
-					<< " lceLog=" << number_of_run
-					<< endl;
-				lce = 0;
-			}
+	// 			ts = timer.elapsed();
+	// 			log << "RESULT"
+	// 				<< " text=" << file_name
+	// 				<< " algo=" << lce_data_structure_names[alg]
+	// 				<< " lceQueries=" << number_of_lce_queries
+	// 				<< " time=" << ts
+	// 				<< " lce=" << lce
+	// 				<< " aveLce=" << lce/number_of_lce_queries
+	// 				<< " lceLog=" << number_of_run
+	// 				<< endl;
+	// 			lce = 0;
+	// 		}
 		
-		//log << "RESULT"
-		//	<< " algo= ssssLce"
-		//	<< " naive_part=" << dataSSS.getTimeNaive()
-		//	<< " rank_part=" << dataSSS.getTimeRank()
-		//	<< " sss_part=" << dataSSS.getTimeRmq()
-		//	<< endl;
-		//delete[] lce_indices;
+	// 	//log << "RESULT"
+	// 	//	<< " algo= ssssLce"
+	// 	//	<< " naive_part=" << dataSSS.getTimeNaive()
+	// 	//	<< " rank_part=" << dataSSS.getTimeRank()
+	// 	//	<< " sss_part=" << dataSSS.getTimeRmq()
+	// 	//	<< endl;
+	// 	//delete[] lce_indices;
 
-			if(benchmark_complete) {
-				const uint64_t max_index = 1000U < lce_data_structures[0]->getSizeInBytes() ? 1000U : lce_data_structures[0]->getSizeInBytes();
-				for(uint64_t i = 0; i < max_index; ++i) {
-					for(uint64_t j = 0; j < max_index; ++j) {
-						lce += lce_data_structures[alg]->lce(i, j);
-					}
-				}
-				ts = timer.elapsed();
-				log << "RESULT"
-					<< " benchmark=" << "complete"
-					<< " text=" << file
-					<< " algo=" << lce_data_structure_names[alg]
-					<< " time=" << ts
-					<< " lce=" << lce
-					<< " aveLce=" << lce/(max_index*max_index)
-					<< endl;
-				lce = 0;
-			}
-		}
-		log << "---" << endl;
-	}
+	// 		if(benchmark_complete) {
+	// 			const uint64_t max_index = 1000U < lce_data_structures[0]->getSizeInBytes() ? 1000U : lce_data_structures[0]->getSizeInBytes();
+	// 			for(uint64_t i = 0; i < max_index; ++i) {
+	// 				for(uint64_t j = 0; j < max_index; ++j) {
+	// 					lce += lce_data_structures[alg]->lce(i, j);
+	// 				}
+	// 			}
+	// 			ts = timer.elapsed();
+	// 			log << "RESULT"
+	// 				<< " benchmark=" << "complete"
+	// 				<< " text=" << file
+	// 				<< " algo=" << lce_data_structure_names[alg]
+	// 				<< " time=" << ts
+	// 				<< " lce=" << lce
+	// 				<< " aveLce=" << lce/(max_index*max_index)
+	// 				<< endl;
+	// 			lce = 0;
+	// 		}
+	// 	}
+	// 	log << "---" << endl;
+	// }
 	return EXIT_SUCCESS;
 }
 

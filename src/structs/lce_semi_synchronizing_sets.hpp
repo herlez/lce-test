@@ -61,8 +61,8 @@ public:
 			
     s_bvr_ = std::make_unique<bit_vector_rank>(*s_bv_);
 
-    size_t const tmp = t.get_and_reset();
-    std::cout << "tmp " << tmp << std::endl;
+    size_t const fp_and_bv_time = t.get_and_reset();
+    std::cout << "fp_and_bv_time " << fp_and_bv_time << std::endl;
 
     lce_rmq_ = std::make_unique<Lce_rmq>(text_, text_length_in_bytes_,
                                          sync_set_);

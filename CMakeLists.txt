@@ -25,8 +25,16 @@ target_include_directories(tlx_command_line PUBLIC
   $<INSTALL_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libs/tlx/>
 )
 
+# Add sais-lite-lcp
+add_library(sais_lite_lcp
+  libs/sais-lite-lcp/sais.c)
+
+target_include_directories(sais_lite_lcp PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libs/sais-lite-lcp>
+  $<INSTALL_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libs/sais-lite-lcp>
+)
 
 add_executable(bench_time ./src/bench_time.cpp)
-target_link_libraries(bench_time ferrada_rmq stdc++fs tlx_command_line)
+target_link_libraries(bench_time ferrada_rmq stdc++fs tlx_command_line sais_lite_lcp)
 
 #add_executable(testCorrectness ./src/test_correctness.cpp)
