@@ -1,5 +1,7 @@
 build/
-test_results/
+res/*
+test_results/*
+!test_results/plot
 *.log
 *.aux
 *.gz
