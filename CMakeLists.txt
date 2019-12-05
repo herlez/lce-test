@@ -47,10 +47,10 @@ target_include_directories(sais_lcp PUBLIC
 
 add_executable(bench_time ./src/bench_time.cpp)
 target_link_libraries(bench_time ferrada_rmq)
-target_link_libraries(bench_time tlx_command_line)
+target_link_libraries(bench_time tlx_command_line stdc++fs)
 target_link_libraries(bench_time sais_lcp)
 
 
-add_executable(bench_memory ./src/bench_memory.cpp)
-target_link_libraries(bench_memory ferrada_rmq)
-target_link_libraries(bench_memory malloc_count -ldl)
+# add_executable(bench_memory ./src/bench_memory.cpp)
+# target_link_libraries(bench_memory ferrada_rmq tlx_command_line sais_lcp)
+# target_link_libraries(bench_memory malloc_count -ldl)

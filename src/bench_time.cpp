@@ -5,6 +5,8 @@
 
 #include <tlx/cmdline_parser.hpp>
 
+#include "structs/util/io.hpp"
+
 #include "build_lce_ranges.hpp"
 #include "structs/lce_naive.hpp"
 #include "structs/lce_naive_ultra.hpp"
@@ -148,6 +150,7 @@ int main(int argc, char *argv[]) {
     // names of tested data structure
     std::vector<string> lce_data_structure_names{};
     
+    std::vector<uint8_t> const text = load_text(file);
     
     if(test_ultra_naive) {
         timer.reset();
@@ -187,7 +190,7 @@ int main(int argc, char *argv[]) {
     
     if(test_sss) {
         timer.reset();
-        LceSemiSyncSets * dataSSS = new LceSemiSyncSets{file};
+        LceSemiSyncSets * dataSSS = new LceSemiSyncSets(text);
         ts = timer.elapsed();
         log << "RESULT algo=construction structure=sss_lce time=" << ts << std::endl;
         lce_data_structures.push_back(dataSSS);

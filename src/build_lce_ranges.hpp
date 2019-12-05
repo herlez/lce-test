@@ -75,7 +75,7 @@ void build_lce_range(std::string& file, std::string output_folder, long prefix_l
     
     /* Construct the suffix array. */
     fprintf(stderr, "%ld bytes ... \n", text_length);
-    if(sais(T, SA, LCP, (int)text_length) != 0) {
+    if(saislcp(T, SA, LCP, (int)text_length) != 0) {
         fprintf(stderr, "Cannot allocate memory.\n");
         exit(EXIT_FAILURE);
     }
