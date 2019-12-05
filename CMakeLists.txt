@@ -1,56 +1,54 @@
-cmake_minimum_required (VERSION 3.5)
-project (lceTest)
+################################################################################
+# CMakeLists.txt
+#
+# Copyright (C) 2019 Alexander Herlez <alexander.herlez@tu-dortmund.de>
+# Copyright (C) 2019 Florian Kurpicz <florian.kurpicz@tu-dortmund.de>
+#
+# All rights reserved. Published under the BSD-2 license in the LICENSE file.
+################################################################################
 
-# configure a header file to pass some of the CMake settings
-# to the source code
-set(CMAKE_CXX_FLAGS " -DNDEBUG -Wall -std=c++17 -O3")
-set(CMAKE_C_FLAGS "-DNDEBUG -Wall -O3")
+cmake_minimum_required (VERSION 3.5)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+project (lce-test)
+
+# Compiler flags
+set(CMAKE_CXX_FLAGS
+  "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
+set(CMAKE_CXX_FLAGS_RELEASE
+  "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native -DNDEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -DDEBUG")
 
 # include ferrada's rmq implementation
-add_library(ferrada_rmq libs/rmq/RMQRMM64.cpp libs/rmq/includes/Basic_rmq.cpp)
+add_library(ferrada_rmq
+  extlib/rmq/RMQRMM64.cpp
+  extlib/rmq/includes/Basic_rmq.cpp)
 
 target_include_directories(ferrada_rmq PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libs>
-  $<INSTALL_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libs>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/extlib/rmq>
+  $<INSTALL_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/extlib/rmq>
 )
 
 # include command line parser from tlx
-add_library(tlx_command_line
-  libs/tlx/tlx/cmdline_parser.cpp
-  libs/tlx/tlx/string/parse_si_iec_units.cpp)
+add_library(tlx
+  extlib/tlx/tlx/cmdline_parser.cpp
+  extlib/tlx/tlx/string/parse_si_iec_units.cpp)
 
-target_include_directories(tlx_command_line PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libs/tlx/>
-  $<INSTALL_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libs/tlx/>
-)
-
-# include malloc_count
-add_library(malloc_count
-  libs/malloc_count/malloc_count.c
-  libs/malloc_count/stack_count.c
-)
-  
-target_include_directories(malloc_count PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libs/malloc_count/>
-  $<INSTALL_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libs/malloc_count/>
+target_include_directories(tlx PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/extlib/tlx/>
+  $<INSTALL_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/extlib/tlx/>
 )
 
 # include reworked version of sais_lite
 add_library(sais_lcp
-  libs/sais-lite-lcp/sais.c
+  extlib/sais-lite-lcp/sais.c
 )
 target_include_directories(sais_lcp PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libs/sais-lite-lcp/>
-  $<INSTALL_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libs/sais-lite-lcp/>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/extlib/sais-lite-lcp/>
+  $<INSTALL_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/extlib/sais-lite-lcp/>
 )
-  
 
-add_executable(bench_time ./src/bench_time.cpp)
-target_link_libraries(bench_time ferrada_rmq)
-target_link_libraries(bench_time tlx_command_line stdc++fs)
-target_link_libraries(bench_time sais_lcp)
+add_subdirectory(benchmark)
 
-
-# add_executable(bench_memory ./src/bench_memory.cpp)
-# target_link_libraries(bench_memory ferrada_rmq tlx_command_line sais_lcp)
-# target_link_libraries(bench_memory malloc_count -ldl)
+################################################################################

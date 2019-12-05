@@ -1,4 +1,4 @@
-#include <sais-lite-lcp/sais.h>
+#include "sais.h"
 #include <fstream>
 #include <iostream>
 #include <stdio.h>

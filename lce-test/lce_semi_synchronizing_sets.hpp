@@ -9,12 +9,13 @@
 
 #pragma once
 
+#include "util/io.hpp"
 #include "util/lce_interface.hpp"
-#include "util/util.hpp"
-#include "util/timer.hpp"
 #include "util/synchronizing_sets/bit_vector_rank.hpp"
 #include "util/synchronizing_sets/ring_buffer.hpp"
 #include "util/synchronizing_sets/lce-rmq.hpp"
+#include "util/timer.hpp"
+#include "util/util.hpp"
 
 #include <vector>
 #include <memory>
@@ -39,8 +40,8 @@ public:
   static constexpr uint64_t TwoPowTauModQ = calculatePowerModulo(10, kPrime);
 
 public:
-  LceSemiSyncSets(std::vector<uint8_t> const& text)
-    : text_(text.data()), text_length_in_bytes_(text.size()),
+  LceSemiSyncSets(std::string const& file_name)
+    : text_(load_text(file_name)), text_length_in_bytes_(text_.size()),
       s_bv_(std::make_unique<bit_vector>(text_length_in_bytes_)) {
 
     timer t;
@@ -65,7 +66,7 @@ public:
     size_t const fp_and_bv_time = t.get_and_reset();
     std::cout << "fp_and_bv_time " << fp_and_bv_time << std::endl;
 
-    lce_rmq_ = std::make_unique<Lce_rmq>(text_, text_length_in_bytes_,
+    lce_rmq_ = std::make_unique<Lce_rmq>(text_.data(), text_length_in_bytes_,
                                          sync_set_, s_fingerprints);
   }
 
@@ -102,7 +103,7 @@ public:
   }
 		
 private:
-  uint8_t const * const text_;
+  std::vector<uint8_t> const text_;
   size_t const text_length_in_bytes_;
 
   std::vector<uint64_t> sync_set_;

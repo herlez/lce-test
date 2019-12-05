@@ -15,7 +15,7 @@
 #include <vector>
 #include <algorithm> //std::sort
 #include <string>
-#include <rmq/includes/RMQRMM64.h>
+#include "RMQRMM64.h"
 
 #include "../timer.hpp"
 
