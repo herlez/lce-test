@@ -42,8 +42,8 @@ public:
   LceSemiSyncSets(std::vector<uint8_t> const& text)
     : text_(text.data()), text_length_in_bytes_(text.size()),
       s_bv_(std::make_unique<bit_vector>(text_length_in_bytes_)) {
-    timer t;
 
+    timer t;
     unsigned __int128 fp = 0;
     for(uint64_t i = 0; i < kTau; ++i) {
       fp *= 256;
@@ -51,9 +51,10 @@ public:
       fp %= kPrime;
     }
     ring_buffer<uint64_t> fingerprints(3*kTau);
+    std::vector<uint64_t> s_fingerprints;
     fingerprints.push_back(static_cast<uint64_t>(fp));
     fill_synchronizing_set(0, (text_length_in_bytes_ - (2*kTau)), fp,
-                           fingerprints);
+                           fingerprints, s_fingerprints);
 
     for(size_t i = 0; i < sync_set_.size(); ++i) {
       s_bv_->bitset(sync_set_[i], 1);
@@ -65,7 +66,7 @@ public:
     std::cout << "fp_and_bv_time " << fp_and_bv_time << std::endl;
 
     lce_rmq_ = std::make_unique<Lce_rmq>(text_, text_length_in_bytes_,
-                                         sync_set_);
+                                         sync_set_, s_fingerprints);
   }
 
   /* Answers the lce query for position i and j */
@@ -118,7 +119,8 @@ private:
 
   void fill_synchronizing_set(const uint64_t from, const uint64_t to,
                               unsigned __int128& fp,
-                              ring_buffer<uint64_t>& fingerprints) {
+                              ring_buffer<uint64_t>& fingerprints,
+                              std::vector<uint64_t>& out_s_fingerprints) {
 
     uint64_t min = 0;
     for (uint64_t i = from; i < to; ) {
@@ -133,6 +135,7 @@ private:
       }
       if(min == 0 || min == kTau) {
         sync_set_.push_back(i);
+        out_s_fingerprints.push_back(fingerprints[i]);
       }
 				
 				
@@ -142,6 +145,7 @@ private:
       while(i < to && i < local_min) {
         if(fingerprints[i+kTau] <= fingerprints[local_min]) {
           sync_set_.push_back(i);
+          out_s_fingerprints.push_back(fingerprints[i]);
           local_min = i + kTau; 
         }
         i++;

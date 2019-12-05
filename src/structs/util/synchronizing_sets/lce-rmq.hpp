@@ -76,7 +76,8 @@ class Lce_rmq {
 
 public:
   Lce_rmq(uint8_t const * const v_text, uint64_t const v_text_size,
-          std::vector<uint64_t> const& sync_set) 
+          std::vector<uint64_t> const& sync_set,
+          std::vector<uint64_t> const& s_fingerprints) 
     : text(v_text), text_size(v_text_size) {
     //Construct SA
 		
@@ -87,16 +88,45 @@ public:
 
     timer t;
 
-    std::vector<indexed_string> strings_to_sort;
-    for (uint64_t i = 0; i < sync_set.size(); ++i) {
-      strings_to_sort.emplace_back(sync_set[i], text, text_size, 1024 * 3);
-      // std::cout << "strings_to_sort.back() " << strings_to_sort.back() << std::endl;
+    std::vector<rank_tuple> rank_tuples;
+    rank_tuples.reserve(s_fingerprints.size());
+    for (size_t i = 0; i < s_fingerprints.size(); ++i) {
+      rank_tuples.emplace_back(i, s_fingerprints[i]);
     }
 
-    radixsort(strings_to_sort.data(), strings_to_sort.size());
+    std::sort(rank_tuples.begin(), rank_tuples.end(),
+              [](rank_tuple const& a, rank_tuple const& b) {
+                return a.rank < b.rank;
+    });
 
-    size_t const inssort_time = t.get_and_reset();
-    std::cout << "inssort_time " << inssort_time << std::endl;
+    uint64_t old_rank = 0;
+    uint32_t cur_rank = 0;
+    for (size_t i = 0; i < rank_tuples.size(); ++i) {
+      if (old_rank != rank_tuples[i].rank) {
+        old_rank = rank_tuples[i].rank;
+        ++cur_rank;
+      }
+      rank_tuples[i].rank = cur_rank;
+    }
+
+    std::sort(rank_tuples.begin(), rank_tuples.end(),
+              [](rank_tuple const& b, rank_tuple const& a) {
+                return a.index < b.index;
+    });
+
+    size_t const fp_sort = t.get_and_reset();
+    std::cout << "fp_sort " << fp_sort << std::endl;
+
+    // std::vector<indexed_string> strings_to_sort;
+    // for (uint64_t i = 0; i < sync_set.size(); ++i) {
+    //   strings_to_sort.emplace_back(sync_set[i], text, text_size, 1024 * 3);
+    //   // std::cout << "strings_to_sort.back() " << strings_to_sort.back() << std::endl;
+    // }
+
+    // radixsort(strings_to_sort.data(), strings_to_sort.size());
+
+    // size_t const inssort_time = t.get_and_reset();
+    // std::cout << "inssort_time " << inssort_time << std::endl;
 
     // std::cout << "CHECKING SORTING ";
     // bool correct = true;
@@ -117,32 +147,32 @@ public:
     //   std::cout << "EVERYTHING CORRECT" << std::endl;
     // }
 
-    t.reset();
+    // t.reset();
     
-    std::vector<rank_tuple> rank_tuples;
-    rank_tuples.reserve(strings_to_sort.size());
-    uint64_t cur_rank = 1;
-    rank_tuples.emplace_back(strings_to_sort[0].index(), cur_rank);
-    for (uint64_t i = 1; i < strings_to_sort.size(); ++i) {
-      uint64_t const max_length = std::min(strings_to_sort[i].max_length(),
-                                           strings_to_sort[i - 1].max_length());
-      uint64_t depth = 0;
-      while (depth < max_length &&
-             strings_to_sort[i][depth] == strings_to_sort[i - 1][depth]) {
-        ++depth;
-      }
-      if (strings_to_sort[i][depth] > strings_to_sort[i - 1][depth]) {
-        ++cur_rank;
-      }
-      rank_tuples.emplace_back(strings_to_sort[i].index(), cur_rank);
-    }
-    std::sort(rank_tuples.begin(), rank_tuples.end(),
-              [](rank_tuple const& lhs, rank_tuple const& rhs) {
-                return lhs.index < rhs.index;
-    });
+    // std::vector<rank_tuple> rank_tuples;
+    // rank_tuples.reserve(strings_to_sort.size());
+    // uint64_t cur_rank = 1;
+    // rank_tuples.emplace_back(strings_to_sort[0].index(), cur_rank);
+    // for (uint64_t i = 1; i < strings_to_sort.size(); ++i) {
+    //   uint64_t const max_length = std::min(strings_to_sort[i].max_length(),
+    //                                        strings_to_sort[i - 1].max_length());
+    //   uint64_t depth = 0;
+    //   while (depth < max_length &&
+    //          strings_to_sort[i][depth] == strings_to_sort[i - 1][depth]) {
+    //     ++depth;
+    //   }
+    //   if (strings_to_sort[i][depth] > strings_to_sort[i - 1][depth]) {
+    //     ++cur_rank;
+    //   }
+    //   rank_tuples.emplace_back(strings_to_sort[i].index(), cur_rank);
+    // }
+    // std::sort(rank_tuples.begin(), rank_tuples.end(),
+    //           [](rank_tuple const& lhs, rank_tuple const& rhs) {
+    //             return lhs.index < rhs.index;
+    // });
 
-    size_t const sort_rt_time = t.get_and_reset();
-    std::cout << "sort_rt_time " << sort_rt_time << std::endl;
+    // size_t const sort_rt_time = t.get_and_reset();
+    // std::cout << "sort_rt_time " << sort_rt_time << std::endl;
 
     std::vector<int32_t> new_text;
     std::vector<int32_t> new_sa(rank_tuples.size() + 1, 0);
@@ -173,17 +203,17 @@ public:
     size_t const old_sort_sa_time = t.get_and_reset();
     std::cout << "old_sort_sa_time " << old_sort_sa_time << std::endl;
 
-    bool sa_correct = true;
-    for (size_t i = 0; sa_correct && i < new_sa.size() - 1; ++i) {
-      if (static_cast<int32_t>(sa[i]) != new_sa[i + 1]) {
-        sa_correct = false;
-      }
-    }
-    if (!sa_correct) {
-      std::cout << "--- ARG, NEW_SA NOT CORRECT" << std::endl;
-    } else {
-      std::cout << "--- YAY, NEW_SA CORRECT" << std::endl;
-    }
+    // bool sa_correct = true;
+    // for (size_t i = 0;  i < new_sa.size() - 1; ++i) {
+    //   if (static_cast<int32_t>(sa[i]) != new_sa[i + 1]) {
+    //     sa_correct = false;
+    //   }
+    // }
+    // if (!sa_correct) {
+    //   std::cout << "--- ARG, NEW_SA NOT CORRECT" << std::endl;
+    // } else {
+    //   std::cout << "--- YAY, NEW_SA CORRECT" << std::endl;
+    // }
 
     // //Calculate IS
     // isa = std::vector<uint64_t>(sa.size(), 0);
