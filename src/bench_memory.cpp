@@ -13,11 +13,19 @@
 #include <stack_count.h>
 
 
-const string file_name = "english.1024MB";
-const string file = "../../text/" + file_name;
+string file_name = "english.1024MB";
+string file = "../../text/" + file_name;
 
 
 int main(int argc, char *argv[]) {
+    
+    if(argc != 2) {
+        std::cout << "usage: ./bench_memory FILE_PATH" << std::endl;
+        return EXIT_FAILURE;
+    }
+    file = argv[1];
+    std::cout << "File: " << file << std::endl;
+    
 	// Set up log to measure time
 	auto t = std::time(nullptr);
     auto tm = *std::localtime(&t);
@@ -30,8 +38,7 @@ int main(int argc, char *argv[]) {
 	log << "---" << std::endl;
 	
 	uint64_t mem1, mem2, mem3;
-	
-	
+ 
 	mem1 = malloc_count_current();
 	LceNaive dataN(file);
 	mem2 = malloc_count_current();

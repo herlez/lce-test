@@ -82,27 +82,27 @@ void build_lce_range(std::string& file, std::string output_folder, long prefix_l
     
     
     /* Extract LCE */
-	std::ofstream of0 {output_folder_name + "/lce_0", std::ofstream::out};
-	std::ofstream of1 {output_folder_name + "/lce_1", std::ofstream::out};
-	std::ofstream of2 {output_folder_name + "/lce_2", std::ofstream::out};
-	std::ofstream of3 {output_folder_name + "/lce_3", std::ofstream::out};
-	std::ofstream of4 {output_folder_name + "/lce_4", std::ofstream::out};
-	std::ofstream of5 {output_folder_name + "/lce_5", std::ofstream::out};
-	std::ofstream of6 {output_folder_name + "/lce_6", std::ofstream::out};
-	std::ofstream of7 {output_folder_name + "/lce_7", std::ofstream::out};
-	std::ofstream of8 {output_folder_name + "/lce_8", std::ofstream::out};
-	std::ofstream of9 {output_folder_name + "/lce_9", std::ofstream::out};
-	std::ofstream of10 {output_folder_name + "/lce_10", std::ofstream::out};
-	std::ofstream of11 {output_folder_name + "/lce_11", std::ofstream::out};
-	std::ofstream of12 {output_folder_name + "/lce_12", std::ofstream::out};
-	std::ofstream of13 {output_folder_name + "/lce_13", std::ofstream::out};
-	std::ofstream of14 {output_folder_name + "/lce_14", std::ofstream::out};
-	std::ofstream of15 {output_folder_name + "/lce_15", std::ofstream::out};
-	std::ofstream of16 {output_folder_name + "/lce_16", std::ofstream::out};
-	std::ofstream of17 {output_folder_name + "/lce_17", std::ofstream::out};
-	std::ofstream of18 {output_folder_name + "/lce_18", std::ofstream::out};
-	std::ofstream of19 {output_folder_name + "/lce_19", std::ofstream::out};
-	std::ofstream ofX {output_folder_name + "/lce_X", std::ofstream::out};
+    std::ofstream of0 {output_folder_name + "/lce_0", std::ofstream::out};
+    std::ofstream of1 {output_folder_name + "/lce_1", std::ofstream::out};
+    std::ofstream of2 {output_folder_name + "/lce_2", std::ofstream::out};
+    std::ofstream of3 {output_folder_name + "/lce_3", std::ofstream::out};
+    std::ofstream of4 {output_folder_name + "/lce_4", std::ofstream::out};
+    std::ofstream of5 {output_folder_name + "/lce_5", std::ofstream::out};
+    std::ofstream of6 {output_folder_name + "/lce_6", std::ofstream::out};
+    std::ofstream of7 {output_folder_name + "/lce_7", std::ofstream::out};
+    std::ofstream of8 {output_folder_name + "/lce_8", std::ofstream::out};
+    std::ofstream of9 {output_folder_name + "/lce_9", std::ofstream::out};
+    std::ofstream of10 {output_folder_name + "/lce_10", std::ofstream::out};
+    std::ofstream of11 {output_folder_name + "/lce_11", std::ofstream::out};
+    std::ofstream of12 {output_folder_name + "/lce_12", std::ofstream::out};
+    std::ofstream of13 {output_folder_name + "/lce_13", std::ofstream::out};
+    std::ofstream of14 {output_folder_name + "/lce_14", std::ofstream::out};
+    std::ofstream of15 {output_folder_name + "/lce_15", std::ofstream::out};
+    std::ofstream of16 {output_folder_name + "/lce_16", std::ofstream::out};
+    std::ofstream of17 {output_folder_name + "/lce_17", std::ofstream::out};
+    std::ofstream of18 {output_folder_name + "/lce_18", std::ofstream::out};
+    std::ofstream of19 {output_folder_name + "/lce_19", std::ofstream::out};
+    std::ofstream ofX {output_folder_name + "/lce_X", std::ofstream::out};
 	
   //FILE *lce0 = fopen( strcat(output_folder_name.c_str(), "/lce_0"), "w");
     

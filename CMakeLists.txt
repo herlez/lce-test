@@ -4,7 +4,8 @@ project (lceTest)
 # configure a header file to pass some of the CMake settings
 # to the source code
   
-set(CMAKE_CXX_FLAGS " -Wall -std=c++17 -O3")
+set(CMAKE_CXX_FLAGS " -DNDEBUG -Wall -std=c++17 -O3")
+set(CMAKE_C_FLAGS "-DNDEBUG -Wall -O3")
 
 # include ferrada's rmq implementation
 add_library(ferrada_rmq libs/rmq/RMQRMM64.cpp libs/rmq/includes/Basic_rmq.cpp)

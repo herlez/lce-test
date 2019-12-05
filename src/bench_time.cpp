@@ -8,20 +8,12 @@
 #include "build_lce_ranges.hpp"
 #include "structs/lce_naive.hpp"
 #include "structs/lce_naive_ultra.hpp"
-
 #include "structs/lce_prezza.hpp"
 #include "structs/lce_prezza_mersenne.hpp"
-
 #include "structs/lce_semi_synchronizing_sets.hpp"
 
 
-//#define benchmark_ordered_by_lce
-//#define benchmark_random
-//#define benchmark_complete
-
 using namespace std;
-
-
 
 bool benchmark_ordered = false;
 bool benchmark_random = false;
@@ -41,8 +33,11 @@ uint64_t number_of_runs;
 bool test_ultra_naive = false, test_naive = false, test_prezza_mersenne = false, test_prezza = false, test_sss = false;
 
 
-
 int main(int argc, char *argv[]) {
+    /************************************
+     *********PARSE COMMAND LINE*********
+     ************************************/
+    
     // Set up command line parser
     tlx::CmdlineParser cp;
     cp.set_description("This programs measures construction time and lce-query time"
@@ -80,16 +75,16 @@ int main(int argc, char *argv[]) {
         number_of_runs = 1;
         lce_from = 0;
         lce_to = 1;
-    } else if (mode == "ord" || mode == "o" || mode == "order" || mode == "ordered") {
-        benchmark_ordered = true;
-        number_of_lce_queries = 1'000'000ULL;
-		lce_from = lce_from;
-		lce_to = lce_to;
     } else if (mode == "rand" || mode == "r" || mode == "random") {
         benchmark_random = true;
         number_of_lce_queries = 10'000'000ULL;
         lce_from = 0;
         lce_to = 1;
+    }  else if (true || mode == "ord" || mode == "o" || mode == "order" || mode == "ordered") {
+        benchmark_ordered = true;
+        number_of_lce_queries = 1'000'000ULL;
+        lce_from = lce_from;
+        lce_to = lce_to;
     }
     
     if(prefix_length == 0) {
@@ -101,9 +96,6 @@ int main(int argc, char *argv[]) {
 		return EXIT_FAILURE;
 	}
 	
-    if(!benchmark_complete && !benchmark_ordered && !benchmark_random) {
-        benchmark_ordered = true;
-    }
     if(output_path.empty()) {
         output_path = "../test_results";
     }
@@ -118,16 +110,6 @@ int main(int argc, char *argv[]) {
     cp.print_result();
 
     
-    // We load the path to the precomputed lce queries
-    const string lce_path = "../res/" + file_name + "_" + std::to_string(prefix_length);
-    const array<string, 21> lce_set{lce_path + "/lce_0", lce_path + "/lce_1", lce_path + "/lce_2", lce_path + "/lce_3", lce_path + "/lce_4", lce_path + "/lce_5", lce_path + "/lce_6", lce_path + "/lce_7", lce_path + "/lce_8", lce_path + "/lce_9", lce_path + "/lce_10", lce_path + "/lce_11", lce_path + "/lce_12", lce_path + "/lce_13", lce_path + "/lce_14", lce_path + "/lce_15", lce_path + "/lce_16",lce_path + "/lce_17",lce_path + "/lce_18", lce_path + "/lce_19", lce_path + "/lce_X"};
-    
-    if(benchmark_ordered) {
-       build_lce_range(file, std::string("../res/") + file_name, prefix_length);
-    }
-    
-    
-    
     // Set up log to measure time
     auto t = std::time(nullptr);
     auto tm = *std::localtime(&t);
@@ -137,6 +119,18 @@ int main(int argc, char *argv[]) {
     ofstream log(output_path + string("/time-") + str + string(".txt"), ios::out|ios::trunc);
     log << "FILE: " << file << "   SIZE(Byte): " << util::calculateSizeOfInputFile(file) << "   PREFIX(Byte): " << prefix_length << std::endl;
     log << "---" << std::endl;
+    
+    
+    
+    
+    const string lce_path = "../res/" + file_name + "_" + std::to_string(prefix_length);
+    const array<string, 21> lce_set{lce_path + "/lce_0", lce_path + "/lce_1", lce_path + "/lce_2", lce_path + "/lce_3", lce_path + "/lce_4", lce_path + "/lce_5", lce_path + "/lce_6", lce_path + "/lce_7", lce_path + "/lce_8", lce_path + "/lce_9", lce_path + "/lce_10", lce_path + "/lce_11", lce_path + "/lce_12", lce_path + "/lce_13", lce_path + "/lce_14", lce_path + "/lce_15", lce_path + "/lce_16",lce_path + "/lce_17",lce_path + "/lce_18", lce_path + "/lce_19", lce_path + "/lce_X"};
+    if(benchmark_ordered) {
+        log << "Indices for sorted lce queries have not been computated yet. Computing them now..";
+        build_lce_range(file, std::string("../res/") + file_name, prefix_length);
+        log << "..done" << std::endl;
+    }
+    
     
 
     /************************************
@@ -217,6 +211,7 @@ int main(int argc, char *argv[]) {
         
         if(benchmark_ordered) {
             vector<uint64_t> v;
+            log << "loading indices for lce queries: " << lce_set[lce_from] << std::endl;
             ifstream lc(lce_set[lce_from], ios::in);
             util::inputErrorHandling(&lc);
             
@@ -227,12 +222,14 @@ int main(int argc, char *argv[]) {
             }
             
             if(v.size() == 0) {
-				continue;
-			}
-			for(uint64_t i = 0; i < number_of_lce_queries * 2; ++i) {
-				lce_indices[i] = v[i % v.size()];
-			}
-			
+                continue;
+            } else  {
+                log << v.size() << " indices loaded. Extending them to " << (2*number_of_lce_queries) << " indices." << std::endl;
+            }
+            for(uint64_t i = 0; i < number_of_lce_queries * 2; ++i) {
+                lce_indices[i] = v[i % v.size()];
+            }
+            
         }
 
         if(benchmark_random) {
