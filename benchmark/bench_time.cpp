@@ -27,31 +27,17 @@
 #include "lce_prezza_mersenne.hpp"
 #include "lce_semi_synchronizing_sets.hpp"
 
-
-using namespace std;
-
-bool benchmark_ordered = false;
-bool benchmark_random = false;
-bool benchmark_complete = false;
-
-uint64_t prefix_length = 0;
-unsigned int lce_from = 0;
-unsigned int lce_to = 21;
-
-std::string file{};
-std::string file_name{};
-std::string output_path{};
-
-uint64_t number_of_lce_queries;
-uint64_t number_of_runs;
-
-bool test_ultra_naive = false, test_naive = false, test_prezza_mersenne = false, test_prezza = false, test_sss = false;
-
-
 class lce_benchmark {
 
 public:
   void run() {
+    if (mode == "r") {
+      random_ = true;
+    } else if (mode == "s") {
+      sorted_ = true;
+    } else if (mode == "c") {
+      complete_ = true;
+    }
 
     // file_name = util::getFileName(file);
     // if (mode == "complete" || mode == "c" || mode == "comp" || mode == "compl") {
@@ -187,14 +173,34 @@ public:
             
     //   }
 
-    //   if(benchmark_random) {
-    //     uint64_t text_size = util::calculateSizeOfInputFile(file);
-    //     srand(time(NULL));
-    //     for(uint64_t i = 0; i < number_of_lce_queries * 2; ++i) {
-    //       lce_indices[i] = rand() % text_size;
-    //     }
-    //   }
+    std::vector<uint64_t> lce_indices(number_lce_queries * 2);
 
+    if(random_) {
+      std::srand(time(NULL));
+      for(uint64_t i = 0; i < number_lce_queries * 2; ++i) {
+        lce_indices[i] = rand() % lce_structure->getSizeInBytes();
+      }
+    }
+
+    tlx::Aggregate<size_t> random_queries_times;
+    tlx::Aggregate<size_t> lce_values;
+    for (size_t i = 0; i < runs; ++i) {
+      t.reset();
+      for (size_t j = 0; j < number_lce_queries * 2; j += 2) {
+        size_t const lce = lce_structure->lce(lce_indices[j],
+                                              lce_indices[j + 1]);
+        lce_values.add(lce);
+      }
+      random_queries_times.add(t.get_and_reset());
+    }
+
+    std::cout << "lce_values.min() " << lce_values.min() << std::endl;
+    std::cout << "lce_values.max() " << lce_values.max() << std::endl;
+    std::cout << "lce_values.avg() " << lce_values.avg() << std::endl;
+
+    std::cout << "random_queries_times.min() " << random_queries_times.min() << std::endl;
+    std::cout << "random_queries_times.max() " << random_queries_times.max() << std::endl;
+    std::cout << "random_queries_times.avg() " << random_queries_times.avg() << std::endl;
 
 
     //   /************************************
@@ -278,7 +284,7 @@ public:
 
   std::string mode;
 
-  size_t number_lce_queries;
+  size_t number_lce_queries = 1000000;
   uint32_t runs = 5;
 
   uint32_t lce_from = 0;
@@ -286,7 +292,7 @@ public:
 
 
 private:
-  bool ordered_ = false;
+  bool sorted_ = false;
   bool random_ = false;
   bool complete_ = false;
 }; // class lce_benchmark
