@@ -63,7 +63,7 @@ namespace rklce {
      * Build RK-LCP structure over the text stored at this path
      */
     LcePrezzaMersenne(std::vector<uint8_t>& text) : 
-      n_{text.size()}, text_{reinterpret_cast<char*>(text.data())} {
+      n_{text.size()}, text_{text.data()} {
         char_to_uint = vector<uint8_t>(256);
         uint_to_char = vector<char>(256);
 
@@ -77,7 +77,6 @@ namespace rklce {
           vector<bool> mapped(256, false);
 
           for (uint64_t i = 0; i < n_; ++i) {
-
             if (!mapped[text_[i]]) {
 
               mapped[text_[i]] = true;
@@ -89,7 +88,6 @@ namespace rklce {
             }
           }
         }
-
         assert(sigma_temp > 0);
 
         sigma = 1;
@@ -108,7 +106,6 @@ namespace rklce {
         // first block of the binary text_ is different than q and
         // the binary text_ size is a multiple of w
         pad = w - (n_ * log2_sigma) % w;
-
         // init binary text_ with the padding of zeros
         auto binary_text = vector<bool>(pad, false);
 
@@ -127,7 +124,6 @@ namespace rklce {
             }
           }
         }
-
         // build LCE structure of the binary text
         bin_lce = rk_lce_bin(binary_text);
       }
@@ -254,7 +250,7 @@ namespace rklce {
   
     // text length
     const uint64_t n_;
-    char * const text_;
+    uint8_t * const text_;
   
 
     // padding at the left of the text to reach a size multiple of B

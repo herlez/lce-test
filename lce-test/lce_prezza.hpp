@@ -21,16 +21,16 @@ class LcePrezza : public LceDataStructure {
 public:
   LcePrezza() = delete;
   /* Loads the full file located at PATH and builds Prezza's LCE data structure */
-  LcePrezza(std::vector<uint8_t>& text) :
-    text_length_in_bytes_(text.size()),
+  LcePrezza(uint64_t * const text, size_t const size)
+  : text_length_in_bytes_(size),
     text_length_in_blocks_(text_length_in_bytes_ / 8 +
                            (text_length_in_bytes_ % 8 == 0 ? 0 : 1)),
     prime_{util::getLow64BitPrime()},
-    fingerprints_(reinterpret_cast<uint64_t*>(text.data())),
+    fingerprints_(text),
     power_table_(new uint64_t[((int) std::log2(text_length_in_blocks_)) + 6]) {
       calculateFingerprints();
       calculatePowers();
-    }
+  }
 
 
   /* Fast LCE-query in O(log(n)) time */
@@ -72,8 +72,6 @@ public:
       comp_block_j = (block_j << offset_lce2) +
         ((block_j2 >> 1) >> (63-offset_lce2));
     }
-
-
 
     lce *= 8;
     /* If everything except the stub matches, we compare the stub character-wise
@@ -170,7 +168,7 @@ private:
         return fingerprints_[0];
       }
     } else {
-      unsigned __int128 x = fingerprints_[i-1] & 0x7FFFFFFFFFFFFFFFULL;
+      unsigned __int128 x = fingerprints_[i - 1] & 0x7FFFFFFFFFFFFFFFULL;
       x <<= 64;
       x %= prime_;
 

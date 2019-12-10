@@ -8,9 +8,7 @@
 
 #pragma once
 
-#include <inttypes.h>
-#include <string>
-#include <fstream>
+#include <cstdint>
 
 class LceDataStructure {
 public:
