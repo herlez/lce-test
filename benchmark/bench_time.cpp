@@ -184,6 +184,11 @@ public:
     }
     std::cout << "check=";
     if (check) {
+      // Create random queries for the test
+      std::srand(std::time(nullptr));
+      for(uint64_t i = 0; i < number_lce_queries * 2; ++i) {
+        lce_indices[i] = rand() % lce_structure->getSizeInBytes();
+      }
       std::vector<uint8_t> cmp_text = load_text(file_path, prefix_length);
       auto lce_naive = LceUltraNaive(cmp_text);
       bool correct = true;

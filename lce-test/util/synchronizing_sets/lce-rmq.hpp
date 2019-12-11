@@ -77,14 +77,6 @@ public:
           std::vector<uint64_t> const& sync_set,
           std::vector<uint64_t> const& s_fingerprints) 
     : text(v_text), text_size(v_text_size) {
-    //Construct SA
-		
-    std::vector<uint64_t> sa(sync_set.size());
-    for(uint64_t i = 0; i < sa.size(); ++i) {
-      sa[i] = i;
-    }
-
-    timer t;
 
     std::vector<rank_tuple> rank_tuples;
     rank_tuples.reserve(s_fingerprints.size());
@@ -112,171 +104,23 @@ public:
                 return a.index < b.index;
     });
 
-    size_t const fp_sort = t.get_and_reset();
-    std::cout << "fp_sort " << fp_sort << std::endl;
-
-    // std::vector<indexed_string> strings_to_sort;
-    // for (uint64_t i = 0; i < sync_set.size(); ++i) {
-    //   strings_to_sort.emplace_back(sync_set[i], text, text_size, 1024 * 3);
-    //   // std::cout << "strings_to_sort.back() " << strings_to_sort.back() << std::endl;
-    // }
-
-    // radixsort(strings_to_sort.data(), strings_to_sort.size());
-
-    // size_t const inssort_time = t.get_and_reset();
-    // std::cout << "inssort_time " << inssort_time << std::endl;
-
-    // std::cout << "CHECKING SORTING ";
-    // bool correct = true;
-    // for (size_t i = 0; correct && i < strings_to_sort.size() - 1; ++i) {
-    //   uint64_t max_length = std::min(strings_to_sort[i].max_length(),
-    //                                  strings_to_sort[i + 1].max_length());
-    //   uint64_t depth = 0;
-    //   while (depth < max_length &&
-    //          strings_to_sort[i][depth] == strings_to_sort[i + 1][depth]) {
-    //     ++depth;
-    //   }
-    //   correct = strings_to_sort[i][depth] <= strings_to_sort[i + 1][depth];
-    // }
-
-    // if (!correct) {
-    //   std::cout << "BOOOO" << std::endl;
-    // } else {
-    //   std::cout << "EVERYTHING CORRECT" << std::endl;
-    // }
-
-    // t.reset();
-    
-    // std::vector<rank_tuple> rank_tuples;
-    // rank_tuples.reserve(strings_to_sort.size());
-    // uint64_t cur_rank = 1;
-    // rank_tuples.emplace_back(strings_to_sort[0].index(), cur_rank);
-    // for (uint64_t i = 1; i < strings_to_sort.size(); ++i) {
-    //   uint64_t const max_length = std::min(strings_to_sort[i].max_length(),
-    //                                        strings_to_sort[i - 1].max_length());
-    //   uint64_t depth = 0;
-    //   while (depth < max_length &&
-    //          strings_to_sort[i][depth] == strings_to_sort[i - 1][depth]) {
-    //     ++depth;
-    //   }
-    //   if (strings_to_sort[i][depth] > strings_to_sort[i - 1][depth]) {
-    //     ++cur_rank;
-    //   }
-    //   rank_tuples.emplace_back(strings_to_sort[i].index(), cur_rank);
-    // }
-    // std::sort(rank_tuples.begin(), rank_tuples.end(),
-    //           [](rank_tuple const& lhs, rank_tuple const& rhs) {
-    //             return lhs.index < rhs.index;
-    // });
-
-    size_t const sort_rt_time = t.get_and_reset();
-    std::cout << "sort_rt_time " << sort_rt_time << std::endl;
-
     std::vector<int32_t> new_text;
     std::vector<int32_t> new_sa(rank_tuples.size() + 1, 0);
     new_text.reserve(rank_tuples.size());
-    tlx::Aggregate<int32_t> tmp;
     for (size_t i = 0; i < rank_tuples.size(); ++i) {
       new_text.push_back(static_cast<int32_t>(rank_tuples[i].rank));
-      tmp.add(new_text.back());
-      if (new_text.back() > new_sa.size()) {
-        std::cout << "ntb too big " << new_text.back() << std::endl;
-      }
-      if (new_text.back() <= 0) {
-        std::cout << "uh oh " << new_text.back() << std::endl;
-      }
     }
-    std::cout << "right before sais" << std::endl;
     new_text.push_back(0);
-
-    std::cout << tmp.max() << ", " << tmp.min() << std::endl;
-
     sais_int(new_text.data(), new_sa.data(), new_text.size(), 2*cur_rank + 5);
 
-    size_t const sais_time = t.get_and_reset();
-    std::cout << "sais_time " << sais_time << std::endl; 
-
-    /*std::sort(sa.begin(), sa.end(), [=](uint64_t i, uint64_t j) {
-      const uint64_t start_i = sync_set[i];
-      const uint64_t start_j = sync_set[j];
-      uint64_t max_lce = text_size - (start_i > start_j ? start_i : start_j);
-						
-      for(uint64_t k = 0; k < max_lce; ++k) {
-        if (text[start_i + k] != text[start_j + k]) {
-          return (text[start_i + k] < text[start_j + k]);
-        }
-      }
-      return i > j;
-    });
-
-    size_t const old_sort_sa_time = t.get_and_reset();
-    std::cout << "old_sort_sa_time " << old_sort_sa_time << std::endl;
-    */
-    // bool sa_correct = true;
-    // for (size_t i = 0;  i < new_sa.size() - 1; ++i) {
-    //   if (static_cast<int32_t>(sa[i]) != new_sa[i + 1]) {
-    //     sa_correct = false;
-    //   }
-    // }
-    // if (!sa_correct) {
-    //   std::cout << "--- ARG, NEW_SA NOT CORRECT" << std::endl;
-    // } else {
-    //   std::cout << "--- YAY, NEW_SA CORRECT" << std::endl;
-    // }
-
-    // //Calculate IS
-    // isa = std::vector<uint64_t>(sa.size(), 0);
     lcp = std::vector<uint64_t>(new_sa.size(), 0);
-    // for (size_t i = 0; i < sa.size(); ++i) {
-    //   isa[sa[i]] = i;
-    // }
-    // uint64_t cur_lcp = 0;
-    // for (size_t i = 0; i < sa.size(); ++i) {
-    //   if (TLX_LIKELY(isa[i] != 0)) {
-    //     uint64_t pre = sa[isa[i] - 1];
-    //     //uint64_t max_lcp = text_size - std::max<uint64_t>(i, pre);
-    //     while (text[i+cur_lcp] != 0 && text[i + cur_lcp] == text[pre + cur_lcp]) {
-    //       ++cur_lcp;
-    //     }
-    //     if (cur_lcp > 0) {
-    //       std::cout << "cur_lcp " << cur_lcp << std::endl;
-    //     }
-    //     lcp[isa[i]] = cur_lcp;
-    //     cur_lcp = (cur_lcp > 0) ? cur_lcp - 1 : 0;
-    //   }
-    // }
 
-
-    // size_t const lcp_time = t.get_and_reset();
-    // std::cout << "lcp_time " << lcp_time << std::endl;
-
-    //std::vector<uint64_t> lcp_old(sa.size());
     for(uint64_t i = 1; i < new_sa.size() - 1; ++i) {
       lcp[i] = lce_in_text(sync_set[new_sa[i]], sync_set[new_sa[i + 1]]);
     }
 
-    // size_t const lcp_time = t.get_and_reset();
-    // std::cout << "lcp_time " << lcp_time << std::endl;
-
-    // bool lcp_correct = true;
-    // for (size_t i = 0; i < lcp.size() - 1; ++i) {
-    //   if (lcp_old[i] != lcp[i + 1]) {
-    //     std::cout << "lcp_old[i] " << lcp_old[i] << std::endl;
-    //     std::cout << " lcp[i+1] " <<  lcp[i+1] << std::endl;
-    //     lcp_correct = false;
-    //   }
-    // }
-    // if (!lcp_correct) {
-    //   std::cout << "ARG, LCP NOT CORRECT" << std::endl;
-    // } else {
-    //   std::cout << "YAY, LCP CORRECT" << std::endl;
-    // }
-
     //Build RMQ data structure
-    // rmq_ds = new Rmq(lcp);
     rmq_ds1 = new RMQRMM64((long int*)lcp.data(), lcp.size());
-    // size_t const rmq_time = t.get_and_reset();
-    // std::cout << "rmq_time " << rmq_time << std::endl;
   }
 	
 
