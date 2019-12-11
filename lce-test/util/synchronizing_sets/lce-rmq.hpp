@@ -84,7 +84,7 @@ public:
       sa[i] = i;
     }
 
-//    timer t;
+    timer t;
 
     std::vector<rank_tuple> rank_tuples;
     rank_tuples.reserve(s_fingerprints.size());
@@ -112,8 +112,8 @@ public:
                 return a.index < b.index;
     });
 
-    // size_t const fp_sort = t.get_and_reset();
-    // std::cout << "fp_sort " << fp_sort << std::endl;
+    size_t const fp_sort = t.get_and_reset();
+    std::cout << "fp_sort " << fp_sort << std::endl;
 
     // std::vector<indexed_string> strings_to_sort;
     // for (uint64_t i = 0; i < sync_set.size(); ++i) {
@@ -169,23 +169,34 @@ public:
     //             return lhs.index < rhs.index;
     // });
 
-    // size_t const sort_rt_time = t.get_and_reset();
-    // std::cout << "sort_rt_time " << sort_rt_time << std::endl;
+    size_t const sort_rt_time = t.get_and_reset();
+    std::cout << "sort_rt_time " << sort_rt_time << std::endl;
 
     std::vector<int32_t> new_text;
     std::vector<int32_t> new_sa(rank_tuples.size() + 1, 0);
     new_text.reserve(rank_tuples.size());
+    tlx::Aggregate<int32_t> tmp;
     for (size_t i = 0; i < rank_tuples.size(); ++i) {
       new_text.push_back(static_cast<int32_t>(rank_tuples[i].rank));
+      tmp.add(new_text.back());
+      if (new_text.back() > new_sa.size()) {
+        std::cout << "ntb too big " << new_text.back() << std::endl;
+      }
+      if (new_text.back() <= 0) {
+        std::cout << "uh oh " << new_text.back() << std::endl;
+      }
     }
+    std::cout << "right before sais" << std::endl;
     new_text.push_back(0);
-    sais_int(new_text.data(), new_sa.data(), new_text.size(), cur_rank + 1);
 
-    // size_t const sais_time = t.get_and_reset();
-    // std::cout << "sais_time " << sais_time << std::endl;
-    
+    std::cout << tmp.max() << ", " << tmp.min() << std::endl;
 
-    std::sort(sa.begin(), sa.end(), [=](uint64_t i, uint64_t j) {
+    sais_int(new_text.data(), new_sa.data(), new_text.size(), 2*cur_rank + 5);
+
+    size_t const sais_time = t.get_and_reset();
+    std::cout << "sais_time " << sais_time << std::endl; 
+
+    /*std::sort(sa.begin(), sa.end(), [=](uint64_t i, uint64_t j) {
       const uint64_t start_i = sync_set[i];
       const uint64_t start_j = sync_set[j];
       uint64_t max_lce = text_size - (start_i > start_j ? start_i : start_j);
@@ -198,9 +209,9 @@ public:
       return i > j;
     });
 
-    // size_t const old_sort_sa_time = t.get_and_reset();
-    // std::cout << "old_sort_sa_time " << old_sort_sa_time << std::endl;
-
+    size_t const old_sort_sa_time = t.get_and_reset();
+    std::cout << "old_sort_sa_time " << old_sort_sa_time << std::endl;
+    */
     // bool sa_correct = true;
     // for (size_t i = 0;  i < new_sa.size() - 1; ++i) {
     //   if (static_cast<int32_t>(sa[i]) != new_sa[i + 1]) {
@@ -215,7 +226,7 @@ public:
 
     // //Calculate IS
     // isa = std::vector<uint64_t>(sa.size(), 0);
-    lcp = std::vector<uint64_t>(sa.size(), 0);
+    lcp = std::vector<uint64_t>(new_sa.size(), 0);
     // for (size_t i = 0; i < sa.size(); ++i) {
     //   isa[sa[i]] = i;
     // }
@@ -240,8 +251,8 @@ public:
     // std::cout << "lcp_time " << lcp_time << std::endl;
 
     //std::vector<uint64_t> lcp_old(sa.size());
-    for(uint64_t i = 1; i < sa.size(); ++i) {
-      lcp[i] = lce_in_text(sync_set[sa[i-1]], sync_set[sa[i]]);
+    for(uint64_t i = 1; i < new_sa.size() - 1; ++i) {
+      lcp[i] = lce_in_text(sync_set[new_sa[i]], sync_set[new_sa[i + 1]]);
     }
 
     // size_t const lcp_time = t.get_and_reset();
