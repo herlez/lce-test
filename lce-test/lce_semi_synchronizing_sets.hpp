@@ -14,6 +14,7 @@
 #include "util/synchronizing_sets/ring_buffer.hpp"
 #include "util/synchronizing_sets/lce-rmq.hpp"
 #include "util/util.hpp"
+#include <stash/pred/index.hpp>
 
 #include <vector>
 #include <memory>
@@ -54,6 +55,7 @@ public:
     fingerprints.push_back(static_cast<uint64_t>(fp));
     fill_synchronizing_set(0, (text_length_in_bytes_ - (2*kTau)), fp,
                            fingerprints, s_fingerprints);
+                      
 
     for(size_t i = 0; i < sync_set_.size(); ++i) {
       s_bv_->bitset(sync_set_[i], 1);
