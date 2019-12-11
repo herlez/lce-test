@@ -7,13 +7,14 @@
  * All rights reserved. Published under the BSD-2 license in the LICENSE file.
  ******************************************************************************/
 
+#include <malloc_count.h>
+
 #include <fstream>
 #include <sys/time.h>
 #include <vector>
 #include <iomanip>
 
 #include <filesystem>
-
 
 #include <memory>
 
@@ -62,8 +63,6 @@ public:
     if(sorted_) {
       build_lce_range(file_path, output_path + filename, prefix_length);
     }
-    
-    
 
     /************************************
      ****PREPARE LCE DATA STRUCTURES*****
@@ -74,6 +73,7 @@ public:
 
     timer t;
     tlx::Aggregate<size_t> construction_times;
+    tlx::Aggregate<size_t> construction_mem;
 
     std::cout << "RESULT "
               << "algo=" << print_algo_name() << " "
@@ -87,13 +87,17 @@ public:
         delete old_structure;
       }
       if (algorithm == "u") {
+        size_t const mem_before = malloc_count_current();
         t.reset();
         lce_structure = std::make_unique<LceUltraNaive>(text);
         construction_times.add(t.get_and_reset());
+        construction_mem.add(malloc_count_current() - mem_before);
       } else if (algorithm == "n") {
+        size_t const mem_before = malloc_count_current();
         t.reset();
         lce_structure = std::make_unique<LceNaive>(text);
         construction_times.add(t.get_and_reset());
+        construction_mem.add(malloc_count_current() - mem_before);
       } else if (algorithm == "m") {
         t.reset();
         lce_structure = std::make_unique<rklce::LcePrezzaMersenne>(text);
@@ -101,15 +105,19 @@ public:
       } else if (algorithm == "p") {
         // Make sure the text can be divided into 64 bit blocks
         text.resize(text.size() + (8 - (text.size() % 8)));
+        size_t const mem_before = malloc_count_current();
         t.reset();
         lce_structure =
           std::make_unique<LcePrezza>(reinterpret_cast<uint64_t*>(text.data()),
                                       text.size());
         construction_times.add(t.get_and_reset());
+        construction_mem.add(malloc_count_current() - mem_before);
       } else if (algorithm == "s") {
+        size_t const mem_before = malloc_count_current();
         t.reset();
         lce_structure = std::make_unique<LceSemiSyncSets>(text);
         construction_times.add(t.get_and_reset());
+        construction_mem.add(malloc_count_current() - mem_before);
       } else {
         return;
       }
@@ -117,10 +125,12 @@ public:
 
     std::cout << "construction_min_time=" << construction_times.min() << " "
               << "construction_max_time=" << construction_times.max() << " "
-              << "construction_avg_time=" << construction_times.avg() << " ";
+              << "construction_avg_time=" << construction_times.avg() << " "
 
-    std::cout << "input=" << file_path << " "
-              << "size=" << text.size() << " ";
+              << "input=" << file_path << " "
+              << "size=" << text.size() << " "
+
+              << "lce_mem=" << construction_mem.max() << " ";
 
     std::vector<uint64_t> lce_indices(number_lce_queries * 2);
     tlx::Aggregate<size_t> queries_times;
@@ -156,17 +166,21 @@ public:
         while(getline(lc, line)) {
           v.push_back(stoi(line, &sz));
         }
-        for(uint64_t i = 0; i < number_lce_queries * 2; ++i) {
-          lce_indices[i] = v[i % v.size()];
-        }
-        for (size_t i = 0; i < runs; ++i) {
-          t.reset();
-          for (size_t j = 0; j < number_lce_queries * 2; j += 2) {
-            size_t const lce = lce_structure->lce(lce_indices[j],
-                                                  lce_indices[j + 1]);
-            lce_values.add(lce);
+        lc.close();
+
+        if (v.size() > 0) {
+          for(uint64_t i = 0; i < number_lce_queries * 2; ++i) {
+            lce_indices[i] = v[i % v.size()];
           }
-          queries_times.add(t.get_and_reset());
+          for (size_t i = 0; i < runs; ++i) {
+            t.reset();
+            for (size_t j = 0; j < number_lce_queries * 2; j += 2) {
+              size_t const lce = lce_structure->lce(lce_indices[j],
+                                                    lce_indices[j + 1]);
+              lce_values.add(lce);
+            }
+            queries_times.add(t.get_and_reset());
+          }
         }
       }
     } else {
@@ -213,7 +227,7 @@ public:
 
 public:
   std::string file_path;
-  std::string output_path = "/tmp/res_lce";
+  std::string output_path = "/tmp/res_lce/";
   uint64_t prefix_length = 0;
 
   std::string algorithm = "u";
