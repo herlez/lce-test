@@ -1,16 +1,6 @@
 #ifndef BASIC_DRF_H_
 #define BASIC_DRF_H_
 
-#include <iostream>
-#include <fstream>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#include <sys/resource.h>
-#include <sys/time.h>
-#include <dirent.h>
-
 namespace rmqrmm {
 	#ifndef uchar // 1 byte
 	#define uchar unsigned char

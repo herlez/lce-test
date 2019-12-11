@@ -1,4 +1,7 @@
 # lce-test
+
+*WORK IN PROGRESS*
+
 Here are implementations and benchmarks of data structures, that answer 'Longest Common Extension' queries.
 
 Included data structures are:

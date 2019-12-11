@@ -1,18 +1,18 @@
 [submodule "libs/tlx"]
-	path = libs/tlx
+	path = extlib/tlx
 	url = https://github.com/tlx/tlx
 [submodule "libs/rmq"]
-	path = libs/rmq
+	path = extlib/rmq
 	url = https://github.com/hferrada/rmq
 [submodule "libs/stash"]
-	path = libs/stash
+	path = extlib/stash
 	url = https://github.com/pdinklag/stash/
 [submodule "libs/malloc_count"]
-	path = libs/malloc_count
+	path = extlib/malloc_count
 	url = https://github.com/bingmann/malloc_count
 [submodule "libs/sais-lite-lcp"]
-	path = libs/sais-lite-lcp
+	path = extlib/sais-lite-lcp
 	url = https://github.com/kurpicz/sais-lite-lcp
 [submodule "libs/rk-lce"]
-	path = libs/rk-lce
+	path = extlib/rk-lce
 	url = https://github.com/nicolaprezza/rk-lce
