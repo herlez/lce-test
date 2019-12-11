@@ -13,7 +13,8 @@
 
 namespace fs = std::filesystem;
 
-void build_lce_range(std::string& file, std::string output_folder, long prefix_length=0) {
+void build_lce_range(std::string const& file, std::string const& output_folder,
+                     long const prefix_length=0) {
     
   long text_length;
     
@@ -28,9 +29,12 @@ void build_lce_range(std::string& file, std::string output_folder, long prefix_l
   } else {
     output_folder_name = output_folder + "_" + std::to_string(prefix_length);
   }
-  std::cout << "output_folder_name.c_str() " << output_folder_name.c_str() << std::endl;
+  std::cout << "output_folder_name.c_str() " << output_folder_name.c_str()
+            << std::endl;
   if(!fs::create_directory(output_folder_name.c_str())) {
-    std::cout << "Folder for sorted lce queries could not get created. If it was already created and you want to calculate new values, delete the folder first." << std::endl;
+    std::cout << "Folder for sorted lce queries could not get created. "
+              << "If it was already created and you want to calculate new "
+              << "values, delete the folder first." << std::endl;
     return;
   }
 
@@ -227,8 +231,6 @@ void build_lce_range(std::string& file, std::string output_folder, long prefix_l
       }
     }
   }
-
-
    
   /* Deallocate memory. */
   free(SA);

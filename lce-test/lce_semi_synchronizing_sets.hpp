@@ -43,7 +43,6 @@ public:
     : text_(text), text_length_in_bytes_(text_.size()),
       s_bv_(std::make_unique<bit_vector>(text_length_in_bytes_)) {
 
-    timer t;
     unsigned __int128 fp = 0;
     for(uint64_t i = 0; i < kTau; ++i) {
       fp *= 256;
@@ -62,9 +61,6 @@ public:
     }
 			
     s_bvr_ = std::make_unique<bit_vector_rank>(*s_bv_);
-
-    size_t const fp_and_bv_time = t.get_and_reset();
-    std::cout << "fp_and_bv_time " << fp_and_bv_time << std::endl;
 
     lce_rmq_ = std::make_unique<Lce_rmq>(text_.data(), text_length_in_bytes_,
                                          sync_set_, s_fingerprints);

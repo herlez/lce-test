@@ -27,7 +27,8 @@ target_include_directories(bench_time PUBLIC
   ${PROJECT_SOURCE_DIR}/extlib/stash/include
 )
 
-target_link_libraries(bench_time ferrada_rmq tlx stdc++fs sais_lcp)
+target_link_libraries(bench_time
+  ferrada_rmq tlx stdc++fs sais_lcp malloc_count -ldl)
 
 # add_executable(bench_memory ./src/bench_memory.cpp)
 # target_link_libraries(bench_memory ferrada_rmq tlx_command_line sais_lcp)

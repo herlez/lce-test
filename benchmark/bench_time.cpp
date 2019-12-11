@@ -7,13 +7,14 @@
  * All rights reserved. Published under the BSD-2 license in the LICENSE file.
  ******************************************************************************/
 
+#include <malloc_count.h>
+
 #include <fstream>
 #include <sys/time.h>
 #include <vector>
 #include <iomanip>
 
 #include <filesystem>
-
 
 #include <memory>
 
@@ -42,20 +43,12 @@ public:
     } else if (mode == "c") {
       complete_ = true;
     }
-
-    // if(output_path.empty()) {
-    //   output_path = "../test_results";
-    // }
-    // if(!test_ultra_naive && !test_naive && !test_prezza_mersenne && !test_prezza && !test_sss) {
-    //   test_ultra_naive = test_naive = test_prezza_mersenne = test_prezza = test_sss = true;
-    // }
-    
-
     
     fs::path input_path(file_path);
     std::string const filename = input_path.filename();
     
-    const string lce_path = "/tmp/res_lce/" + filename + "_" + std::to_string(prefix_length);
+    const string lce_path = output_path + filename + "_" +
+      std::to_string(prefix_length);
     const array<string, 21> lce_set{lce_path + "/lce_0", lce_path + "/lce_1",
                                     lce_path + "/lce_2", lce_path + "/lce_3",
                                     lce_path + "/lce_4", lce_path + "/lce_5",
@@ -68,12 +61,8 @@ public:
                                     lce_path + "/lce_18", lce_path + "/lce_19",
                                     lce_path + "/lce_X"};
     if(sorted_) {
-      // log << "Indices for sorted lce queries have not been computated yet. Computing them now..";
-      build_lce_range(file_path, std::string("/tmp/res_lce/") + filename, prefix_length);
-      //log << "..done" << std::endl;
+      build_lce_range(file_path, output_path + filename, prefix_length);
     }
-    
-    
 
     /************************************
      ****PREPARE LCE DATA STRUCTURES*****
@@ -84,6 +73,12 @@ public:
 
     timer t;
     tlx::Aggregate<size_t> construction_times;
+    tlx::Aggregate<size_t> construction_mem;
+
+    std::cout << "RESULT "
+              << "algo=" << print_algo_name() << " "
+              << "runs=" << runs << " ";
+
     for (size_t i = 0; i < runs; ++i) {
       text = load_text(file_path, prefix_length);
 
@@ -91,15 +86,18 @@ public:
       if (old_structure != nullptr) {
         delete old_structure;
       }
-      
       if (algorithm == "u") {
+        size_t const mem_before = malloc_count_current();
         t.reset();
         lce_structure = std::make_unique<LceUltraNaive>(text);
         construction_times.add(t.get_and_reset());
+        construction_mem.add(malloc_count_current() - mem_before);
       } else if (algorithm == "n") {
+        size_t const mem_before = malloc_count_current();
         t.reset();
         lce_structure = std::make_unique<LceNaive>(text);
         construction_times.add(t.get_and_reset());
+        construction_mem.add(malloc_count_current() - mem_before);
       } else if (algorithm == "m") {
         t.reset();
         lce_structure = std::make_unique<rklce::LcePrezzaMersenne>(text);
@@ -107,71 +105,104 @@ public:
       } else if (algorithm == "p") {
         // Make sure the text can be divided into 64 bit blocks
         text.resize(text.size() + (8 - (text.size() % 8)));
+        size_t const mem_before = malloc_count_current();
         t.reset();
         lce_structure =
           std::make_unique<LcePrezza>(reinterpret_cast<uint64_t*>(text.data()),
                                       text.size());
         construction_times.add(t.get_and_reset());
+        construction_mem.add(malloc_count_current() - mem_before);
       } else if (algorithm == "s") {
+        size_t const mem_before = malloc_count_current();
         t.reset();
         lce_structure = std::make_unique<LceSemiSyncSets>(text);
         construction_times.add(t.get_and_reset());
-      }      
+        construction_mem.add(malloc_count_current() - mem_before);
+      } else {
+        return;
+      }
     }
 
-    std::cout << "construction_times.min() " << construction_times.min() << std::endl;
-    std::cout << "construction_times.max() " << construction_times.max() << std::endl;
-    std::cout << "construction_times.avg() " << construction_times.avg() << std::endl;
+    std::cout << "construction_min_time=" << construction_times.min() << " "
+              << "construction_max_time=" << construction_times.max() << " "
+              << "construction_avg_time=" << construction_times.avg() << " "
+
+              << "input=" << file_path << " "
+              << "size=" << text.size() << " "
+
+              << "lce_mem=" << construction_mem.max() << " ";
 
     std::vector<uint64_t> lce_indices(number_lce_queries * 2);
+    tlx::Aggregate<size_t> queries_times;
+    tlx::Aggregate<size_t> lce_values;
 
+    std::cout << "lce_query_type=";
     if(random_) {
+      std::cout << "random ";
       std::srand(std::time(nullptr));
       for(uint64_t i = 0; i < number_lce_queries * 2; ++i) {
         lce_indices[i] = rand() % lce_structure->getSizeInBytes();
       }
+      for (size_t i = 0; i < runs; ++i) {
+        t.reset();
+        for (size_t j = 0; j < number_lce_queries * 2; j += 2) {
+          size_t const lce = lce_structure->lce(lce_indices[j],
+                                                lce_indices[j + 1]);
+          lce_values.add(lce);
+        }
+        queries_times.add(t.get_and_reset());
+      }
     } else if (sorted_) {
-      vector<uint64_t> v;
-      //log << "loading indices for lce queries: " << lce_set[lce_from] << std::endl;
-      std::ifstream lc(lce_set[lce_from], ios::in);
-      util::inputErrorHandling(&lc);
+      std::cout << "sorted "
+                << "from=" << lce_from << " "
+                << "to=" << lce_to << " ";
+      for (size_t i = lce_from; i < lce_to; ++i) {
+        vector<uint64_t> v;
+        std::ifstream lc(lce_set[i], ios::in);
+        util::inputErrorHandling(&lc);
             
-      string line;
-      string::size_type sz;
-      while(getline(lc, line)) {
-        v.push_back(stoi(line, &sz));
+        string line;
+        string::size_type sz;
+        while(getline(lc, line)) {
+          v.push_back(stoi(line, &sz));
+        }
+        lc.close();
+
+        if (v.size() > 0) {
+          for(uint64_t i = 0; i < number_lce_queries * 2; ++i) {
+            lce_indices[i] = v[i % v.size()];
+          }
+          for (size_t i = 0; i < runs; ++i) {
+            t.reset();
+            for (size_t j = 0; j < number_lce_queries * 2; j += 2) {
+              size_t const lce = lce_structure->lce(lce_indices[j],
+                                                    lce_indices[j + 1]);
+              lce_values.add(lce);
+            }
+            queries_times.add(t.get_and_reset());
+          }
+        }
       }
-            
-      if(v.size() > 0) {
-        //log << v.size() << " indices loaded. Extending them to " << (2*number_of_lce_queries) << " indices." << std::endl;
-      }
-      for(uint64_t i = 0; i < number_lce_queries * 2; ++i) {
-        lce_indices[i] = v[i % v.size()];
-      }
+    } else {
+      std::cout << "none ";
     }
 
-    tlx::Aggregate<size_t> random_queries_times;
-    tlx::Aggregate<size_t> lce_values;
-    for (size_t i = 0; i < runs; ++i) {
-      t.reset();
-      for (size_t j = 0; j < number_lce_queries * 2; j += 2) {
-        size_t const lce = lce_structure->lce(lce_indices[j],
-                                              lce_indices[j + 1]);
-        lce_values.add(lce);
-      }
-      random_queries_times.add(t.get_and_reset());
+    if (random_ || sorted_) {
+      std::cout << "lce_values_min=" << lce_values.min() << " "
+                << "lce_values_max=" << lce_values.max() << " "
+                << "lce_values_avg=" << lce_values.avg() << " "
+                << "lce_values_count=" << lce_values.count() << " "
+                << "queries_times_min=" << queries_times.min() << " "
+                << "queries_times_max=" << queries_times.max() << " "
+                << "queries_times_avg=" << queries_times.avg() << " ";
     }
-
-    std::cout << "lce_values.min() " << lce_values.min() << std::endl;
-    std::cout << "lce_values.max() " << lce_values.max() << std::endl;
-    std::cout << "lce_values.avg() " << lce_values.avg() << std::endl;
-    std::cout << "lce_values.count() " << lce_values.count() << std::endl;
-
-    std::cout << "random_queries_times.min() " << random_queries_times.min() << std::endl;
-    std::cout << "random_queries_times.max() " << random_queries_times.max() << std::endl;
-    std::cout << "random_queries_times.avg() " << random_queries_times.avg() << std::endl;
-
+    std::cout << "check=";
     if (check) {
+      // Create random queries for the test
+      std::srand(std::time(nullptr));
+      for(uint64_t i = 0; i < number_lce_queries * 2; ++i) {
+        lce_indices[i] = rand() % lce_structure->getSizeInBytes();
+      }
       std::vector<uint8_t> cmp_text = load_text(file_path, prefix_length);
       auto lce_naive = LceUltraNaive(cmp_text);
       bool correct = true;
@@ -183,21 +214,23 @@ public:
         correct = (lce_res == lce_res_naive);
       }
       if (!correct) {
-        std::cout << "boo" << std::endl;
+        std::cout << "failed";
       } else {
-        std::cout << "Everything correct" << std::endl;
+        std::cout << "passed";
       }
+    } else {
+      std::cout << "none";
     }
-    
+    std::cout << std::endl;
   }
 
 
 public:
   std::string file_path;
-  std::string output_path;
+  std::string output_path = "/tmp/res_lce/";
   uint64_t prefix_length = 0;
 
-  std::string algorithm;
+  std::string algorithm = "u";
 
   bool check = false;
 
@@ -209,6 +242,23 @@ public:
   uint32_t lce_from = 0;
   uint32_t lce_to = 21;
 
+
+private:
+  std::string print_algo_name() {
+    std::string name("unknown");
+    if (algorithm == "u") {
+      name = "ultra_naive";
+    } else if (algorithm == "n") {
+      name = "naive";
+    } else if (algorithm == "m") {
+      name = "prezza_mersenne";
+    } else if (algorithm == "p") {
+      name = "prezza";
+    } else if (algorithm == "s") {
+      name = "sss";
+    }
+    return name;
+  }
 
 private:
   bool sorted_ = false;
@@ -227,16 +277,17 @@ int32_t main(int argc, char *argv[]) {
 
   cp.add_param_string("file", lce_bench.file_path, "The for from which the LCE "
                       "data structures are build.");
-  cp.add_string('o', "output_path", lce_bench.output_path, "Path where result "
-                "file are saved here (optional).");
+  cp.add_string('o', "output_path", lce_bench.output_path, "Path where LCE "
+                "queries for [-m]ode [s]orted are stored "
+                "(default: /tmp/res_lce).");
   cp.add_bytes('p', "pre", lce_bench.prefix_length, "Size of the prefix in "
                "bytes that will be read (optional).");
   cp.add_string('a', "algorithm", lce_bench.algorithm, "LCP data structure "
-                "that is computed: [u]ltra naive, [n]aive, prezza [m]ersenne, "
-                "[p]rezza, or [s]tring synchronizing sets.");
+                "that is computed: [u]ltra naive (default), [n]aive, "
+                "prezza [m]ersenne, [p]rezza, or [s]tring synchronizing sets.");
   cp.add_flag('c', "check", lce_bench.check, "Check correctness of LCE queries "
               "by comparing with results of naive computation.");
-  cp.add_string('M', "mode", lce_bench.mode, "Test mode: [r]andom, [c]omplete, "
+  cp.add_string('m', "mode", lce_bench.mode, "Test mode: [r]andom, [c]omplete, "
                 "or [s]orted.");
   cp.add_size_t('q', "queries", lce_bench.number_lce_queries, "Number of LCE "
               "queries that are executed (default=1,000,000).");
