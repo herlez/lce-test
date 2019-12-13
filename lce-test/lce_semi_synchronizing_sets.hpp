@@ -40,8 +40,8 @@ public:
 
 public:
   LceSemiSyncSets(std::vector<uint8_t> const& text)
-    : text_(text), text_length_in_bytes_(text_.size()),
-      s_bv_(std::make_unique<bit_vector>(text_length_in_bytes_)) {
+    : text_(text), text_length_in_bytes_(text_.size()) {
+    //, s_bv_(std::make_unique<bit_vector>(text_length_in_bytes_)) {
 
     unsigned __int128 fp = 0;
     for(uint64_t i = 0; i < kTau; ++i) {
@@ -54,14 +54,15 @@ public:
     fingerprints.push_back(static_cast<uint64_t>(fp));
     fill_synchronizing_set(0, (text_length_in_bytes_ - (2*kTau)), fp,
                            fingerprints, s_fingerprints);
-                      
-
-    for(size_t i = 0; i < sync_set_.size(); ++i) {
-      s_bv_->bitset(sync_set_[i], 1);
-    }
-			
-    s_bvr_ = std::make_unique<bit_vector_rank>(*s_bv_);
-
+    
+    ind_ = std::make_unique<stash::pred::index<std::vector<uint64_t>, uint64_t, 8>>(sync_set_);         
+    
+    
+    //~ for(size_t i = 0; i < sync_set_.size(); ++i) {
+      //~ s_bv_->bitset(sync_set_[i], 1);
+    //~ }
+    //~ s_bvr_ = std::make_unique<bit_vector_rank>(*s_bv_);
+    
     lce_rmq_ = std::make_unique<Lce_rmq>(text_.data(), text_length_in_bytes_,
                                          sync_set_, s_fingerprints);
   }
@@ -77,35 +78,36 @@ public:
         return k;
       }
     }
-			
+
     /* strSync part */
     uint64_t const i_ = suc(i);
     uint64_t const j_ = suc(j);
-    uint64_t const l = lce_rmq_->lce(i_, j_);			
+    uint64_t const l = lce_rmq_->lce(i_, j_);
     return l + sync_set_[i_] - i;
   }
-		
+        
   char operator[](uint64_t i) {
     if(i > text_length_in_bytes_) {return '\00';}
     return text_[i];
   }
-		
+    
   int isSmallerSuffix([[maybe_unused]] const uint64_t i,
                       [[maybe_unused]] const uint64_t j) {
     return 0;
   }
-		
+    
   size_t getSizeInBytes() {
     return text_length_in_bytes_;
   }
-		
+    
 private:
 
   /* Finds the smallest element that is greater or equal to i
      Because s_ is ordered, that is equal to the 
      first element greater than i */
   inline uint64_t suc(uint64_t i) const {
-    return s_bvr_->rank1(i);
+    //return s_bvr_->rank1(i);
+    return ind_->successor(i).pos;
   }
 
   void fill_synchronizing_set(const uint64_t from, const uint64_t to,
@@ -128,8 +130,8 @@ private:
         sync_set_.push_back(i);
         out_s_fingerprints.push_back(fingerprints[i]);
       }
-				
-				
+            
+            
       uint64_t local_min = i + min;
       ++i;
       calculate_fingerprints(1, fp, fingerprints);
@@ -168,10 +170,11 @@ private:
 private:
   std::vector<uint8_t> const& text_;
   size_t const text_length_in_bytes_;
-
+  
+  std::unique_ptr<stash::pred::index<std::vector<uint64_t>, uint64_t, 8>> ind_;
   std::vector<uint64_t> sync_set_;
-  std::unique_ptr<bit_vector> s_bv_;
-  std::unique_ptr<bit_vector_rank> s_bvr_;
+  //std::unique_ptr<bit_vector> s_bv_;
+  //std::unique_ptr<bit_vector_rank> s_bvr_;
   std::unique_ptr<Lce_rmq> lce_rmq_;
 };
 
