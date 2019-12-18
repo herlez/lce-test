@@ -119,8 +119,13 @@ public:
       lcp[i] = lce_in_text(sync_set[new_sa[i]], sync_set[new_sa[i + 1]]);
     }
 
+    isa.resize(new_sa.size() - 1);
+    for(uint64_t i = 1; i < new_sa.size(); ++i) {
+      isa[new_sa[i] - 1] = i - 1;
+    }
+
     //Build RMQ data structure
-    rmq_ds1 = new RMQRMM64((long int*)lcp.data(), lcp.size());
+    rmq_ds1 = std::make_unique<RMQRMM64>((long int*)lcp.data(), lcp.size());
   }
 	
 
@@ -148,7 +153,7 @@ private:
   std::vector<uint64_t> isa;
   std::vector<uint64_t> lcp;
   //Rmq * rmq_ds;
-  RMQRMM64 * rmq_ds1;
+  std::unique_ptr<RMQRMM64> rmq_ds1;
 
   void inline inssort(indexed_string* strings, size_t n, int64_t depth = 0) {
     if (n <= 1) {

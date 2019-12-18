@@ -57,12 +57,6 @@ public:
     
     ind_ = std::make_unique<stash::pred::index<std::vector<uint64_t>, uint64_t, 8>>(sync_set_);         
     
-    
-    //~ for(size_t i = 0; i < sync_set_.size(); ++i) {
-      //~ s_bv_->bitset(sync_set_[i], 1);
-    //~ }
-    //~ s_bvr_ = std::make_unique<bit_vector_rank>(*s_bv_);
-    
     lce_rmq_ = std::make_unique<Lce_rmq>(text_.data(), text_length_in_bytes_,
                                          sync_set_, s_fingerprints);
   }
@@ -73,19 +67,20 @@ public:
       return text_length_in_bytes_ - i;
     }
     /* naive part */
-    for(unsigned int k = 0; k < (3*kTau-1); ++k) {
+    uint32_t const max_lcp = std::min(3*kTau-1,
+                                      text_length_in_bytes_ - std::max(i,j));
+    for(unsigned int k = 0; k < max_lcp; ++k) {
       if(text_[i+k] != text_[j+k]) {
         return k;
       }
     }
-
     /* strSync part */
     uint64_t const i_ = suc(i);
     uint64_t const j_ = suc(j);
     uint64_t const l = lce_rmq_->lce(i_, j_);
     return l + sync_set_[i_] - i;
   }
-        
+
   char operator[](uint64_t i) {
     if(i > text_length_in_bytes_) {return '\00';}
     return text_[i];
