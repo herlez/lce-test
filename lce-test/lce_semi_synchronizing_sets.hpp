@@ -33,11 +33,11 @@ static constexpr uint64_t calculatePowerModulo(unsigned int const power,
 /* This class stores a text as an array of characters and 
  * answers LCE-queries with the naive method. */
 
+template <uint64_t kTau = 1024>
 class LceSemiSyncSets : public LceDataStructure {
 
 public:
   static constexpr __int128 kPrime = 18446744073709551557ULL;
-  static constexpr uint64_t kTau = 1024;
   static constexpr uint64_t TwoPowTauModQ = calculatePowerModulo(10, kPrime);
 
 public:
