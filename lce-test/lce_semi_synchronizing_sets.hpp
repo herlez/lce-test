@@ -16,6 +16,8 @@
 #include "util/util.hpp"
 #include <stash/pred/index.hpp>
 
+#include <tlx/define/likely.hpp>
+
 #include <vector>
 #include <memory>
 
@@ -56,26 +58,48 @@ public:
                            fingerprints, s_fingerprints);
     
     ind_ = std::make_unique<stash::pred::index<std::vector<uint64_t>, uint64_t, 8>>(sync_set_);         
-    
-    
-    //~ for(size_t i = 0; i < sync_set_.size(); ++i) {
-      //~ s_bv_->bitset(sync_set_[i], 1);
-    //~ }
-    //~ s_bvr_ = std::make_unique<bit_vector_rank>(*s_bv_);
-    
+
     lce_rmq_ = std::make_unique<Lce_rmq>(text_.data(), text_length_in_bytes_,
                                          sync_set_, s_fingerprints);
   }
 
   /* Answers the lce query for position i and j */
   inline uint64_t lce(const uint64_t i, const uint64_t j) {
-    if (i == j) {
+    if (TLX_UNLIKELY(i == j)) {
       return text_length_in_bytes_ - i;
     }
     /* naive part */
-    for(unsigned int k = 0; k < (3*kTau-1); ++k) {
-      if(text_[i+k] != text_[j+k]) {
-        return k;
+    uint64_t const sync_length = 3 * kTau - 1;
+    uint64_t const max_length = text_length_in_bytes_ > sync_length ?
+      (text_length_in_bytes_ - ((i < j) ? j : i)) :
+      (sync_length - ((i < j) ? j : i));
+
+    uint64_t lce = 0;
+    for (; lce < 8; ++lce) {
+      if (TLX_UNLIKELY(lce >= max_length)) {
+        return max_length;
+      }
+      if(text_[i + lce] != text_[j + lce]) {
+        return lce;
+      }
+    }
+
+    lce = 0;
+    unsigned __int128 const* const text_blocks_i =
+      reinterpret_cast<unsigned __int128 const*>(text_.data() + i);
+    unsigned __int128 const * const text_blocks_j =
+      reinterpret_cast<unsigned __int128 const *>(text_.data() + j);
+    for(; lce < max_length/16; ++lce) {
+      if(text_blocks_i[lce] != text_blocks_j[lce]) {
+        break;
+      }
+    }
+    lce *= 16;
+    // The last block did not match. Here we compare its single characters
+    uint64_t lce_end = lce + ((16 < max_length) ? 16 : max_length);
+    for (; lce < lce_end; ++lce) {
+      if(text_[i + lce] != text_[j + lce]) {
+        return lce;
       }
     }
 
