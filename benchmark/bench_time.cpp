@@ -47,8 +47,8 @@ public:
     fs::path input_path(file_path);
     std::string const filename = input_path.filename();
     
-    const string lce_path = output_path + filename + "_" +
-      std::to_string(prefix_length);
+    const string lce_path = output_path + filename + ((prefix_length > 0) ? "_" +
+      std::to_string(prefix_length) : "");
     const array<string, 21> lce_set{lce_path + "/lce_0", lce_path + "/lce_1",
                                     lce_path + "/lce_2", lce_path + "/lce_3",
                                     lce_path + "/lce_4", lce_path + "/lce_5",
@@ -63,7 +63,7 @@ public:
     if(sorted_) {
       build_lce_range(file_path, output_path + filename, prefix_length);
     }
-
+    
     /************************************
      ****PREPARE LCE DATA STRUCTURES*****
      ************************************/
@@ -115,7 +115,19 @@ public:
       } else if (algorithm == "s") {
         size_t const mem_before = malloc_count_current();
         t.reset();
-        lce_structure = std::make_unique<LceSemiSyncSets>(text);
+        lce_structure = std::make_unique<LceSemiSyncSets<>>(text);
+        construction_times.add(t.get_and_reset());
+        construction_mem.add(malloc_count_current() - mem_before);
+      } else if (algorithm == "s512") {
+        size_t const mem_before = malloc_count_current();
+        t.reset();
+        lce_structure = std::make_unique<LceSemiSyncSets<512>>(text);
+        construction_times.add(t.get_and_reset());
+        construction_mem.add(malloc_count_current() - mem_before);
+      } else if (algorithm == "s256") {
+        size_t const mem_before = malloc_count_current();
+        t.reset();
+        lce_structure = std::make_unique<LceSemiSyncSets<256>>(text);
         construction_times.add(t.get_and_reset());
         construction_mem.add(malloc_count_current() - mem_before);
       } else {
@@ -158,6 +170,7 @@ public:
                 << "to=" << lce_to << " ";
       for (size_t i = lce_from; i < lce_to; ++i) {
         vector<uint64_t> v;
+        std::cout << "lce_set[i] " << lce_set[i] << std::endl;
         std::ifstream lc(lce_set[i], ios::in);
         util::inputErrorHandling(&lc);
             
@@ -255,7 +268,11 @@ private:
     } else if (algorithm == "p") {
       name = "prezza";
     } else if (algorithm == "s") {
-      name = "sss";
+      name = "sss1024";
+    } else if (algorithm == "s512") {
+      name = "sss512";
+    } else if (algorithm == "s256") {
+      name = "sss256";
     }
     return name;
   }
@@ -284,7 +301,9 @@ int32_t main(int argc, char *argv[]) {
                "bytes that will be read (optional).");
   cp.add_string('a', "algorithm", lce_bench.algorithm, "LCP data structure "
                 "that is computed: [u]ltra naive (default), [n]aive, "
-                "prezza [m]ersenne, [p]rezza, or [s]tring synchronizing sets.");
+                "prezza [m]ersenne, [p]rezza, or [s]tring synchronizing sets "
+                " with Tau = 1024. [s512] and [s256] for Tau = 512 and 256, "
+                "resp.");
   cp.add_flag('c', "check", lce_bench.check, "Check correctness of LCE queries "
               "by comparing with results of naive computation.");
   cp.add_string('m', "mode", lce_bench.mode, "Test mode: [r]andom, [c]omplete, "

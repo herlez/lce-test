@@ -61,6 +61,8 @@ public:
 
     lce_rmq_ = std::make_unique<Lce_rmq>(text_.data(), text_length_in_bytes_,
                                          sync_set_, s_fingerprints);
+
+    std::cout << "getSyncSetSize() " << getSyncSetSize() << std::endl;
   }
 
   /* Answers the lce query for position i and j */
@@ -70,9 +72,16 @@ public:
     }
     /* naive part */
     uint64_t const sync_length = 3 * kTau - 1;
-    uint64_t const max_length = text_length_in_bytes_ > sync_length ?
-      (text_length_in_bytes_ - ((i < j) ? j : i)) :
-      (sync_length - ((i < j) ? j : i));
+    // uint64_t const max_length = text_length_in_bytes_ < sync_length ?
+    //   (text_length_in_bytes_ - ((i < j) ? j : i)) :
+    //   (sync_length - ((i < j) ? j : i));
+    uint64_t const max_length = (i < j) ?
+      ((sync_length + j > text_length_in_bytes_) ?
+       (sync_length + j) - text_length_in_bytes_  :
+       sync_length) :
+      ((sync_length + i > text_length_in_bytes_) ?
+       (sync_length + i) - text_length_in_bytes_  :
+       sync_length);
 
     uint64_t lce = 0;
     for (; lce < 8; ++lce) {
@@ -106,6 +115,7 @@ public:
     /* strSync part */
     uint64_t const i_ = suc(i);
     uint64_t const j_ = suc(j);
+
     uint64_t const l = lce_rmq_->lce(i_, j_);
     return l + sync_set_[i_] - i;
   }
@@ -123,7 +133,11 @@ public:
   size_t getSizeInBytes() {
     return text_length_in_bytes_;
   }
-    
+
+  size_t getSyncSetSize() {
+    return sync_set_.size();
+  }
+
 private:
 
   /* Finds the smallest element that is greater or equal to i
@@ -197,8 +211,6 @@ private:
   
   std::unique_ptr<stash::pred::index<std::vector<uint64_t>, uint64_t, 8>> ind_;
   std::vector<uint64_t> sync_set_;
-  //std::unique_ptr<bit_vector> s_bv_;
-  //std::unique_ptr<bit_vector_rank> s_bvr_;
   std::unique_ptr<Lce_rmq> lce_rmq_;
 };
 
