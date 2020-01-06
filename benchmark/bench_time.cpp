@@ -112,22 +112,34 @@ public:
                                       text.size());
         construction_times.add(t.get_and_reset());
         construction_mem.add(malloc_count_current() - mem_before);
-      } else if (algorithm == "s") {
+      } else if (algorithm == "s1024") {
         size_t const mem_before = malloc_count_current();
         t.reset();
-        lce_structure = std::make_unique<LceSemiSyncSets<>>(text);
+        if (prefer_long_queries) {
+          lce_structure = std::make_unique<LceSemiSyncSets<1024, true>>(text);
+        } else {
+          lce_structure = std::make_unique<LceSemiSyncSets<1024, false>>(text);
+        }
         construction_times.add(t.get_and_reset());
         construction_mem.add(malloc_count_current() - mem_before);
       } else if (algorithm == "s512") {
         size_t const mem_before = malloc_count_current();
         t.reset();
-        lce_structure = std::make_unique<LceSemiSyncSets<512>>(text);
+        if (prefer_long_queries) {
+          lce_structure = std::make_unique<LceSemiSyncSets<512, true>>(text);
+        } else {
+          lce_structure = std::make_unique<LceSemiSyncSets<512, false>>(text);
+        }
         construction_times.add(t.get_and_reset());
         construction_mem.add(malloc_count_current() - mem_before);
       } else if (algorithm == "s256") {
         size_t const mem_before = malloc_count_current();
         t.reset();
-        lce_structure = std::make_unique<LceSemiSyncSets<256>>(text);
+        if (prefer_long_queries) {
+          lce_structure = std::make_unique<LceSemiSyncSets<256, true>>(text);
+        } else {
+          lce_structure = std::make_unique<LceSemiSyncSets<256, false>>(text);
+        }
         construction_times.add(t.get_and_reset());
         construction_mem.add(malloc_count_current() - mem_before);
       } else {
@@ -170,7 +182,6 @@ public:
                 << "to=" << lce_to << " ";
       for (size_t i = lce_from; i < lce_to; ++i) {
         vector<uint64_t> v;
-        std::cout << "lce_set[i] " << lce_set[i] << std::endl;
         std::ifstream lc(lce_set[i], ios::in);
         util::inputErrorHandling(&lc);
             
@@ -244,6 +255,7 @@ public:
   uint64_t prefix_length = 0;
 
   std::string algorithm = "u";
+  bool prefer_long_queries = false;
 
   bool check = false;
 
@@ -267,13 +279,18 @@ private:
       name = "prezza_mersenne";
     } else if (algorithm == "p") {
       name = "prezza";
-    } else if (algorithm == "s") {
+    } else if (algorithm == "s1024") {
       name = "sss1024";
     } else if (algorithm == "s512") {
       name = "sss512";
     } else if (algorithm == "s256") {
       name = "sss256";
     }
+
+    if (name.rfind("sss", 0) == 0 && prefer_long_queries) {
+      name.append("pl");
+    }
+
     return name;
   }
 
@@ -304,6 +321,9 @@ int32_t main(int argc, char *argv[]) {
                 "prezza [m]ersenne, [p]rezza, or [s]tring synchronizing sets "
                 " with Tau = 1024. [s512] and [s256] for Tau = 512 and 256, "
                 "resp.");
+  cp.add_flag('l', "long", lce_bench.prefer_long_queries, "Prefer long queries,"
+              " i.e., queries with long LCE get faster, all other get slower. "
+              "Only for [s]tring synchronizing sets.");
   cp.add_flag('c', "check", lce_bench.check, "Check correctness of LCE queries "
               "by comparing with results of naive computation.");
   cp.add_string('m', "mode", lce_bench.mode, "Test mode: [r]andom, [c]omplete, "
