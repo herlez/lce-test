@@ -162,7 +162,6 @@ public:
         return lce;
       }
     }
-
     /* strSync part */
     uint64_t const i_ = suc(i);
     uint64_t const j_ = suc(j);
@@ -170,7 +169,7 @@ public:
     uint64_t const l = lce_rmq_->lce(i_, j_);
     return l + sync_set_[i_] - i;
   }
-        
+
   char operator[](uint64_t i) {
     if(i > text_length_in_bytes_) {return '\00';}
     return text_[i];

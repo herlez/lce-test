@@ -47,8 +47,12 @@ public:
     fs::path input_path(file_path);
     std::string const filename = input_path.filename();
     
-    const string lce_path = output_path + filename + ((prefix_length > 0) ? "_" +
-      std::to_string(prefix_length) : "");
+    string lce_path = output_path + filename;
+
+    if (prefix_length > 0) {
+      lce_path += "_" + std::to_string(prefix_length);
+    }
+
     const array<string, 21> lce_set{lce_path + "/lce_0", lce_path + "/lce_1",
                                     lce_path + "/lce_2", lce_path + "/lce_3",
                                     lce_path + "/lce_4", lce_path + "/lce_5",
