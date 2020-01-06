@@ -68,6 +68,10 @@ struct rank_tuple {
   uint64_t rank;
 
   rank_tuple(uint64_t _index, uint64_t _rank) : index(_index), rank(_rank) { }
+
+  friend std::ostream& operator<<(std::ostream& os, rank_tuple const& rt) {
+    os << "[ " << rt.index << ", " << rt.rank << "]";
+  }
 }; // struct rank_tuple
 
 class Lce_rmq {
@@ -78,30 +82,33 @@ public:
           std::vector<uint64_t> const& s_fingerprints) 
     : text(v_text), text_size(v_text_size) {
 
-    std::vector<rank_tuple> rank_tuples;
-    rank_tuples.reserve(s_fingerprints.size());
-    for (size_t i = 0; i < s_fingerprints.size(); ++i) {
-      rank_tuples.emplace_back(i, s_fingerprints[i]);
+    std::vector<indexed_string> strings_to_sort;
+    for (uint64_t i = 0; i < sync_set.size(); ++i) {
+      strings_to_sort.emplace_back(sync_set[i], text, text_size, tau * 3);
     }
 
-    std::sort(rank_tuples.begin(), rank_tuples.end(),
-              [](rank_tuple const& a, rank_tuple const& b) {
-                return a.rank < b.rank;
-    });
+    radixsort(strings_to_sort.data(), strings_to_sort.size());
 
-    uint64_t old_rank = 0;
-    uint32_t cur_rank = 0;
-    for (size_t i = 0; i < rank_tuples.size(); ++i) {
-      if (old_rank != rank_tuples[i].rank) {
-        old_rank = rank_tuples[i].rank;
+    std::vector<rank_tuple> rank_tuples;
+    rank_tuples.reserve(strings_to_sort.size());
+    uint64_t cur_rank = 1;
+    rank_tuples.emplace_back(strings_to_sort[0].index(), cur_rank);
+    for (uint64_t i = 1; i < strings_to_sort.size(); ++i) {
+      uint64_t const max_length = std::min(strings_to_sort[i].max_length(),
+                                           strings_to_sort[i - 1].max_length());
+      uint64_t depth = 0;
+      while (depth < max_length &&
+             strings_to_sort[i][depth] == strings_to_sort[i - 1][depth]) {
+        ++depth;
+      }
+      if (strings_to_sort[i][depth] > strings_to_sort[i - 1][depth]) {
         ++cur_rank;
       }
-      rank_tuples[i].rank = cur_rank;
+      rank_tuples.emplace_back(strings_to_sort[i].index(), cur_rank);
     }
-
     std::sort(rank_tuples.begin(), rank_tuples.end(),
-              [](rank_tuple const& b, rank_tuple const& a) {
-                return a.index < b.index;
+              [](rank_tuple const& lhs, rank_tuple const& rhs) {
+                return lhs.index < rhs.index;
     });
 
     std::vector<int32_t> new_text;
@@ -111,16 +118,107 @@ public:
       new_text.push_back(static_cast<int32_t>(rank_tuples[i].rank));
     }
     new_text.push_back(0);
-    sais_int(new_text.data(), new_sa.data(), new_text.size(), 2*cur_rank + 5);
+    sais_int(new_text.data(), new_sa.data(), new_text.size(), cur_rank + 1);
+
+    // std::vector<rank_tuple> rank_tuples;
+    // rank_tuples.reserve(s_fingerprints.size());
+    // for (size_t i = 0; i < s_fingerprints.size(); ++i) {
+    //   rank_tuples.emplace_back(i, s_fingerprints[i]);
+    //   std::cout << "rank_tuples.back() " << rank_tuples.back() << std::endl;
+    // }
+
+    // std::sort(rank_tuples.begin(), rank_tuples.end(),
+    //           [](rank_tuple const& a, rank_tuple const& b) {
+    //             return a.rank < b.rank;
+    // });
+
+    // uint64_t old_rank = 0;
+    // uint32_t cur_rank = 0;
+    // for (size_t i = 0; i < rank_tuples.size(); ++i) {
+    //   if (old_rank != rank_tuples[i].rank) {
+    //     old_rank = rank_tuples[i].rank;
+    //     ++cur_rank;
+    //   }
+    //   rank_tuples[i].rank = cur_rank;
+    //   std::cout << "rank_tuples[i] " << rank_tuples[i] << std::endl;
+    // }
+
+    // std::sort(rank_tuples.begin(), rank_tuples.end(),
+    //           [](rank_tuple const& b, rank_tuple const& a) {
+    //             return a.index < b.index;
+    // });
+
+    // std::vector<int32_t> new_text;
+    // std::vector<int32_t> new_sa(rank_tuples.size() + 1, 0);
+    // new_text.reserve(rank_tuples.size());
+    // for (size_t i = 0; i < rank_tuples.size(); ++i) {
+    //   new_text.push_back(static_cast<int32_t>(rank_tuples[i].rank));
+    // }
+    // new_text.push_back(0);
+    // sais_int(new_text.data(), new_sa.data(), new_text.size(), 2*cur_rank + 5);
+
+
+    // std::cout << "NAIVELY SA" << std::endl;
+
+    // std::vector<uint32_t> sa(rank_tuples.size(), 0);
+    // for (size_t i = 0; i < sa.size(); ++i) {
+    //   sa[i] = i;
+    // }
+    // std::sort(sa.begin(), sa.end(), [=](uint64_t i, uint64_t j) {
+    //   const uint64_t start_i = sync_set[i];
+    //   const uint64_t start_j = sync_set[j];
+    //   uint64_t max_lce = text_size - (start_i > start_j ? start_i : start_j);
+						
+    //   for(uint64_t k = 0; k < max_lce; ++k) {
+    //     if (text[start_i + k] != text[start_j + k]) {
+    //       return (text[start_i + k] < text[start_j + k]);
+    //     }
+    //   }
+    //   return i > j;
+    // });
+
+    // std::cout << "FINISH NAIVE SA" << std::endl;
+
+    // // for (size_t i = 0; i < sa.size(); ++i) {
+    // //   std::cout << "sa[i] " << sa[i] << std::endl;
+    // // }
+
+    // // for (size_t i = 0; i < new_sa.size(); ++i) {
+    // //   std::cout << "new_sa[i] " << new_sa[i] << std::endl;
+    // // }
+
+    // for (size_t i = 0; i < sa.size(); ++i) {
+    //   if (sa[i] != new_sa[i + 1]) {
+    //     std::cout << "NOPE" << std::endl;
+    //   }
+    // }
 
     lcp = std::vector<uint64_t>(new_sa.size(), 0);
 
-    for(uint64_t i = 1; i < new_sa.size() - 1; ++i) {
-      lcp[i] = lce_in_text(sync_set[new_sa[i]], sync_set[new_sa[i + 1]]);
+    isa.resize(new_sa.size() - 1);
+    for(uint64_t i = 0; i < new_sa.size() - 1; ++i) {
+      isa[new_sa[i + 1]] = i;
+      lcp[i + 1] = lce_in_text(sync_set[new_sa[i + 1]], sync_set[new_sa[i + 2]]);
     }
 
+    // std::vector<uint64_t> old_lcp(sa.size());
+    // for(uint64_t i = 1; i < sa.size(); ++i) {
+    //   old_lcp[i] = lce_in_text(sync_set[sa[i-1]], sync_set[sa[i]]);
+    // }
+
+    // for (size_t i = 0; i < lcp.size(); ++i) {
+    //   if (lcp[i] != old_lcp[i]) {
+    //     std::cout << "lcp.size() " << lcp.size() << std::endl;
+    //     std::cout << "old_lcp.size() " << old_lcp.size() << std::endl;
+    //     std::cout << "i " << i << std::endl;
+    //     std::cout << "lcp[i] " << lcp[i] << std::endl;
+    //     std::cout << "old_lcp[i] " << old_lcp[i] << std::endl;
+    //     std::cout << "NOPE LCP" << std::endl;
+    //   }
+    // }
+
     //Build RMQ data structure
-    rmq_ds1 = new RMQRMM64((long int*)lcp.data(), lcp.size());
+    rmq_ds1 = std::make_unique<RMQRMM64>((long int*)lcp.data(), lcp.size());
   }
 	
 
@@ -141,14 +239,14 @@ public:
   }
 
 private:
-  const uint64_t tau = 512;
+  const uint64_t tau = 1024;
   uint8_t const * const text;
   uint64_t text_size;
 	
   std::vector<uint64_t> isa;
   std::vector<uint64_t> lcp;
   //Rmq * rmq_ds;
-  RMQRMM64 * rmq_ds1;
+  std::unique_ptr<RMQRMM64> rmq_ds1;
 
   void inline inssort(indexed_string* strings, size_t n, int64_t depth = 0) {
     if (n <= 1) {
@@ -180,7 +278,6 @@ private:
   template <size_t IS_THRESHOLD = 32>
   void inline msd_CE0(indexed_string* strings, indexed_string* sorted, size_t n,
                       uint64_t depth) {
-    //std::cout << "depth " << depth << " n " << n << std::endl;
     if (n <= 1) {
       return;
     }
@@ -232,6 +329,7 @@ private:
       }
       ++lce_naive;
     }
+    std::cout << std::endl;
     return lce_naive;
   }
 };

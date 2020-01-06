@@ -64,11 +64,12 @@ void build_lce_range(std::string const& file, std::string const& output_folder,
   if(prefix_length != 0) {
     text_length = prefix_length;
   }
-    
+
+  std::cout << "text_length " << text_length << std::endl;
     
   /* Allocate 9n bytes of memory. */
   T = (unsigned char *)malloc((size_t)text_length * sizeof(unsigned char));
-  SA = (int *)malloc((size_t)(text_length+1) * sizeof(int)); // +1 for computing LCP
+  SA = (int *)malloc((size_t)(text_length) * sizeof(int)); // +1 for computing LCP
   LCP = (int *)malloc((size_t)text_length * sizeof(int));
   if((T == NULL) || (SA == NULL) || (LCP == NULL)) {
     fprintf(stderr, "Cannot allocate memory.\n");
