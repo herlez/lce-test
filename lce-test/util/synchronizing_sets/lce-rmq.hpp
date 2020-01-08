@@ -194,12 +194,13 @@ public:
     //   }
     // }
 
-    lcp = std::vector<uint64_t>(new_sa.size(), 0);
+    lcp = std::vector<uint64_t>(new_sa.size() + 1, 0);
 
     isa.resize(new_sa.size() - 1);
-    for(uint64_t i = 0; i < new_sa.size() - 1; ++i) {
+    for(uint64_t i = 0; i < new_sa.size() - 2; ++i) {
       isa[new_sa[i + 1]] = i;
-      lcp[i + 1] = lce_in_text(sync_set[new_sa[i + 1]], sync_set[new_sa[i + 2]]);
+      lcp[i + 1] = lce_in_text(sync_set[new_sa[i + 1]],
+                               sync_set[new_sa[i + 2]]);
     }
 
     // std::vector<uint64_t> old_lcp(sa.size());
