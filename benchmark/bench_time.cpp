@@ -159,12 +159,12 @@ public:
               << "size=" << text.size() << " "
 
               << "lce_mem=" << construction_mem.max() << " ";
+    std::cout << std::endl;
 
     std::vector<uint64_t> lce_indices(number_lce_queries * 2);
     tlx::Aggregate<size_t> queries_times;
     tlx::Aggregate<size_t> lce_values;
-
-    std::cout << "lce_query_type=";
+    
     if(random_) {
       std::cout << "random ";
       std::srand(std::time(nullptr));
@@ -181,10 +181,12 @@ public:
         queries_times.add(t.get_and_reset());
       }
     } else if (sorted_) {
-      std::cout << "sorted "
-                << "from=" << lce_from << " "
-                << "to=" << lce_to << " ";
       for (size_t i = lce_from; i < lce_to; ++i) {
+            std::cout << "RESULT "
+                      << "algo=" << print_algo_name() << "_queries "
+                      << "runs=" << runs << " "
+                      << "lce_query_type=sorted "
+                      << "length_exp=" << i << " ";
         vector<uint64_t> v;
         std::ifstream lc(lce_set[i], ios::in);
         util::inputErrorHandling(&lc);
@@ -210,12 +212,20 @@ public:
             queries_times.add(t.get_and_reset());
           }
         }
+        std::cout << "lce_values_min=" << lce_values.min() << " "
+                  << "lce_values_max=" << lce_values.max() << " "
+                  << "lce_values_avg=" << lce_values.avg() << " "
+                  << "lce_values_count=" << lce_values.count() << " "
+                  << "queries_times_min=" << queries_times.min() << " "
+                  << "queries_times_max=" << queries_times.max() << " "
+                  << "queries_times_avg=" << queries_times.avg() << " "
+                  << std::endl;
       }
     } else {
       std::cout << "none ";
     }
 
-    if (random_ || sorted_) {
+    if (random_) {
       std::cout << "lce_values_min=" << lce_values.min() << " "
                 << "lce_values_max=" << lce_values.max() << " "
                 << "lce_values_avg=" << lce_values.avg() << " "
@@ -224,7 +234,7 @@ public:
                 << "queries_times_max=" << queries_times.max() << " "
                 << "queries_times_avg=" << queries_times.avg() << " ";
     }
-    std::cout << "check=";
+    std::cout << "CHECK=";
     if (check) {
       // Create random queries for the test
       std::srand(std::time(nullptr));
@@ -270,7 +280,6 @@ public:
 
   uint32_t lce_from = 0;
   uint32_t lce_to = 21;
-
 
 private:
   std::string print_algo_name() {
