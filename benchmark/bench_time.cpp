@@ -162,11 +162,13 @@ public:
     std::cout << std::endl;
 
     std::vector<uint64_t> lce_indices(number_lce_queries * 2);
-    tlx::Aggregate<size_t> queries_times;
-    tlx::Aggregate<size_t> lce_values;
-    
+
     if(random_) {
       std::cout << "random ";
+
+      tlx::Aggregate<size_t> queries_times;
+      tlx::Aggregate<size_t> lce_values;
+    
       std::srand(std::time(nullptr));
       for(uint64_t i = 0; i < number_lce_queries * 2; ++i) {
         lce_indices[i] = rand() % lce_structure->getSizeInBytes();
@@ -180,13 +182,26 @@ public:
         }
         queries_times.add(t.get_and_reset());
       }
+
+      std::cout << "lce_values_min=" << lce_values.min() << " "
+                << "lce_values_max=" << lce_values.max() << " "
+                << "lce_values_avg=" << lce_values.avg() << " "
+                << "lce_values_count=" << lce_values.count() << " "
+                << "queries_times_min=" << queries_times.min() << " "
+                << "queries_times_max=" << queries_times.max() << " "
+                << "queries_times_avg=" << queries_times.avg() << " ";
+
     } else if (sorted_) {
       for (size_t i = lce_from; i < lce_to; ++i) {
-            std::cout << "RESULT "
-                      << "algo=" << print_algo_name() << "_queries "
-                      << "runs=" << runs << " "
-                      << "lce_query_type=sorted "
-                      << "length_exp=" << i << " ";
+        tlx::Aggregate<size_t> queries_times;
+        tlx::Aggregate<size_t> lce_values;
+        std::cout << "RESULT "
+                  << "algo=" << print_algo_name() << "_queries "
+                  << "runs=" << runs << " "
+                  << "lce_query_type=sorted "
+                  << "length_exp=" << i << " "
+                  << "input=" << file_path << " "
+                  << "size=" << text.size() << " ";
         vector<uint64_t> v;
         std::ifstream lc(lce_set[i], ios::in);
         util::inputErrorHandling(&lc);
@@ -226,13 +241,7 @@ public:
     }
 
     if (random_) {
-      std::cout << "lce_values_min=" << lce_values.min() << " "
-                << "lce_values_max=" << lce_values.max() << " "
-                << "lce_values_avg=" << lce_values.avg() << " "
-                << "lce_values_count=" << lce_values.count() << " "
-                << "queries_times_min=" << queries_times.min() << " "
-                << "queries_times_max=" << queries_times.max() << " "
-                << "queries_times_avg=" << queries_times.avg() << " ";
+
     }
     std::cout << "CHECK=";
     if (check) {
