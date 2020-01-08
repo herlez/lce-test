@@ -11,11 +11,10 @@
 
 #include <tlx/define/likely.hpp>
 
-#include "./rmq.hpp"
 #include <vector>
 #include <algorithm> //std::sort
 #include <string>
-#include "RMQRMM64.h"
+#include <includes/RMQRMM64.h>
 
 #include "sais.h"
 

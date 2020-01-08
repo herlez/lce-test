@@ -10,7 +10,8 @@
 cmake_minimum_required (VERSION 3.5)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
+SET(CMAKE_CXX_COMPILER /usr/bin/g++-8)
+SET(CMAKE_C_COMPILER /usr/bin/gcc-8)
 project (lce-test)
 
 # Compiler flags

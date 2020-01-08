@@ -57,7 +57,7 @@ public:
     fill_synchronizing_set(0, (text_length_in_bytes_ - (2*kTau)), fp,
                            fingerprints, s_fingerprints);
     
-    ind_ = std::make_unique<stash::pred::index<std::vector<uint64_t>, uint64_t, 8>>(sync_set_);         
+    ind_ = std::make_unique<stash::pred::index<std::vector<uint64_t>, uint64_t, 7>>(sync_set_);         
 
     lce_rmq_ = std::make_unique<Lce_rmq>(text_.data(), text_length_in_bytes_,
                                          sync_set_, s_fingerprints);
@@ -259,7 +259,7 @@ private:
   std::vector<uint8_t> const& text_;
   size_t const text_length_in_bytes_;
   
-  std::unique_ptr<stash::pred::index<std::vector<uint64_t>, uint64_t, 8>> ind_;
+  std::unique_ptr<stash::pred::index<std::vector<uint64_t>, uint64_t, 7>> ind_;
   std::vector<uint64_t> sync_set_;
   std::unique_ptr<Lce_rmq> lce_rmq_;
 };
