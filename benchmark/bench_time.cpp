@@ -116,6 +116,16 @@ public:
                                       text.size());
         construction_times.add(t.get_and_reset());
         construction_mem.add(malloc_count_current() - mem_before);
+      } else if (algorithm == "s2048") {
+        size_t const mem_before = malloc_count_current();
+        t.reset();
+        if (prefer_long_queries) {
+          lce_structure = std::make_unique<LceSemiSyncSets<2048, true>>(text);
+        } else {
+          lce_structure = std::make_unique<LceSemiSyncSets<2048, false>>(text);
+        }
+        construction_times.add(t.get_and_reset());
+        construction_mem.add(malloc_count_current() - mem_before);
       } else if (algorithm == "s1024") {
         size_t const mem_before = malloc_count_current();
         t.reset();
@@ -301,6 +311,8 @@ private:
       name = "prezza_mersenne";
     } else if (algorithm == "p") {
       name = "prezza";
+    } else if (algorithm == "s2048") {
+      name = "sss2048";
     } else if (algorithm == "s1024") {
       name = "sss1024";
     } else if (algorithm == "s512") {
