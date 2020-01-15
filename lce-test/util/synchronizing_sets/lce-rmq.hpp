@@ -73,6 +73,7 @@ struct rank_tuple {
   }
 }; // struct rank_tuple
 
+template <uint64_t kTau = 1024>
 class Lce_rmq {
 
 public:
@@ -83,7 +84,7 @@ public:
 
     std::vector<indexed_string> strings_to_sort;
     for (uint64_t i = 0; i < sync_set.size(); ++i) {
-      strings_to_sort.emplace_back(sync_set[i], text, text_size, tau * 3);
+      strings_to_sort.emplace_back(sync_set[i], text, text_size, kTau * 3);
     }
 
     radixsort(strings_to_sort.data(), strings_to_sort.size());
@@ -192,12 +193,13 @@ public:
     //   }
     // }
 
-    lcp = std::vector<uint64_t>(new_sa.size(), 0);
+    lcp = std::vector<uint64_t>(new_sa.size() + 1, 0);
 
     isa.resize(new_sa.size() - 1);
-    for(uint64_t i = 0; i < new_sa.size() - 1; ++i) {
+    for(uint64_t i = 0; i < new_sa.size() - 2; ++i) {
       isa[new_sa[i + 1]] = i;
-      lcp[i + 1] = lce_in_text(sync_set[new_sa[i + 1]], sync_set[new_sa[i + 2]]);
+      lcp[i + 1] = lce_in_text(sync_set[new_sa[i + 1]],
+                               sync_set[new_sa[i + 2]]);
     }
 
     // std::vector<uint64_t> old_lcp(sa.size());
@@ -238,7 +240,6 @@ public:
   }
 
 private:
-  const uint64_t tau = 1024;
   uint8_t const * const text;
   uint64_t text_size;
 	
@@ -277,11 +278,11 @@ private:
   template <size_t IS_THRESHOLD = 32>
   void inline msd_CE0(indexed_string* strings, indexed_string* sorted, size_t n,
                       uint64_t depth) {
-    if (n <= 1) {
+    if (n <= 1 || depth > 3 * kTau) {
       return;
     }
 
-    if (n <= IS_THRESHOLD || depth == 1024) {
+    if (n <= IS_THRESHOLD) {
       inssort(strings, n, depth);
       return;
     }
@@ -301,8 +302,8 @@ private:
       for (auto* cur_string = strings; cur_string < strings + n; ++cur_string) {
         *(buckets[(*cur_string)[depth]]++) = *cur_string;
       }
+      std::copy_n(sorted, n, strings);
     }
-    std::copy_n(sorted, n, strings);
     auto* bucket_border = strings + bucket_sizes[0];
     for (size_t i = 1; i < max_char; ++i) {
       if (bucket_sizes[i] > 0) {
@@ -313,9 +314,51 @@ private:
 
   }
 
+  template <size_t IS_THRESHOLD = 32>
+  void inline msd_CE1(indexed_string* const strings,
+                      indexed_string* const sorted, uint8_t* const char_cache,
+                      size_t const n, size_t const depth) {
+    if (n <= 1 || depth > 3 * kTau) {
+      return;
+    }
+    if (n <= IS_THRESHOLD) {
+      inssort(strings, n, depth);
+      return;
+    }
+
+    constexpr size_t max_char = std::numeric_limits<uint8_t>::max() + 1;
+    std::array<size_t, max_char> bucket_sizes = { 0 };
+    uint8_t* cc = char_cache;
+    for (size_t i = 0; i < n; ++i, ++cc) {
+      ++bucket_sizes[*cc = strings[i][depth]];
+    }
+
+    {
+      std::array<indexed_string*, max_char> buckets;
+      buckets[0] = sorted;
+      for (size_t i = 1; i < max_char; ++i) {
+        buckets[i] = buckets[i - 1] + bucket_sizes[i - 1];
+      }
+      uint8_t* cc = char_cache;
+      for (indexed_string* s = strings; s < strings + n; ++s, ++cc) {
+        *(buckets[*cc]++) = *s;
+      }
+      std::copy_n(sorted, n, strings);
+    }
+    auto* bucket_border = strings + bucket_sizes[0];
+    for (size_t i = 1; i < max_char; ++i) {
+      if (bucket_sizes[i] > 0) {
+        msd_CE1(bucket_border, sorted, char_cache, bucket_sizes[i], depth + 1);
+        bucket_border += bucket_sizes[i];
+      }
+    }
+  }
+
   inline void radixsort(indexed_string* strings, size_t n) {
     std::vector<indexed_string> sorted_buffer(n);
+    //std::vector<uint8_t> char_cache(n);
     msd_CE0(strings, sorted_buffer.data(), n, 0);
+    //msd_CE1(strings, sorted_buffer.data(), char_cache.data(), n, 0);
   }
 
 

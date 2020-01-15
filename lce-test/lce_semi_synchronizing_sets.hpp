@@ -59,10 +59,11 @@ public:
     
     ind_ = std::make_unique<stash::pred::index<std::vector<uint64_t>, uint64_t, 7>>(sync_set_);         
 
-    lce_rmq_ = std::make_unique<Lce_rmq>(text_.data(), text_length_in_bytes_,
-                                         sync_set_, s_fingerprints);
+    lce_rmq_ = std::make_unique<Lce_rmq<kTau>>(text_.data(),
+                                               text_length_in_bytes_, sync_set_,
+                                               s_fingerprints);
 
-    std::cout << "sync_set_size=" << getSyncSetSize() << " " << std::endl;
+    std::cout << "sync_set_size=" << getSyncSetSize() << " ";
   }
 
   /* Answers the lce query for position i and j */
@@ -261,7 +262,7 @@ private:
   
   std::unique_ptr<stash::pred::index<std::vector<uint64_t>, uint64_t, 7>> ind_;
   std::vector<uint64_t> sync_set_;
-  std::unique_ptr<Lce_rmq> lce_rmq_;
+  std::unique_ptr<Lce_rmq<kTau>> lce_rmq_;
 };
 
 /******************************************************************************/
