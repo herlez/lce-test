@@ -27,9 +27,10 @@
 #include "lce_naive.hpp"
 #include "lce_naive_ultra.hpp"
 #include "lce_prezza.hpp"
-#include "lce_prezza_mersenne.hpp"
+//#include "lce_prezza_mersenne.hpp"
 #include "lce_semi_synchronizing_sets.hpp"
 
+#include <rk_lce.hpp>
 namespace fs = std::filesystem;
 
 class lce_benchmark {
@@ -82,74 +83,10 @@ public:
     std::cout << "RESULT "
               << "algo=" << print_algo_name() << " "
               << "runs=" << runs << " ";
-
-    for (size_t i = 0; i < runs; ++i) {
-      text = load_text(file_path, prefix_length);
-
-      auto* old_structure = lce_structure.release();
-      if (old_structure != nullptr) {
-        delete old_structure;
-      }
-      if (algorithm == "u") {
-        size_t const mem_before = malloc_count_current();
-        t.reset();
-        lce_structure = std::make_unique<LceUltraNaive>(text);
-        construction_times.add(t.get_and_reset());
-        construction_mem.add(malloc_count_current() - mem_before);
-      } else if (algorithm == "n") {
-        size_t const mem_before = malloc_count_current();
-        t.reset();
-        lce_structure = std::make_unique<LceNaive>(text);
-        construction_times.add(t.get_and_reset());
-        construction_mem.add(malloc_count_current() - mem_before);
-      } else if (algorithm == "m") {
-        t.reset();
-        lce_structure = std::make_unique<rklce::LcePrezzaMersenne>(text);
-        construction_times.add(t.get_and_reset());
-      } else if (algorithm == "p") {
-        // Make sure the text can be divided into 64 bit blocks
-        text.resize(text.size() + (8 - (text.size() % 8)));
-        size_t const mem_before = malloc_count_current();
-        t.reset();
-        lce_structure =
-          std::make_unique<LcePrezza>(reinterpret_cast<uint64_t*>(text.data()),
-                                      text.size());
-        construction_times.add(t.get_and_reset());
-        construction_mem.add(malloc_count_current() - mem_before);
-      } else if (algorithm == "s1024") {
-        size_t const mem_before = malloc_count_current();
-        t.reset();
-        if (prefer_long_queries) {
-          lce_structure = std::make_unique<LceSemiSyncSets<1024, true>>(text);
-        } else {
-          lce_structure = std::make_unique<LceSemiSyncSets<1024, false>>(text);
-        }
-        construction_times.add(t.get_and_reset());
-        construction_mem.add(malloc_count_current() - mem_before);
-      } else if (algorithm == "s512") {
-        size_t const mem_before = malloc_count_current();
-        t.reset();
-        if (prefer_long_queries) {
-          lce_structure = std::make_unique<LceSemiSyncSets<512, true>>(text);
-        } else {
-          lce_structure = std::make_unique<LceSemiSyncSets<512, false>>(text);
-        }
-        construction_times.add(t.get_and_reset());
-        construction_mem.add(malloc_count_current() - mem_before);
-      } else if (algorithm == "s256") {
-        size_t const mem_before = malloc_count_current();
-        t.reset();
-        if (prefer_long_queries) {
-          lce_structure = std::make_unique<LceSemiSyncSets<256, true>>(text);
-        } else {
-          lce_structure = std::make_unique<LceSemiSyncSets<256, false>>(text);
-        }
-        construction_times.add(t.get_and_reset());
-        construction_mem.add(malloc_count_current() - mem_before);
-      } else {
-        return;
-      }
-    }
+    
+    t.reset();
+    rklce::rk_lce rk(input_path);
+    construction_times.add(t.get_and_reset());
 
     std::cout << "construction_min_time=" << construction_times.min() << " "
               << "construction_max_time=" << construction_times.max() << " "
@@ -203,8 +140,9 @@ public:
           for (size_t i = 0; i < runs; ++i) {
             t.reset();
             for (size_t j = 0; j < number_lce_queries * 2; j += 2) {
-              size_t const lce = lce_structure->lce(lce_indices[j],
-                                                    lce_indices[j + 1]);
+            //size_t const lce = lce_structure->lce(lce_indices[j],
+            //                                        lce_indices[j + 1]);
+              size_t const lce = rk.LCE(lce_indices[j], lce_indices[j+1]);
               lce_values.add(lce);
             }
             queries_times.add(t.get_and_reset());
