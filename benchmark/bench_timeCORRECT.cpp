@@ -27,10 +27,9 @@
 #include "lce_naive.hpp"
 #include "lce_naive_ultra.hpp"
 #include "lce_prezza.hpp"
-//#include "lce_prezza_mersenne.hpp"
+#include "lce_prezza_mersenne.hpp"
 #include "lce_semi_synchronizing_sets.hpp"
 
-#include <rk_lce.hpp>
 namespace fs = std::filesystem;
 
 class lce_benchmark {
@@ -83,10 +82,84 @@ public:
     std::cout << "RESULT "
               << "algo=" << print_algo_name() << " "
               << "runs=" << runs << " ";
-    
-    t.reset();
-    rklce::rk_lce rk(input_path);
-    construction_times.add(t.get_and_reset());
+
+    for (size_t i = 0; i < runs; ++i) {
+      text = load_text(file_path, prefix_length);
+
+      auto* old_structure = lce_structure.release();
+      if (old_structure != nullptr) {
+        delete old_structure;
+      }
+      if (algorithm == "u") {
+        size_t const mem_before = malloc_count_current();
+        t.reset();
+        lce_structure = std::make_unique<LceUltraNaive>(text);
+        construction_times.add(t.get_and_reset());
+        construction_mem.add(malloc_count_current() - mem_before);
+      } else if (algorithm == "n") {
+        size_t const mem_before = malloc_count_current();
+        t.reset();
+        lce_structure = std::make_unique<LceNaive>(text);
+        construction_times.add(t.get_and_reset());
+        construction_mem.add(malloc_count_current() - mem_before);
+      } else if (algorithm == "m") {
+        t.reset();
+        lce_structure = std::make_unique<rklce::LcePrezzaMersenne>(text);
+        construction_times.add(t.get_and_reset());
+      } else if (algorithm == "p") {
+        // Make sure the text can be divided into 64 bit blocks
+        text.resize(text.size() + (8 - (text.size() % 8)));
+        size_t const mem_before = malloc_count_current();
+        t.reset();
+        lce_structure =
+          std::make_unique<LcePrezza>(reinterpret_cast<uint64_t*>(text.data()),
+                                      text.size());
+        construction_times.add(t.get_and_reset());
+        construction_mem.add(malloc_count_current() - mem_before);
+      } else if (algorithm == "s2048") {
+        size_t const mem_before = malloc_count_current();
+        t.reset();
+        if (prefer_long_queries) {
+          lce_structure = std::make_unique<LceSemiSyncSets<2048, true>>(text);
+        } else {
+          lce_structure = std::make_unique<LceSemiSyncSets<2048, false>>(text);
+        }
+        construction_times.add(t.get_and_reset());
+        construction_mem.add(malloc_count_current() - mem_before);
+      } else if (algorithm == "s1024") {
+        size_t const mem_before = malloc_count_current();
+        t.reset();
+        if (prefer_long_queries) {
+          lce_structure = std::make_unique<LceSemiSyncSets<1024, true>>(text);
+        } else {
+          lce_structure = std::make_unique<LceSemiSyncSets<1024, false>>(text);
+        }
+        construction_times.add(t.get_and_reset());
+        construction_mem.add(malloc_count_current() - mem_before);
+      } else if (algorithm == "s512") {
+        size_t const mem_before = malloc_count_current();
+        t.reset();
+        if (prefer_long_queries) {
+          lce_structure = std::make_unique<LceSemiSyncSets<512, true>>(text);
+        } else {
+          lce_structure = std::make_unique<LceSemiSyncSets<512, false>>(text);
+        }
+        construction_times.add(t.get_and_reset());
+        construction_mem.add(malloc_count_current() - mem_before);
+      } else if (algorithm == "s256") {
+        size_t const mem_before = malloc_count_current();
+        t.reset();
+        if (prefer_long_queries) {
+          lce_structure = std::make_unique<LceSemiSyncSets<256, true>>(text);
+        } else {
+          lce_structure = std::make_unique<LceSemiSyncSets<256, false>>(text);
+        }
+        construction_times.add(t.get_and_reset());
+        construction_mem.add(malloc_count_current() - mem_before);
+      } else {
+        return;
+      }
+    }
 
     std::cout << "construction_min_time=" << construction_times.min() << " "
               << "construction_max_time=" << construction_times.max() << " "
@@ -96,14 +169,16 @@ public:
               << "size=" << text.size() << " "
 
               << "lce_mem=" << construction_mem.max() << " ";
+    std::cout << std::endl;
 
     std::vector<uint64_t> lce_indices(number_lce_queries * 2);
-    tlx::Aggregate<size_t> queries_times;
-    tlx::Aggregate<size_t> lce_values;
 
-    std::cout << "lce_query_type=";
     if(random_) {
       std::cout << "random ";
+
+      tlx::Aggregate<size_t> queries_times;
+      tlx::Aggregate<size_t> lce_values;
+    
       std::srand(std::time(nullptr));
       for(uint64_t i = 0; i < number_lce_queries * 2; ++i) {
         lce_indices[i] = rand() % lce_structure->getSizeInBytes();
@@ -117,11 +192,26 @@ public:
         }
         queries_times.add(t.get_and_reset());
       }
+
+      std::cout << "lce_values_min=" << lce_values.min() << " "
+                << "lce_values_max=" << lce_values.max() << " "
+                << "lce_values_avg=" << lce_values.avg() << " "
+                << "lce_values_count=" << lce_values.count() << " "
+                << "queries_times_min=" << queries_times.min() << " "
+                << "queries_times_max=" << queries_times.max() << " "
+                << "queries_times_avg=" << queries_times.avg() << " ";
+
     } else if (sorted_) {
-      std::cout << "sorted "
-                << "from=" << lce_from << " "
-                << "to=" << lce_to << " ";
       for (size_t i = lce_from; i < lce_to; ++i) {
+        tlx::Aggregate<size_t> queries_times;
+        tlx::Aggregate<size_t> lce_values;
+        std::cout << "RESULT "
+                  << "algo=" << print_algo_name() << "_queries "
+                  << "runs=" << runs << " "
+                  << "lce_query_type=sorted "
+                  << "length_exp=" << i << " "
+                  << "input=" << file_path << " "
+                  << "size=" << text.size() << " ";
         vector<uint64_t> v;
         std::ifstream lc(lce_set[i], ios::in);
         util::inputErrorHandling(&lc);
@@ -140,29 +230,30 @@ public:
           for (size_t i = 0; i < runs; ++i) {
             t.reset();
             for (size_t j = 0; j < number_lce_queries * 2; j += 2) {
-            //size_t const lce = lce_structure->lce(lce_indices[j],
-            //                                        lce_indices[j + 1]);
-              size_t const lce = rk.LCE(lce_indices[j], lce_indices[j+1]);
+              size_t const lce = lce_structure->lce(lce_indices[j],
+                                                    lce_indices[j + 1]);
               lce_values.add(lce);
             }
             queries_times.add(t.get_and_reset());
           }
         }
+        std::cout << "lce_values_min=" << lce_values.min() << " "
+                  << "lce_values_max=" << lce_values.max() << " "
+                  << "lce_values_avg=" << lce_values.avg() << " "
+                  << "lce_values_count=" << lce_values.count() << " "
+                  << "queries_times_min=" << queries_times.min() << " "
+                  << "queries_times_max=" << queries_times.max() << " "
+                  << "queries_times_avg=" << queries_times.avg() << " "
+                  << std::endl;
       }
     } else {
       std::cout << "none ";
     }
 
-    if (random_ || sorted_) {
-      std::cout << "lce_values_min=" << lce_values.min() << " "
-                << "lce_values_max=" << lce_values.max() << " "
-                << "lce_values_avg=" << lce_values.avg() << " "
-                << "lce_values_count=" << lce_values.count() << " "
-                << "queries_times_min=" << queries_times.min() << " "
-                << "queries_times_max=" << queries_times.max() << " "
-                << "queries_times_avg=" << queries_times.avg() << " ";
+    if (random_) {
+
     }
-    std::cout << "check=";
+    std::cout << "CHECK=";
     if (check) {
       // Create random queries for the test
       std::srand(std::time(nullptr));
@@ -209,7 +300,6 @@ public:
   uint32_t lce_from = 0;
   uint32_t lce_to = 21;
 
-
 private:
   std::string print_algo_name() {
     std::string name("unknown");
@@ -221,6 +311,8 @@ private:
       name = "prezza_mersenne";
     } else if (algorithm == "p") {
       name = "prezza";
+    } else if (algorithm == "s2048") {
+      name = "sss2048";
     } else if (algorithm == "s1024") {
       name = "sss1024";
     } else if (algorithm == "s512") {
