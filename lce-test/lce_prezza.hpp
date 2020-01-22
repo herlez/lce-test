@@ -17,6 +17,7 @@
 
 /* This class builds Prezza's in-place LCE data structure and
  * answers LCE-queries in O(log(n)). */
+template <uint64_t t_naive_scan = 128>
 class LcePrezza : public LceDataStructure {
 public:
   LcePrezza() = delete;
@@ -31,15 +32,7 @@ public:
   }
 
 
-  /* Fast LCE-query in O(log(n)) time */
-  uint64_t lce(const uint64_t i, const uint64_t j) {
-  
-    constexpr uint64_t naive_scan = 128;
-    if (TLX_UNLIKELY(i == j)) {
-      return text_length_in_bytes_ - i;
-    }
-
-    const uint64_t max_lce = text_length_in_bytes_ - ((i < j) ? j : i);
+  uint64_t lce_scan(const uint64_t i, const uint64_t j, uint64_t max_lce) {
     uint64_t lce = 0;
     /* naive part of lce query */
     /* compare blockwise */
@@ -54,7 +47,7 @@ public:
     uint64_t comp_block_j = (block_j << offset_lce2) +
       ((block_j2 >> 1) >> (63-offset_lce2));
 
-    const uint64_t max_block_naive = max_lce < naive_scan ? max_lce/8 : naive_scan/8;
+    const uint64_t max_block_naive = max_lce < t_naive_scan ? max_lce/8 : t_naive_scan/8;
     while(lce < max_block_naive) {
       if(comp_block_i != comp_block_j) {
         break;
@@ -69,11 +62,10 @@ public:
       comp_block_j = (block_j << offset_lce2) +
         ((block_j2 >> 1) >> (63-offset_lce2));
     }
-
-    lce *= 8;
+   lce *= 8;
     /* If everything except the stub matches, we compare the stub character-wise
        and return the result */
-    if(lce != naive_scan) {
+    if(lce != t_naive_scan) {
       unsigned char * comp_block_i2 = (unsigned char *) &comp_block_i;
       unsigned char * comp_block_j2 = (unsigned char *) &comp_block_j;
       unsigned int max_stub = (max_lce - lce) < 8 ? (max_lce - lce) : 8;
@@ -85,10 +77,24 @@ public:
       }
       return lce;
     }
-
+    return lce;
+  }
+  
+  
+  
+  /* Fast LCE-query in O(log(n)) time */
+  uint64_t lce(const uint64_t i, const uint64_t j) {
+    if (TLX_UNLIKELY(i == j)) {
+      return text_length_in_bytes_ - i;
+    }
+    const uint64_t max_lce = text_length_in_bytes_ - ((i < j) ? j : i);
+    uint64_t lce = lce_scan(i, j, max_lce);
+    if(lce < t_naive_scan) {
+      return lce;
+    }
     /* exponential search */    
-    uint64_t dist = naive_scan * 2;
-    int exp = __builtin_ctz(dist);
+    uint64_t dist = t_naive_scan * 2;
+    int exp = __builtin_ctz(t_naive_scan)+1;
 
     while( dist <= max_lce ) {
       if (fingerprintExp(i, exp) != fingerprintExp(j, exp)) {
@@ -100,12 +106,13 @@ public:
 
     /* binary search , we start it at i2 and j2, because we know that 
      * up until i2 and j2 everything matched */
+     
     --exp;
     dist /= 2;
     uint64_t i2 = i + dist;
     uint64_t j2 = j + dist;
 
-    while(exp != 0) {
+    while(exp != __builtin_ctz(t_naive_scan)) {
       --exp;
       dist /= 2;
       if(fingerprintExp(i2, exp) == fingerprintExp(j2, exp)) {
@@ -113,7 +120,8 @@ public:
         j2 += dist;
       }
     }
-    return i2-i;
+    const uint64_t max_lce_rest = text_length_in_bytes_ - ((i2 < j2) ? j2 : i2);
+    return i2-i+lce_scan(i2, j2, max_lce_rest);
   }
 
   /* Returns the prime*/
