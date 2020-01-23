@@ -55,6 +55,8 @@ public:
   static constexpr __int128 kPrime = 18446744073709551253ULL;
   static constexpr uint64_t TwoPowTauModQ = calculatePowerModulo(std::log2(kTau), kPrime);
 
+  using sss_type = uint32_t;
+
 public:
   LceSemiSyncSets(std::vector<uint8_t> const& text, bool const print_ss_size)
     : text_(text), text_length_in_bytes_(text_.size()) {
@@ -71,11 +73,12 @@ public:
     fill_synchronizing_set(0, (text_length_in_bytes_ - (2*kTau)), fp,
                            fingerprints, s_fingerprints);
     
-    ind_ = std::make_unique<stash::pred::index<std::vector<uint64_t>, uint64_t, 7>>(sync_set_);         
+    ind_ = std::make_unique<stash::pred::index<std::vector<sss_type>, sss_type, 7>>(sync_set_);         
 
-    lce_rmq_ = std::make_unique<Lce_rmq<kTau>>(text_.data(),
-                                               text_length_in_bytes_, sync_set_,
-                                               s_fingerprints);
+    lce_rmq_ = std::make_unique<Lce_rmq<sss_type, kTau>>(text_.data(),
+                                                         text_length_in_bytes_,
+                                                         sync_set_,
+                                                         s_fingerprints);
     if (print_ss_size) {
       std::cout << "sync_set_size=" << getSyncSetSize() << " ";
     }
@@ -270,9 +273,9 @@ private:
   std::vector<uint8_t> const& text_;
   size_t const text_length_in_bytes_;
   
-  std::unique_ptr<stash::pred::index<std::vector<uint64_t>, uint64_t, 7>> ind_;
-  std::vector<uint64_t> sync_set_;
-  std::unique_ptr<Lce_rmq<kTau>> lce_rmq_;
+  std::unique_ptr<stash::pred::index<std::vector<uint32_t>, uint32_t, 7>> ind_;
+  std::vector<sss_type> sync_set_;
+  std::unique_ptr<Lce_rmq<sss_type, kTau>> lce_rmq_;
 };
 
 /******************************************************************************/

@@ -32,12 +32,12 @@ struct rank_tuple {
   }
 }; // struct rank_tuple
 
-template <uint64_t kTau = 1024>
+template <typename sss_type, uint64_t kTau = 1024>
 class Lce_rmq {
 
 public:
   Lce_rmq(uint8_t const * const v_text, uint64_t const v_text_size,
-          std::vector<uint64_t> const& sync_set,
+          std::vector<sss_type> const& sync_set,
           std::vector<uint64_t> const& s_fingerprints) 
     : text(v_text), text_size(v_text_size) {
 
