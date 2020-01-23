@@ -18,6 +18,7 @@
 
 #include <tlx/define/likely.hpp>
 
+#include <cmath>
 #include <vector>
 #include <memory>
 
@@ -37,21 +38,34 @@ template <uint64_t kTau = 1024, bool prefer_long = true>
 class LceSemiSyncSets : public LceDataStructure {
 
 public:
-  static constexpr __int128 kPrime = 18446744073709551557ULL;
-  static constexpr uint64_t TwoPowTauModQ = calculatePowerModulo(10, kPrime);
+  // static constexpr __int128 kPrime = 562949953421231ULL;
+  // static constexpr __int128 kPrime = 1125899906842597ULL;
+  // static constexpr __int128 kPrime = 2251799813685119ULL;
+  // static constexpr __int128 kPrime = 4503599627370449ULL;
+  // static constexpr __int128 kPrime = 9007199254740881ULL;
+  // static constexpr __int128 kPrime = 18014398509481951ULL;
+  // static constexpr __int128 kPrime = 36028797018963913ULL;
+  // static constexpr __int128 kPrime = 72057594037927931ULL;
+  // static constexpr __int128 kPrime = 144115188075855859ULL;
+  // static constexpr __int128 kPrime = 288230376151711717ULL;
+  // static constexpr __int128 kPrime = 576460752303423433ULL;
+  // static constexpr __int128 kPrime = 1152921504606846883ULL;
+  // static constexpr __int128 kPrime = 2305843009213693951ULL;
+
+  static constexpr __int128 kPrime = 18446744073709551253ULL;
+  static constexpr uint64_t TwoPowTauModQ = calculatePowerModulo(std::log2(kTau), kPrime);
 
 public:
-  LceSemiSyncSets(std::vector<uint8_t> const& text)
+  LceSemiSyncSets(std::vector<uint8_t> const& text, bool const print_ss_size)
     : text_(text), text_length_in_bytes_(text_.size()) {
-    //, s_bv_(std::make_unique<bit_vector>(text_length_in_bytes_)) {
 
-    unsigned __int128 fp = 0;
+    unsigned __int128 fp = { 0ULL };
     for(uint64_t i = 0; i < kTau; ++i) {
       fp *= 256;
       fp += (unsigned char) text_[i];
       fp %= kPrime;
     }
-    ring_buffer<uint64_t> fingerprints(3*kTau);
+    ring_buffer<uint64_t> fingerprints(4*kTau);
     std::vector<uint64_t> s_fingerprints;
     fingerprints.push_back(static_cast<uint64_t>(fp));
     fill_synchronizing_set(0, (text_length_in_bytes_ - (2*kTau)), fp,
@@ -62,8 +76,9 @@ public:
     lce_rmq_ = std::make_unique<Lce_rmq<kTau>>(text_.data(),
                                                text_length_in_bytes_, sync_set_,
                                                s_fingerprints);
-
-    std::cout << "sync_set_size=" << getSyncSetSize() << " ";
+    if (print_ss_size) {
+      std::cout << "sync_set_size=" << getSyncSetSize() << " ";
+    }
   }
 
   /* Answers the lce query for position i and j */
@@ -91,9 +106,6 @@ public:
       }
 
       for (; lce < 8; ++lce) {
-        // if (TLX_UNLIKELY(lce >= max_length)) {
-        //   return max_length;
-        // }
         if(text_[i + lce] != text_[j + lce]) {
           return lce;
         }
@@ -120,55 +132,53 @@ public:
 
       uint64_t const l = lce_rmq_->lce(i_, j_);
       return l + sync_set_[i_] - i;
-    }
+    } else {
+      /* naive part */
+      uint64_t const sync_length = 3 * kTau - 1;
+      uint64_t const max_length = (i < j) ?
+        ((sync_length + j > text_length_in_bytes_) ?
+         (sync_length + j) - text_length_in_bytes_  :
+         sync_length) :
+        ((sync_length + i > text_length_in_bytes_) ?
+         (sync_length + i) - text_length_in_bytes_  :
+         sync_length);
 
-    /* naive part */
-    uint64_t const sync_length = 3 * kTau - 1;
-    // uint64_t const max_length = text_length_in_bytes_ < sync_length ?
-    //   (text_length_in_bytes_ - ((i < j) ? j : i)) :
-    //   (sync_length - ((i < j) ? j : i));
-    uint64_t const max_length = (i < j) ?
-      ((sync_length + j > text_length_in_bytes_) ?
-       (sync_length + j) - text_length_in_bytes_  :
-       sync_length) :
-      ((sync_length + i > text_length_in_bytes_) ?
-       (sync_length + i) - text_length_in_bytes_  :
-       sync_length);
+      uint64_t lce = 0;
+      for (; lce < 8; ++lce) {
+        if (TLX_UNLIKELY(lce >= max_length)) {
+          return max_length;
+        }
+        if(text_[i + lce] != text_[j + lce]) {
+          return lce;
+        }
+      }
 
-    uint64_t lce = 0;
-    for (; lce < 8; ++lce) {
-      if (TLX_UNLIKELY(lce >= max_length)) {
-        return max_length;
+      lce = 0;
+      unsigned __int128 const* const text_blocks_i =
+        reinterpret_cast<unsigned __int128 const*>(text_.data() + i);
+      unsigned __int128 const * const text_blocks_j =
+        reinterpret_cast<unsigned __int128 const *>(text_.data() + j);
+      for(; lce < max_length/16; ++lce) {
+        if(text_blocks_i[lce] != text_blocks_j[lce]) {
+          break;
+        }
       }
-      if(text_[i + lce] != text_[j + lce]) {
-        return lce;
+      lce *= 16;
+      // The last block did not match. Here we compare its single characters
+      uint64_t lce_end = lce + ((16 < max_length) ? 16 : max_length);
+      for (; lce < lce_end; ++lce) {
+        if(text_[i + lce] != text_[j + lce]) {
+          return lce;
+        }
       }
-    }
+      /* strSync part */
+      uint64_t const i_ = suc(i);
+      uint64_t const j_ = suc(j);
 
-    lce = 0;
-    unsigned __int128 const* const text_blocks_i =
-      reinterpret_cast<unsigned __int128 const*>(text_.data() + i);
-    unsigned __int128 const * const text_blocks_j =
-      reinterpret_cast<unsigned __int128 const *>(text_.data() + j);
-    for(; lce < max_length/16; ++lce) {
-      if(text_blocks_i[lce] != text_blocks_j[lce]) {
-        break;
-      }
-    }
-    lce *= 16;
-    // The last block did not match. Here we compare its single characters
-    uint64_t lce_end = lce + ((16 < max_length) ? 16 : max_length);
-    for (; lce < lce_end; ++lce) {
-      if(text_[i + lce] != text_[j + lce]) {
-        return lce;
-      }
-    }
-    /* strSync part */
-    uint64_t const i_ = suc(i);
-    uint64_t const j_ = suc(j);
+      uint64_t const l = lce_rmq_->lce(i_, j_);
 
-    uint64_t const l = lce_rmq_->lce(i_, j_);
-    return l + sync_set_[i_] - i;
+      return l + sync_set_[i_] - i;
+    }
   }
 
   char operator[](uint64_t i) {

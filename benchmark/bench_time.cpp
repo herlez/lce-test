@@ -65,7 +65,7 @@ public:
                                     lce_path + "/lce_18", lce_path + "/lce_19",
                                     lce_path + "/lce_X"};
     if(sorted_) {
-      build_lce_range(file_path, output_path + filename, prefix_length);
+      //build_lce_range(file_path, output_path + filename, prefix_length);
     }
     
     /************************************
@@ -120,9 +120,9 @@ public:
         size_t const mem_before = malloc_count_current();
         t.reset();
         if (prefer_long_queries) {
-          lce_structure = std::make_unique<LceSemiSyncSets<2048, true>>(text);
+          lce_structure = std::make_unique<LceSemiSyncSets<2048, true>>(text, i == 0);
         } else {
-          lce_structure = std::make_unique<LceSemiSyncSets<2048, false>>(text);
+          lce_structure = std::make_unique<LceSemiSyncSets<2048, false>>(text, i == 0);
         }
         construction_times.add(t.get_and_reset());
         construction_mem.add(malloc_count_current() - mem_before);
@@ -130,9 +130,9 @@ public:
         size_t const mem_before = malloc_count_current();
         t.reset();
         if (prefer_long_queries) {
-          lce_structure = std::make_unique<LceSemiSyncSets<1024, true>>(text);
+          lce_structure = std::make_unique<LceSemiSyncSets<1024, true>>(text, i == 0);
         } else {
-          lce_structure = std::make_unique<LceSemiSyncSets<1024, false>>(text);
+          lce_structure = std::make_unique<LceSemiSyncSets<1024, false>>(text, i == 0);
         }
         construction_times.add(t.get_and_reset());
         construction_mem.add(malloc_count_current() - mem_before);
@@ -140,9 +140,9 @@ public:
         size_t const mem_before = malloc_count_current();
         t.reset();
         if (prefer_long_queries) {
-          lce_structure = std::make_unique<LceSemiSyncSets<512, true>>(text);
+          lce_structure = std::make_unique<LceSemiSyncSets<512, true>>(text, i == 0);
         } else {
-          lce_structure = std::make_unique<LceSemiSyncSets<512, false>>(text);
+          lce_structure = std::make_unique<LceSemiSyncSets<512, false>>(text, i == 0);
         }
         construction_times.add(t.get_and_reset());
         construction_mem.add(malloc_count_current() - mem_before);
@@ -150,9 +150,9 @@ public:
         size_t const mem_before = malloc_count_current();
         t.reset();
         if (prefer_long_queries) {
-          lce_structure = std::make_unique<LceSemiSyncSets<256, true>>(text);
+          lce_structure = std::make_unique<LceSemiSyncSets<256, true>>(text, i == 0);
         } else {
-          lce_structure = std::make_unique<LceSemiSyncSets<256, false>>(text);
+          lce_structure = std::make_unique<LceSemiSyncSets<256, false>>(text, i == 0);
         }
         construction_times.add(t.get_and_reset());
         construction_mem.add(malloc_count_current() - mem_before);
