@@ -91,9 +91,9 @@ public:
     //Build RMQ data structure
     rmq_ds1 = std::make_unique<RMQRMM64>((long int*)lcp.data(), lcp.size());
   }
-	
+    
 
-	
+    
   uint64_t lce(uint64_t i, uint64_t j) const {
     if(i == j) {
       return text_size - i;
@@ -108,11 +108,11 @@ public:
 
     auto result = lcp[min];
     for (auto i = min + 1; i <= max; ++i) {
-      result = std::max(result, lcp[i]);
+      result = std::min(result, lcp[i]);
     }
     return result;
   }
-	
+    
   uint64_t get_size() {
     return text_size;
   }
@@ -120,7 +120,7 @@ public:
 private:
   uint8_t const * const text;
   uint64_t text_size;
-	
+    
   std::vector<uint64_t> isa;
   std::vector<uint64_t> lcp;
   //Rmq * rmq_ds;
