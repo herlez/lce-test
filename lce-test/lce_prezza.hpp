@@ -17,15 +17,14 @@
 
 /* This class builds Prezza's in-place LCE data structure and
  * answers LCE-queries in O(log(n)). */
+template <uint64_t t_naive_scan = 128>
 class LcePrezza : public LceDataStructure {
 public:
   LcePrezza() = delete;
   /* Loads the full file located at PATH and builds Prezza's LCE data structure */
   LcePrezza(uint64_t * const text, size_t const size)
   : text_length_in_bytes_(size),
-    text_length_in_blocks_(text_length_in_bytes_ / 8 +
-                           (text_length_in_bytes_ % 8 == 0 ? 0 : 1)),
-    prime_{util::getLow64BitPrime()},
+    text_length_in_blocks_(size / 8 + (size % 8 == 0 ? 0 : 1)),
     fingerprints_(text),
     power_table_(new uint64_t[((int) std::log2(text_length_in_blocks_)) + 6]) {
       calculateFingerprints();
@@ -33,15 +32,10 @@ public:
   }
 
 
-  /* Fast LCE-query in O(log(n)) time */
-  uint64_t lce(const uint64_t i, const uint64_t j) {
-    if (TLX_UNLIKELY(i == j)) {
-      return text_length_in_bytes_ - i;
-    }
-
-    const uint64_t max_lce = text_length_in_bytes_ - ((i < j) ? j : i);
-
+  uint64_t lce_scan(const uint64_t i, const uint64_t j, uint64_t max_lce) {
+    uint64_t lce = 0;
     /* naive part of lce query */
+    /* compare blockwise */
     const int offset_lce1 = (i % 8) * 8;
     const int offset_lce2 = (j % 8) * 8;
     uint64_t block_i = getBlock(i/8);
@@ -53,11 +47,7 @@ public:
     uint64_t comp_block_j = (block_j << offset_lce2) +
       ((block_j2 >> 1) >> (63-offset_lce2));
 
-    /* compare blockwise */
-    const uint64_t max_block_naive = max_lce < 1024 ? max_lce/8 : 1024/8;
-
-    uint64_t lce = 0;
-
+    const uint64_t max_block_naive = max_lce < t_naive_scan ? max_lce/8 : t_naive_scan/8;
     while(lce < max_block_naive) {
       if(comp_block_i != comp_block_j) {
         break;
@@ -72,12 +62,10 @@ public:
       comp_block_j = (block_j << offset_lce2) +
         ((block_j2 >> 1) >> (63-offset_lce2));
     }
-
-    lce *= 8;
+   lce *= 8;
     /* If everything except the stub matches, we compare the stub character-wise
        and return the result */
-    if(lce != 1024) {
-
+    if(lce != t_naive_scan) {
       unsigned char * comp_block_i2 = (unsigned char *) &comp_block_i;
       unsigned char * comp_block_j2 = (unsigned char *) &comp_block_j;
       unsigned int max_stub = (max_lce - lce) < 8 ? (max_lce - lce) : 8;
@@ -89,10 +77,24 @@ public:
       }
       return lce;
     }
-
-    /* exponential search */
-    int exp = 11;
-    uint64_t dist = 2048;
+    return lce;
+  }
+  
+  
+  
+  /* Fast LCE-query in O(log(n)) time */
+  uint64_t lce(const uint64_t i, const uint64_t j) {
+    if (TLX_UNLIKELY(i == j)) {
+      return text_length_in_bytes_ - i;
+    }
+    const uint64_t max_lce = text_length_in_bytes_ - ((i < j) ? j : i);
+    uint64_t lce = lce_scan(i, j, max_lce);
+    if(lce < t_naive_scan) {
+      return lce;
+    }
+    /* exponential search */    
+    uint64_t dist = t_naive_scan * 2;
+    int exp = __builtin_ctz(t_naive_scan)+1;
 
     while( dist <= max_lce ) {
       if (fingerprintExp(i, exp) != fingerprintExp(j, exp)) {
@@ -104,24 +106,22 @@ public:
 
     /* binary search , we start it at i2 and j2, because we know that 
      * up until i2 and j2 everything matched */
+     
     --exp;
     dist /= 2;
     uint64_t i2 = i + dist;
     uint64_t j2 = j + dist;
 
-    const uint64_t max_rest = text_length_in_bytes_ - ((i2 < j2) ? j2 : i2);
-    while(exp != 0) {
+    while(exp != __builtin_ctz(t_naive_scan)) {
       --exp;
       dist /= 2;
-      if (TLX_UNLIKELY(dist > max_rest)) {
-        continue;
-      }
       if(fingerprintExp(i2, exp) == fingerprintExp(j2, exp)) {
         i2 += dist;
         j2 += dist;
       }
     }
-    return i2-i;
+    const uint64_t max_lce_rest = text_length_in_bytes_ - ((i2 < j2) ? j2 : i2);
+    return i2-i+lce_scan(i2, j2, max_lce_rest);
   }
 
   /* Returns the prime*/
@@ -152,23 +152,13 @@ public:
 private:
   const uint64_t text_length_in_bytes_;
   const uint64_t text_length_in_blocks_;
-  const unsigned __int128 prime_;
+  static constexpr unsigned __int128 prime_ = 0x800000000000001dULL;
   uint64_t * const fingerprints_;
   uint64_t * const power_table_;
 
   /* Returns the i'th block. A block contains 8 character. */
   uint64_t getBlock(const uint64_t i) const {
-    if (TLX_UNLIKELY(i > text_length_in_blocks_)) {
-      return 0;
-    }
-    if (TLX_UNLIKELY(i == 0)) {
-      if(fingerprints_[0] >= 0x8000000000000000ULL) {
-        return fingerprints_[0] - 0x8000000000000000ULL + prime_;
-      } else {
-        return fingerprints_[0];
-      }
-    } else {
-      unsigned __int128 x = fingerprints_[i - 1] & 0x7FFFFFFFFFFFFFFFULL;
+    unsigned __int128 x = (i != 0) ? fingerprints_[i - 1] & 0x7FFFFFFFFFFFFFFFULL : 0;
       x <<= 64;
       x %= prime_;
 
@@ -180,44 +170,38 @@ private:
 
       y = y <= current_fingerprint ?
         current_fingerprint - y : prime_ - (y - current_fingerprint);
-      return y + s_bit*(uint64_t)prime_;
-    }
+      return y + s_bit*static_cast<uint64_t>(prime_);
   }
 
   /* Calculates the fingerprint of T[from, from + 2^exp) */
   uint64_t fingerprintExp(const uint64_t from, const int exp) const {
-    if (TLX_UNLIKELY(from == 0)) {
-      return fingerprintTo((1 << exp)-1); // ie if exponent = 3, we want P[0..7];
-    } else {
-      unsigned __int128 fingerprint_to_i = fingerprintTo(from - 1);
-      unsigned __int128 fingerprint_to_j = fingerprintTo(from + (1 << exp) - 1);
-      fingerprint_to_i *= power_table_[exp];
-      fingerprint_to_i %= prime_;
+    unsigned __int128 fingerprint_to_i = (from != 0) ? fingerprintTo(from - 1) : 0;
+    unsigned __int128 fingerprint_to_j = fingerprintTo(from + (1 << exp) - 1);
+    fingerprint_to_i *= power_table_[exp];
+    fingerprint_to_i %= prime_;
 
-      return fingerprint_to_j >= fingerprint_to_i ?
-        (uint64_t) (fingerprint_to_j - fingerprint_to_i) :
-        (uint64_t)  (prime_ - (fingerprint_to_i - fingerprint_to_j));
-    }
+    return fingerprint_to_j >= fingerprint_to_i ?
+      static_cast<uint64_t>(fingerprint_to_j - fingerprint_to_i) :
+      static_cast<uint64_t>(prime_ - (fingerprint_to_i - fingerprint_to_j));
   }
 
   /* Calculates the fingerprint of T[0..i] */
   uint64_t fingerprintTo(const uint64_t i) const {
     unsigned __int128 fingerprint = 0;
-    int pad = ((i+1) & 7) * 8; // &7 is equal to % 8
+    int pad = ((i+1) & 7) * 8; 
     if(pad == 0) {
       // This fingerprints is already saved.
       // We only have to remove the helping bit.
       return fingerprints_[i/8] & 0x7FFFFFFFFFFFFFFFULL; 
     }
     /* Add fingerprint from previous block */
-    if (i > 7) {
-      fingerprint = fingerprints_[((i/8) - 1)] & 0x7FFFFFFFFFFFFFFFULL;
-      fingerprint <<= pad;
-    }
+    fingerprint = (i > 7) ? fingerprints_[((i/8) - 1)] & 0x7FFFFFFFFFFFFFFFULL : 0;
+    fingerprint <<= pad;
+
     /* Add relevant part of block */
     fingerprint += (getBlock(i/8) >> (64-pad));
     fingerprint %= prime_;
-    return (uint64_t) fingerprint; 
+    return static_cast<uint64_t>(fingerprint);
   }
 
   /* Overwrites the n'th block with the fingerprint of the first n blocks.
@@ -274,7 +258,6 @@ private:
       power_table_[i] = (uint64_t) x;
     }
   }
-
 };
 
 /******************************************************************************/

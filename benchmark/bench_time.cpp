@@ -115,7 +115,7 @@ public:
         size_t const mem_before = malloc_count_current();
         t.reset();
         lce_structure =
-          std::make_unique<LcePrezza>(reinterpret_cast<uint64_t*>(text.data()),
+          std::make_unique<LcePrezza<128>>(reinterpret_cast<uint64_t*>(text.data()),
                                       text.size());
         construction_times.add(t.get_and_reset());
         lce_mem.add(malloc_count_current() - mem_before);

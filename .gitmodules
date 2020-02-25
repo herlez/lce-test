@@ -13,6 +13,3 @@
 [submodule "libs/sais-lite-lcp"]
 	path = extlib/sais-lite-lcp
 	url = https://github.com/kurpicz/sais-lite-lcp
-[submodule "libs/rk-lce"]
-	path = extlib/rk-lce
-	url = https://github.com/nicolaprezza/rk-lce
