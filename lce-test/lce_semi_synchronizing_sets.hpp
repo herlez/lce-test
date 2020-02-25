@@ -241,7 +241,9 @@ private:
         if(fingerprints[i+kTau] <= fingerprints[local_min]) {
           sync_set_.push_back(i);
           out_s_fingerprints.push_back(fingerprints[i]);
-          local_min = i + kTau; 
+          if(fingerprints[i+kTau] != fingerprints[local_min]) {
+            local_min = i + kTau; 
+          }
         }
         i++;
         calculate_fingerprints(1, fp, fingerprints);
