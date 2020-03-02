@@ -17,6 +17,7 @@
 #include <includes/RMQRMM64.h>
 
 #include "sais.h"
+#include "string_sorting.hpp"
 
 struct rank_tuple {
   uint64_t index;
