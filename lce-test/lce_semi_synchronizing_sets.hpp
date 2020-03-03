@@ -77,8 +77,7 @@ public:
 
     lce_rmq_ = std::make_unique<Lce_rmq<sss_type, kTau>>(text_.data(),
                                                          text_length_in_bytes_,
-                                                         sync_set_,
-                                                         s_fingerprints);
+                                                         sync_set_);
     if (print_ss_size) {
       std::cout << "sync_set_size=" << getSyncSetSize() << " ";
     }
