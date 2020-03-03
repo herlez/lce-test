@@ -204,6 +204,7 @@ public:
         queries_times.add(t.get_and_reset());
       }
       if (check) {
+        correct = true;
         auto lce_naive = LceUltraNaive(text);
         for (size_t j = 0; correct && j < number_lce_queries * 2; j += 2) {
           size_t const lce = lce_structure->lce(lce_indices[j],
@@ -261,12 +262,13 @@ public:
             queries_times.add(t.get_and_reset());
           }
           if (check) {
+            correct = true;
             auto lce_naive = LceUltraNaive(text);
             for (size_t j = 0; correct && j < number_lce_queries * 2; j += 2) {
               size_t const lce = lce_structure->lce(lce_indices[j],
                                                     lce_indices[j + 1]);
               size_t const lce_res_naive = lce_naive.lce(lce_indices[j],
-                                                    lce_indices[j + 1]);
+                                                         lce_indices[j + 1]);
               correct = (lce == lce_res_naive);
             }
           }
