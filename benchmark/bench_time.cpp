@@ -183,6 +183,7 @@ public:
 
     std::vector<uint64_t> lce_indices(number_lce_queries * 2);
     bool correct = true;
+    size_t wrong_queries = 0;
 
     if(random_) {
       std::cout << "random ";
@@ -264,12 +265,15 @@ public:
           if (check) {
             correct = true;
             auto lce_naive = LceUltraNaive(text);
-            for (size_t j = 0; correct && j < number_lce_queries * 2; j += 2) {
+            for (size_t j = 0; j < number_lce_queries * 2; j += 2) {
               size_t const lce = lce_structure->lce(lce_indices[j],
                                                     lce_indices[j + 1]);
               size_t const lce_res_naive = lce_naive.lce(lce_indices[j],
                                                          lce_indices[j + 1]);
-              correct = (lce == lce_res_naive);
+              if (lce != lce_res_naive) {
+                correct = false;
+                ++wrong_queries;
+              }
             }
           }
         }
@@ -281,7 +285,9 @@ public:
                   << "queries_times_max=" << queries_times.max() << " "
                   << "queries_times_avg=" << queries_times.avg() << " "
                   << "check="
-                  << (check ? (correct ? "passed" : "failed") : "none") << " "
+                  << (check ? (correct ? "passed" :
+                               ("failed(" + std::to_string(wrong_queries)
+                                + ")" )) : "none") << " "
                   << std::endl;
       }
     } 
