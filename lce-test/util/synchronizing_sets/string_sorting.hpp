@@ -67,6 +67,45 @@ static void inline inssort(indexed_string* strings, size_t n,
   }
 }
 
+template <size_t IS_THRESHOLD = 32>
+void inline msd_CE0(indexed_string* strings, indexed_string* sorted, size_t n,
+                    uint64_t depth) {
+  if (n <= 1 || depth > 3 * kTau) {
+    return;
+  }
+
+  if (n <= IS_THRESHOLD) {
+    inssort(strings, n, depth);
+    return;
+  }
+
+  constexpr size_t max_char = std::numeric_limits<uint8_t>::max() + 1;
+  std::array<size_t, max_char> bucket_sizes = { 0 };
+  for (size_t i = 0; i < n; ++i) {
+    ++bucket_sizes[strings[i][depth]];
+  }
+
+  {
+    std::array<indexed_string*, max_char> buckets;
+    buckets[0] = sorted;
+    for (size_t i = 1; i < max_char; ++i) {
+      buckets[i] = buckets[i - 1] + bucket_sizes[i - 1];
+    }
+    for (auto* cur_string = strings; cur_string < strings + n; ++cur_string) {
+      *(buckets[(*cur_string)[depth]]++) = *cur_string;
+    }
+    std::copy_n(sorted, n, strings);
+  }
+  auto* bucket_border = strings + bucket_sizes[0];
+  for (size_t i = 1; i < max_char; ++i) {
+    if (bucket_sizes[i] > 0) {
+      msd_CE0(bucket_border, sorted, bucket_sizes[i], depth + 1);
+      bucket_border += bucket_sizes[i];
+    }
+  }
+
+}
+
 struct RadixStep_CI2_sb
 {
   indexed_string * str;

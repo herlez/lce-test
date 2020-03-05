@@ -102,7 +102,6 @@ public:
     if (max - min > 1024) {
       return lcp[rmq_ds1->queryRMQ(min, max)];
     }
-
     auto result = lcp[min];
     for (auto i = min + 1; i <= max; ++i) {
       result = std::min(result, lcp[i]);
@@ -124,7 +123,7 @@ private:
   std::unique_ptr<RMQRMM64> rmq_ds1;
 
   inline void radixsort(indexed_string* strings, size_t n) {
-    bingmann_msd_CI3_sb(strings, n);
+    msd_CE0(strings, n);
   }
 
 
