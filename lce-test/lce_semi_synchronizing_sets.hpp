@@ -139,10 +139,10 @@ public:
       uint64_t const sync_length = 3 * kTau - 1;
       uint64_t const max_length = (i < j) ?
         ((sync_length + j > text_length_in_bytes_) ?
-         (sync_length + j) - text_length_in_bytes_  :
+         text_length_in_bytes_ - j  :
          sync_length) :
         ((sync_length + i > text_length_in_bytes_) ?
-         (sync_length + i) - text_length_in_bytes_  :
+         text_length_in_bytes_ - i  :
          sync_length);
 
       uint64_t lce = 0;
