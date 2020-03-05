@@ -182,6 +182,8 @@ public:
     std::cout << std::endl;
 
     std::vector<uint64_t> lce_indices(number_lce_queries * 2);
+    bool correct = true;
+    size_t wrong_queries = 0;
 
     if(random_) {
       std::cout << "random ";
@@ -202,6 +204,17 @@ public:
         }
         queries_times.add(t.get_and_reset());
       }
+      if (check) {
+        correct = true;
+        auto lce_naive = LceUltraNaive(text);
+        for (size_t j = 0; correct && j < number_lce_queries * 2; j += 2) {
+          size_t const lce = lce_structure->lce(lce_indices[j],
+                                                lce_indices[j + 1]);
+          size_t const lce_res_naive = lce_naive.lce(lce_indices[j],
+                                                     lce_indices[j + 1]);
+          correct = (lce == lce_res_naive);
+        }
+      }
 
       std::cout << "lce_values_min=" << lce_values.min() << " "
                 << "lce_values_max=" << lce_values.max() << " "
@@ -209,7 +222,10 @@ public:
                 << "lce_values_count=" << lce_values.count() << " "
                 << "queries_times_min=" << queries_times.min() << " "
                 << "queries_times_max=" << queries_times.max() << " "
-                << "queries_times_avg=" << queries_times.avg() << " ";
+                << "queries_times_avg=" << queries_times.avg() << " "
+                << "check="
+                << (check ? (correct ? "passed" : "failed") : "none") << " "
+                << std::endl;
 
     } else if (sorted_) {
       for (size_t i = lce_from; i < lce_to; ++i) {
@@ -246,6 +262,20 @@ public:
             }
             queries_times.add(t.get_and_reset());
           }
+          if (check) {
+            correct = true;
+            auto lce_naive = LceUltraNaive(text);
+            for (size_t j = 0; j < number_lce_queries * 2; j += 2) {
+              size_t const lce = lce_structure->lce(lce_indices[j],
+                                                    lce_indices[j + 1]);
+              size_t const lce_res_naive = lce_naive.lce(lce_indices[j],
+                                                         lce_indices[j + 1]);
+              if (lce != lce_res_naive) {
+                correct = false;
+                ++wrong_queries;
+              }
+            }
+          }
         }
         std::cout << "lce_values_min=" << lce_values.min() << " "
                   << "lce_values_max=" << lce_values.max() << " "
@@ -254,41 +284,13 @@ public:
                   << "queries_times_min=" << queries_times.min() << " "
                   << "queries_times_max=" << queries_times.max() << " "
                   << "queries_times_avg=" << queries_times.avg() << " "
+                  << "check="
+                  << (check ? (correct ? "passed" :
+                               ("failed(" + std::to_string(wrong_queries)
+                                + ")" )) : "none") << " "
                   << std::endl;
       }
-    } else {
-      std::cout << "none ";
-    }
-
-    if (random_) {
-
-    }
-    std::cout << "CHECK=";
-    if (check) {
-      // Create random queries for the test
-      std::srand(std::time(nullptr));
-      for(uint64_t i = 0; i < number_lce_queries * 2; ++i) {
-        lce_indices[i] = rand() % lce_structure->getSizeInBytes();
-      }
-      std::vector<uint8_t> cmp_text = load_text(file_path, prefix_length);
-      auto lce_naive = LceUltraNaive(cmp_text);
-      bool correct = true;
-      for (size_t i = 0; correct && i < number_lce_queries * 2; i += 2) {
-        size_t const lce_res = lce_structure->lce(lce_indices[i],
-                                                  lce_indices[i + 1]);
-        size_t const lce_res_naive = lce_naive.lce(lce_indices[i],
-                                                   lce_indices[i + 1]);
-        correct = (lce_res == lce_res_naive);
-      }
-      if (!correct) {
-        std::cout << "failed";
-      } else {
-        std::cout << "passed";
-      }
-    } else {
-      std::cout << "none";
-    }
-    std::cout << std::endl;
+    } 
   }
 
 

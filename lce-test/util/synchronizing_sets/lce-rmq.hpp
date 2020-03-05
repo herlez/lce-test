@@ -17,6 +17,7 @@
 #include <includes/RMQRMM64.h>
 
 #include "sais.h"
+#include "string_sorting.hpp"
 
 struct rank_tuple {
   uint64_t index;
@@ -34,8 +35,7 @@ class Lce_rmq {
 
 public:
   Lce_rmq(uint8_t const * const v_text, uint64_t const v_text_size,
-          std::vector<sss_type> const& sync_set,
-          std::vector<uint64_t> const& s_fingerprints) 
+          std::vector<sss_type> const& sync_set) 
     : text(v_text), text_size(v_text_size) {
 
     std::vector<indexed_string> strings_to_sort;
