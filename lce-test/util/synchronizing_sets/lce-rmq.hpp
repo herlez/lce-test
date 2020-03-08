@@ -74,18 +74,20 @@ public:
       new_text.push_back(static_cast<int32_t>(rank_tuples[i].rank));
     }
     new_text.push_back(0);
-    sais_int(new_text.data(), new_sa.data(), new_text.size(), 2 * cur_rank + 1);
+    sais_int(new_text.data(), new_sa.data(), new_text.size(), cur_rank + 1);
 
     lcp = std::vector<uint64_t>(new_sa.size() - 1, 0);
-
     isa.resize(new_sa.size() - 1);
+
     for(uint64_t i = 1; i < new_sa.size() - 1; ++i) {
       isa[new_sa[i]] = i - 1;
       lcp[i] = lce_in_text(sync_set[new_sa[i]],
                            sync_set[new_sa[i + 1]]);
     }
+    isa[new_sa[new_sa.size() - 1]] = new_sa.size() - 2;
 
     //Build RMQ data structure
+
     rmq_ds1 = std::make_unique<RMQRMM64>((long int*)lcp.data(), lcp.size());
   }
     
@@ -123,7 +125,7 @@ private:
   std::unique_ptr<RMQRMM64> rmq_ds1;
 
   inline void radixsort(indexed_string* strings, size_t n) {
-    msd_CE0(strings, n);
+    bingmann_msd_CI3_sb(strings, n);
   }
 
 
@@ -136,7 +138,6 @@ private:
       }
       ++lce_naive;
     }
-    std::cout << std::endl;
     return lce_naive;
   }
 };

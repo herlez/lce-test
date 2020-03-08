@@ -73,7 +73,7 @@ public:
     fill_synchronizing_set(0, (text_length_in_bytes_ - (2*kTau)), fp,
                            fingerprints, s_fingerprints);
     
-    ind_ = std::make_unique<stash::pred::index<std::vector<sss_type>, sss_type, 7>>(sync_set_);         
+    ind_ = std::make_unique<stash::pred::index<std::vector<sss_type>, sss_type, 7>>(sync_set_);
 
     lce_rmq_ = std::make_unique<Lce_rmq<sss_type, kTau>>(text_.data(),
                                                          text_length_in_bytes_,
@@ -90,8 +90,8 @@ public:
     }
 
     if constexpr (prefer_long) {
-      uint64_t const i_ = suc(i);
-      uint64_t const j_ = suc(j);
+      uint64_t const i_ = suc(i + 1);
+      uint64_t const j_ = suc(j + 1);
       uint64_t const dist_i = sync_set_[i_] - i;
       uint64_t const dist_j = sync_set_[j_] - j;
       
@@ -136,7 +136,7 @@ public:
       return l + sync_set_[i_] - i;
     } else {
       /* naive part */
-      uint64_t const sync_length = 3 * kTau - 1;
+      uint64_t const sync_length = 3 * kTau;
       uint64_t const max_length = (i < j) ?
         ((sync_length + j > text_length_in_bytes_) ?
          text_length_in_bytes_ - j  :
@@ -174,8 +174,8 @@ public:
         }
       }
       /* strSync part */
-      uint64_t const i_ = suc(i);
-      uint64_t const j_ = suc(j);
+      uint64_t const i_ = suc(i + 1);
+      uint64_t const j_ = suc(j + 1);
 
       uint64_t const l = lce_rmq_->lce(i_, j_);
 

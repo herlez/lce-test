@@ -70,7 +70,7 @@ static void inline inssort(indexed_string* strings, size_t n,
 template <size_t IS_THRESHOLD = 32>
 void inline msd_CE0(indexed_string* strings, indexed_string* sorted, size_t n,
                     uint64_t depth) {
-  if (n <= 1 || depth > 3 * kTau) {
+  if (n <= 1) {
     return;
   }
 
@@ -104,6 +104,11 @@ void inline msd_CE0(indexed_string* strings, indexed_string* sorted, size_t n,
     }
   }
 
+}
+
+inline void msd_CE0(indexed_string* strings, size_t n) {
+  std::vector<indexed_string> buffer(n);
+  msd_CE0(strings, buffer.data(), n, 0);
 }
 
 struct RadixStep_CI2_sb
