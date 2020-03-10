@@ -14,7 +14,7 @@
 #include "util/synchronizing_sets/ring_buffer.hpp"
 #include "util/synchronizing_sets/lce-rmq.hpp"
 #include "util/util.hpp"
-#include <stash/pred/index.hpp>
+#include "util/successor/index.hpp"
 
 #include <tlx/define/likely.hpp>
 
@@ -256,11 +256,11 @@ private:
       fp *= 256;
       fp += (unsigned char) text_[kTau+fingerprints.size() - 1];
       fp %= kPrime;
-				
+                
       unsigned __int128 first_char_influence = text_[fingerprints.size() - 1];
       first_char_influence *= TwoPowTauModQ;
       first_char_influence %= kPrime;
-				
+                
       if(first_char_influence < fp) {
         fp -= first_char_influence;
       } else {
