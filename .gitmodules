@@ -4,9 +4,6 @@
 [submodule "libs/rmq"]
 	path = extlib/rmq
 	url = https://github.com/hferrada/rmq
-[submodule "libs/stash"]
-	path = extlib/stash
-	url = https://github.com/pdinklag/stash/
 [submodule "libs/malloc_count"]
 	path = extlib/malloc_count
 	url = https://github.com/bingmann/malloc_count
