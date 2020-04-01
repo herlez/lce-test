@@ -120,6 +120,8 @@ public:
 
     rmq_ds1 = std::make_unique<RMQRMM64>((long int*)lcp.data(), lcp.size());
 
+    end = std::chrono::system_clock::now();
+
     if (print_times) {
       std::cout << "rmq_construct_time=" 
                 << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ";
