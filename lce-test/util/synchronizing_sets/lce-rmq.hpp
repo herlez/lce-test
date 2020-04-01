@@ -10,7 +10,7 @@
 #pragma once
 
 #include <tlx/define/likely.hpp>
-
+#include <chrono>
 #include <vector>
 #include <algorithm> //std::sort
 #include <string>
@@ -35,8 +35,10 @@ class Lce_rmq {
 
 public:
   Lce_rmq(uint8_t const * const v_text, uint64_t const v_text_size,
-          std::vector<sss_type> const& sync_set) 
+          std::vector<sss_type> const& sync_set, bool print_times=false) 
     : text(v_text), text_size(v_text_size) {
+
+    std::chrono::system_clock::time_point begin = std::chrono::system_clock::now();
 
     std::vector<indexed_string> strings_to_sort;
     for (uint64_t i = 0; i < sync_set.size(); ++i) {
@@ -44,6 +46,15 @@ public:
     }
 
     radixsort(strings_to_sort.data(), strings_to_sort.size());
+
+    std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
+
+    if (print_times) {
+      std::cout << "string_sort_time=" 
+                << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ";
+    }
+
+    begin = std::chrono::system_clock::now();
 
     std::vector<rank_tuple> rank_tuples;
     rank_tuples.reserve(strings_to_sort.size());
@@ -76,6 +87,16 @@ public:
     new_text.push_back(0);
     sais_int(new_text.data(), new_sa.data(), new_text.size(), cur_rank + 1);
 
+    end = std::chrono::system_clock::now();
+
+    if (print_times) {
+      std::cout << "sa_construct_time=" 
+                << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ";
+    }
+
+
+    begin = std::chrono::system_clock::now();
+
     lcp = std::vector<uint64_t>(new_sa.size() - 1, 0);
     isa.resize(new_sa.size() - 1);
 
@@ -86,9 +107,23 @@ public:
     }
     isa[new_sa[new_sa.size() - 1]] = new_sa.size() - 2;
 
+    end = std::chrono::system_clock::now();
+
+    if (print_times) {
+      std::cout << "lcp_construct_time=" 
+                << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ";
+    }
+
     //Build RMQ data structure
 
+    begin = std::chrono::system_clock::now();
+
     rmq_ds1 = std::make_unique<RMQRMM64>((long int*)lcp.data(), lcp.size());
+
+    if (print_times) {
+      std::cout << "rmq_construct_time=" 
+                << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ";
+    }
   }
     
 

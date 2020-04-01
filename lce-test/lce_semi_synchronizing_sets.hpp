@@ -17,7 +17,7 @@
 #include "util/successor/index.hpp"
 
 #include <tlx/define/likely.hpp>
-
+#include <chrono>
 #include <cmath>
 #include <vector>
 #include <memory>
@@ -68,16 +68,39 @@ public:
       fp %= kPrime;
     }
     ring_buffer<uint64_t> fingerprints(4*kTau);
+
+    std::chrono::system_clock::time_point begin = std::chrono::system_clock::now();
+
     std::vector<uint64_t> s_fingerprints;
     fingerprints.push_back(static_cast<uint64_t>(fp));
     fill_synchronizing_set(0, (text_length_in_bytes_ - (2*kTau)), fp,
                            fingerprints, s_fingerprints);
     
+
+    std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
+
+      
+    if (print_ss_size) {
+      std::cout << "sss_construct_time=" 
+                << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ";
+    }
+
+
+    begin = std::chrono::system_clock::now();
+
     ind_ = std::make_unique<stash::pred::index<std::vector<sss_type>, sss_type, 7>>(sync_set_);
+
+    end = std::chrono::system_clock::now();
+
+    if (print_ss_size) {
+      std::cout << "pred_construct_time=" 
+                << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ";
+    }
 
     lce_rmq_ = std::make_unique<Lce_rmq<sss_type, kTau>>(text_.data(),
                                                          text_length_in_bytes_,
-                                                         sync_set_);
+                                                         sync_set_,
+                                                         print_ss_size);
     if (print_ss_size) {
       std::cout << "sync_set_size=" << getSyncSetSize() << " ";
     }
