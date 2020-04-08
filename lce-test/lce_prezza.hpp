@@ -88,7 +88,11 @@ public:
     uint64_t dist = t_naive_scan * 2;
     int exp = __builtin_ctz(t_naive_scan)+1;
 
-    while (dist <= max_lce && fingerprintExp(i, exp) == fingerprintExp(j, exp)) {
+    unsigned const __int128 fingerprint_to_i = (i != 0) ? fingerprintTo(i - 1) : 0;
+    unsigned const __int128 fingerprint_to_j = (j != 0) ? fingerprintTo(j - 1) : 0;
+
+    while (dist <= max_lce &&
+           fingerprintExp(fingerprint_to_i, i, exp) == fingerprintExp(fingerprint_to_j, j, exp)) {
       ++exp;
       dist *= 2;
     }
@@ -214,6 +218,18 @@ private:
     return y + s_bit*static_cast<uint64_t>(prime_);
   }
 
+  /* Calculates the fingerprint of T[from, from + 2^exp) when the fingerprint
+     of T[1, from) is already knwon */
+  uint64_t fingerprintExp(unsigned __int128 fingerprint_to_i,
+                          const uint64_t from, const int exp) const {
+    unsigned __int128 fingerprint_to_j = fingerprintTo(from + (1 << exp) - 1);
+    fingerprint_to_i *= power_table_[exp];
+    fingerprint_to_i %= prime_;
+
+    return fingerprint_to_j >= fingerprint_to_i ?
+      static_cast<uint64_t>(fingerprint_to_j - fingerprint_to_i) :
+      static_cast<uint64_t>(prime_ - (fingerprint_to_i - fingerprint_to_j));
+  }
 
   /* Calculates the fingerprint of T[from, from + 2^exp) */
   uint64_t fingerprintExp(const uint64_t from, const int exp) const {
