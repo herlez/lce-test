@@ -264,7 +264,8 @@ public:
           }
           if (check) {
             correct = true;
-            auto lce_naive = LceUltraNaive(text);
+            auto check_text = load_text(file_path, prefix_length);
+            auto lce_naive = LceUltraNaive(check_text);
             for (size_t j = 0; j < number_lce_queries * 2; j += 2) {
               size_t const lce = lce_structure->lce(lce_indices[j],
                                                     lce_indices[j + 1]);

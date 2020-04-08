@@ -39,9 +39,9 @@ public:
     const int offset_lce1 = (i % 8) * 8;
     const int offset_lce2 = (j % 8) * 8;
     uint64_t block_i = getBlock(i/8);
-    uint64_t block_i2 = getBlock(i/8 + 1);
+    uint64_t block_i2 = getBlockGuaranteeIgeqOne(i/8 + 1);
     uint64_t block_j = getBlock(j/8);
-    uint64_t block_j2 = getBlock(j/8 + 1);
+    uint64_t block_j2 = getBlockGuaranteeIgeqOne(j/8 + 1);
     uint64_t comp_block_i = (block_i << offset_lce1) +
       ((block_i2 >> 1) >> (63-offset_lce1));
     uint64_t comp_block_j = (block_j << offset_lce2) +
@@ -54,30 +54,22 @@ public:
       }
       ++lce;
       block_i = block_i2;
-      block_i2 = getBlock((i/8)+lce+1);
+      block_i2 = getBlockGuaranteeIgeqOne((i/8)+lce+1);
       block_j = block_j2;
-      block_j2 = getBlock((j/8)+lce+1);
+      block_j2 = getBlockGuaranteeIgeqOne((j/8)+lce+1);
       comp_block_i = (block_i << offset_lce1) +
         ((block_i2 >> 1) >> (63-offset_lce1));
       comp_block_j = (block_j << offset_lce2) +
         ((block_j2 >> 1) >> (63-offset_lce2));
     }
-   lce *= 8;
+    lce *= 8;
     /* If everything except the stub matches, we compare the stub character-wise
        and return the result */
     if(lce != t_naive_scan) {
-      unsigned char * comp_block_i2 = (unsigned char *) &comp_block_i;
-      unsigned char * comp_block_j2 = (unsigned char *) &comp_block_j;
-      unsigned int max_stub = (max_lce - lce) < 8 ? (max_lce - lce) : 8;
-      for(unsigned int k = 0; k < max_stub; ++k) {
-        if(comp_block_i2[7-k] != comp_block_j2[7-k]) {
-          return lce;
-        }
-        ++lce;
-      }
-      return lce;
+      unsigned int const max_stub = (max_lce - lce) < 8 ? (max_lce - lce) : 8;
+      return lce + std::min<uint64_t>(((__builtin_clzl(comp_block_i ^ comp_block_j)) / 8), max_stub);
     }
-    return lce;
+    return t_naive_scan;
   }
   
   
@@ -87,7 +79,7 @@ public:
     if (TLX_UNLIKELY(i == j)) {
       return text_length_in_bytes_ - i;
     }
-    const uint64_t max_lce = text_length_in_bytes_ - ((i < j) ? j : i);
+    uint64_t max_lce = text_length_in_bytes_ - ((i < j) ? j : i);
     uint64_t lce = lce_scan(i, j, max_lce);
     if(lce < t_naive_scan) {
       return lce;
@@ -96,32 +88,26 @@ public:
     uint64_t dist = t_naive_scan * 2;
     int exp = __builtin_ctz(t_naive_scan)+1;
 
-    while( dist <= max_lce ) {
-      if (fingerprintExp(i, exp) != fingerprintExp(j, exp)) {
-        break;
-      }
+    while (dist <= max_lce && fingerprintExp(i, exp) == fingerprintExp(j, exp)) {
       ++exp;
       dist *= 2;
     }
 
     /* binary search , we start it at i2 and j2, because we know that 
      * up until i2 and j2 everything matched */
-     
     --exp;
     dist /= 2;
-    uint64_t i2 = i + dist;
-    uint64_t j2 = j + dist;
+    uint64_t add = dist;
 
     while(exp != __builtin_ctz(t_naive_scan)) {
       --exp;
       dist /= 2;
-      if(fingerprintExp(i2, exp) == fingerprintExp(j2, exp)) {
-        i2 += dist;
-        j2 += dist;
+      if(fingerprintExp(i + add, exp) == fingerprintExp(j + add, exp)) {
+        add += dist;
       }
     }
-    const uint64_t max_lce_rest = text_length_in_bytes_ - ((i2 < j2) ? j2 : i2);
-    return i2-i+lce_scan(i2, j2, max_lce_rest);
+    max_lce -= add;
+    return add + lce_scan_to_end(i + add, j + add, max_lce);
   }
 
   /* Returns the prime*/
@@ -156,22 +142,78 @@ private:
   uint64_t * const fingerprints_;
   uint64_t * const power_table_;
 
+  uint64_t lce_scan_to_end(const uint64_t i, const uint64_t j, uint64_t max_lce) {
+    uint64_t lce = 0;
+    /* naive part of lce query */
+    /* compare blockwise */
+    const int offset_lce1 = (i % 8) * 8;
+    const int offset_lce2 = (j % 8) * 8;
+    uint64_t block_i = getBlock(i/8);
+    uint64_t block_i2 = getBlockGuaranteeIgeqOne(i/8 + 1);
+    uint64_t block_j = getBlock(j/8);
+    uint64_t block_j2 = getBlockGuaranteeIgeqOne(j/8 + 1);
+    uint64_t comp_block_i = (block_i << offset_lce1) +
+      ((block_i2 >> 1) >> (63-offset_lce1));
+    uint64_t comp_block_j = (block_j << offset_lce2) +
+      ((block_j2 >> 1) >> (63-offset_lce2));
+
+    while(lce < max_lce) {
+      if(comp_block_i != comp_block_j) {
+        break;
+      }
+      ++lce;
+      block_i = block_i2;
+      block_i2 = getBlockGuaranteeIgeqOne((i/8)+lce+1);
+      block_j = block_j2;
+      block_j2 = getBlockGuaranteeIgeqOne((j/8)+lce+1);
+      comp_block_i = (block_i << offset_lce1) +
+        ((block_i2 >> 1) >> (63-offset_lce1));
+      comp_block_j = (block_j << offset_lce2) +
+        ((block_j2 >> 1) >> (63-offset_lce2));
+    }
+    lce *= 8;
+    /* If everything except the stub matches, we compare the stub character-wise
+ *        and return the result */
+   
+      unsigned int const max_stub = (max_lce - lce) < 8 ? (max_lce - lce) : 8;
+      return lce + std::min<uint64_t>(((__builtin_clzl(comp_block_i ^ comp_block_j)) / 8), max_stub);
+  }
+
+
   /* Returns the i'th block. A block contains 8 character. */
   uint64_t getBlock(const uint64_t i) const {
     unsigned __int128 x = (i != 0) ? fingerprints_[i - 1] & 0x7FFFFFFFFFFFFFFFULL : 0;
-      x <<= 64;
-      x %= prime_;
+    x <<= 64;
+    x %= prime_;
 
-      uint64_t current_fingerprint = fingerprints_[i];
-      uint64_t s_bit = current_fingerprint >> 63;
-      current_fingerprint &= 0x7FFFFFFFFFFFFFFFULL;
+    uint64_t current_fingerprint = fingerprints_[i];
+    uint64_t s_bit = current_fingerprint >> 63;
+    current_fingerprint &= 0x7FFFFFFFFFFFFFFFULL;
 
-      uint64_t y = (uint64_t) x;
+    uint64_t y = (uint64_t) x;
 
-      y = y <= current_fingerprint ?
-        current_fingerprint - y : prime_ - (y - current_fingerprint);
-      return y + s_bit*static_cast<uint64_t>(prime_);
+    y = y <= current_fingerprint ?
+      current_fingerprint - y : prime_ - (y - current_fingerprint);
+    return y + s_bit*static_cast<uint64_t>(prime_);
   }
+
+  /* Retruns the i'th block for i > 0. */
+  uint64_t getBlockGuaranteeIgeqOne(const uint64_t i) const {
+    unsigned __int128 x = fingerprints_[i - 1] & 0x7FFFFFFFFFFFFFFFULL;
+    x <<= 64;
+    x %= prime_;
+
+    uint64_t current_fingerprint = fingerprints_[i];
+    uint64_t s_bit = current_fingerprint >> 63;
+    current_fingerprint &= 0x7FFFFFFFFFFFFFFFULL;
+
+    uint64_t y = (uint64_t) x;
+
+    y = y <= current_fingerprint ?
+      current_fingerprint - y : prime_ - (y - current_fingerprint);
+    return y + s_bit*static_cast<uint64_t>(prime_);
+  }
+
 
   /* Calculates the fingerprint of T[from, from + 2^exp) */
   uint64_t fingerprintExp(const uint64_t from, const int exp) const {
@@ -188,18 +230,46 @@ private:
   /* Calculates the fingerprint of T[0..i] */
   uint64_t fingerprintTo(const uint64_t i) const {
     unsigned __int128 fingerprint = 0;
-    int pad = ((i+1) & 7) * 8; 
-    if(pad == 0) {
+    int pad = ((i+1) & 7); 
+    if(TLX_UNLIKELY(pad == 0)) {
       // This fingerprints is already saved.
       // We only have to remove the helping bit.
       return fingerprints_[i/8] & 0x7FFFFFFFFFFFFFFFULL; 
     }
+    pad *= 8;
     /* Add fingerprint from previous block */
-    fingerprint = (i > 7) ? fingerprints_[((i/8) - 1)] & 0x7FFFFFFFFFFFFFFFULL : 0;
-    fingerprint <<= pad;
+    if (TLX_LIKELY(i > 7)) {
+      fingerprint = fingerprints_[((i/8) - 1)] & 0x7FFFFFFFFFFFFFFFULL;
+      fingerprint <<= pad;
+      {
+        unsigned __int128 x = fingerprints_[(i / 8) - 1] & 0x7FFFFFFFFFFFFFFFULL;
+        x <<= 64;
+        x %= prime_;
+
+        uint64_t current_fingerprint = fingerprints_[i / 8];
+        uint64_t s_bit = current_fingerprint >> 63;
+        current_fingerprint &= 0x7FFFFFFFFFFFFFFFULL;
+
+        uint64_t y = (uint64_t) x;
+
+        y = y <= current_fingerprint ? 
+          current_fingerprint - y : prime_ - (y - current_fingerprint);
+        fingerprint += ((y + s_bit*static_cast<uint64_t>(prime_)) >> (64 - pad));
+      }
+    } else {
+      uint64_t current_fingerprint = fingerprints_[0];
+      uint64_t s_bit = current_fingerprint >> 63;
+      current_fingerprint &= 0x7FFFFFFFFFFFFFFFULL;
+  
+      uint64_t y = (uint64_t) 0;
+
+      y = y <= current_fingerprint ?
+        current_fingerprint - y : prime_ - (y - current_fingerprint);
+      fingerprint += ((y + s_bit*static_cast<uint64_t>(prime_)) >> (64 - pad));
+    }
 
     /* Add relevant part of block */
-    fingerprint += (getBlock(i/8) >> (64-pad));
+    //fingerprint += (getBlock(i/8) >> (64-pad));
     fingerprint %= prime_;
     return static_cast<uint64_t>(fingerprint);
   }
