@@ -31,6 +31,26 @@ target_include_directories(bench_time PUBLIC
 target_link_libraries(bench_time
   ferrada_rmq tlx stdc++fs sais_lcp malloc_count -ldl)
 
+option(LCE_BUILD_SDSL
+  "Build the minimal benchmark based on the SDSL which uses CSTs to compute LCEs" OFF)
+
+if (LCE_BUILD_SDSL)
+
+  find_package(SDSL REQUIRED)
+
+  add_executable(sdsl_cst_benchmark
+    sdsl_cst_benchmark.cpp)
+
+  target_link_libraries(sdsl_cst_benchmark ${SDSL})
+
+  target_include_directories(sdsl_cst_benchmark PUBLIC
+    ${SDSL_INCLUDE_DIRS}
+    $<BUILD_INTERFACE:${CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:${CURRENT_SOURCE_DIR}>
+    )
+
+endif()
+
 # add_executable(bench_memory ./src/bench_memory.cpp)
 # target_link_libraries(bench_memory ferrada_rmq tlx_command_line sais_lcp)
 # target_link_libraries(bench_memory malloc_count -ldl)
