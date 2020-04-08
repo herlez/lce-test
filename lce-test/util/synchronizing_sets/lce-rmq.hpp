@@ -19,6 +19,10 @@
 #include "sais.h"
 #include "string_sorting.hpp"
 
+#ifdef DETAILED_TIME
+#include <malloc_count.h>
+#endif
+
 struct rank_tuple {
   uint64_t index;
   uint64_t rank;
@@ -38,7 +42,11 @@ public:
           std::vector<sss_type> const& sync_set, bool print_times=false) 
     : text(v_text), text_size(v_text_size) {
 
+#ifdef DETAILED_TIME
+    size_t mem_before = malloc_count_current();
+    malloc_count_reset_peak();
     std::chrono::system_clock::time_point begin = std::chrono::system_clock::now();
+#endif
 
     std::vector<indexed_string> strings_to_sort;
     for (uint64_t i = 0; i < sync_set.size(); ++i) {
@@ -47,15 +55,20 @@ public:
 
     radixsort(strings_to_sort.data(), strings_to_sort.size());
 
+#ifdef DETAILED_TIME
     std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
-
     if (print_times) {
       std::cout << "string_sort_time=" 
-                << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ";
+                << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " "
+                << "string_sort_mem=" << (malloc_count_peak() - mem_before) << " ";
     }
+#endif
 
+#ifdef DETAILED_TIME
+    mem_before = malloc_count_current();
+    malloc_count_reset_peak();
     begin = std::chrono::system_clock::now();
-
+#endif
     std::vector<rank_tuple> rank_tuples;
     rank_tuples.reserve(strings_to_sort.size());
     uint64_t cur_rank = 1;
@@ -86,16 +99,20 @@ public:
     }
     new_text.push_back(0);
     sais_int(new_text.data(), new_sa.data(), new_text.size(), cur_rank + 1);
-
+#ifdef DETAILED_TIME
     end = std::chrono::system_clock::now();
-
     if (print_times) {
       std::cout << "sa_construct_time=" 
-                << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ";
+                << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " "
+                << "sa_construct_mem=" << (malloc_count_peak() - mem_before) << " ";
     }
+#endif
 
-
+#ifdef DETAILED_TIME
+    mem_before = malloc_count_current();
+    malloc_count_reset_peak();
     begin = std::chrono::system_clock::now();
+#endif
 
     lcp = std::vector<uint64_t>(new_sa.size() - 1, 0);
     isa.resize(new_sa.size() - 1);
@@ -107,25 +124,32 @@ public:
     }
     isa[new_sa[new_sa.size() - 1]] = new_sa.size() - 2;
 
+#ifdef DETAILED_TIME
     end = std::chrono::system_clock::now();
-
     if (print_times) {
       std::cout << "lcp_construct_time=" 
-                << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ";
+                << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " "
+                << "lcp_construct_mem=" << (malloc_count_peak() - mem_before) << " ";
     }
-
+#endif
     //Build RMQ data structure
 
+#ifdef DETAILED_TIME
+    mem_before = malloc_count_current();
+    malloc_count_reset_peak();
     begin = std::chrono::system_clock::now();
+#endif
 
     rmq_ds1 = std::make_unique<RMQRMM64>((long int*)lcp.data(), lcp.size());
 
+#ifdef DETAILED_TIME
     end = std::chrono::system_clock::now();
-
     if (print_times) {
       std::cout << "rmq_construct_time=" 
-                << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ";
+                << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " "
+                << "rmq_construct_mem=" << (malloc_count_peak() - mem_before) << " ";
     }
+#endif
   }
     
 

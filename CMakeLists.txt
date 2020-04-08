@@ -12,6 +12,12 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project (lce-test)
 
+option(DETAILED_TIME "Get detailed timing and memory output of SSS construction. This invalidates other memory mesurements." OFF)
+if (DETAILED_TIME)
+  set(CMAKE_CXX_FLAGS
+    "${CMAKE_CXX_FLAGS} -DDETAILED_TIME")
+endif()
+
 # Compiler flags
 set(CMAKE_CXX_FLAGS
   "${CMAKE_CXX_FLAGS} -Wall -Wextra")

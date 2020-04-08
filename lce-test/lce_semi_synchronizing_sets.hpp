@@ -22,6 +22,10 @@
 #include <vector>
 #include <memory>
 
+#ifdef DETAILED_TIME
+#include <malloc_count.h>
+#endif
+
 static constexpr uint64_t calculatePowerModulo(unsigned int const power,
                                                __int128 const kPrime) {
   unsigned __int128 x = 256;
@@ -69,33 +73,42 @@ public:
     }
     ring_buffer<uint64_t> fingerprints(4*kTau);
 
+#ifdef DETAILED_TIME
+    size_t mem_before = malloc_count_current();
+    malloc_count_reset_peak();
     std::chrono::system_clock::time_point begin = std::chrono::system_clock::now();
+#endif
 
     std::vector<uint64_t> s_fingerprints;
     fingerprints.push_back(static_cast<uint64_t>(fp));
     fill_synchronizing_set(0, (text_length_in_bytes_ - (2*kTau)), fp,
                            fingerprints, s_fingerprints);
     
-
+#ifdef DETAILED_TIME
     std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
-
-      
     if (print_ss_size) {
       std::cout << "sss_construct_time=" 
-                << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ";
+                << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " "
+                << "sss_construct_mem=" << (malloc_count_peak() - mem_before) << " ";
     }
+#endif
 
-
+#ifdef DETAILED_TIME
+    mem_before = malloc_count_current();
+    malloc_count_reset_peak();
     begin = std::chrono::system_clock::now();
+#endif
 
     ind_ = std::make_unique<stash::pred::index<std::vector<sss_type>, sss_type, 7>>(sync_set_);
 
+#ifdef DETAILED_TIME
     end = std::chrono::system_clock::now();
-
     if (print_ss_size) {
       std::cout << "pred_construct_time=" 
-                << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ";
+                << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " "
+                << "pred_construct_mem=" << (malloc_count_peak() - mem_before) << " ";
     }
+#endif
 
     lce_rmq_ = std::make_unique<Lce_rmq<sss_type, kTau>>(text_.data(),
                                                          text_length_in_bytes_,
