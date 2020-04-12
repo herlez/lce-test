@@ -37,11 +37,12 @@ option(LCE_BUILD_SDSL
 if (LCE_BUILD_SDSL)
 
   find_package(SDSL REQUIRED)
+  find_package(divsufsort REQUIRED)
+  find_package(divsufsort64 REQUIRED)
 
   add_executable(sdsl_cst_benchmark
     sdsl_cst_benchmark.cpp)
-
-  target_link_libraries(sdsl_cst_benchmark ${SDSL})
+  target_link_libraries(sdsl_cst_benchmark ${SDSL} ${divsufsort} ${divsufsort64})
 
   target_include_directories(sdsl_cst_benchmark PUBLIC
     ${SDSL_INCLUDE_DIRS}
