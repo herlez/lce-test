@@ -30,6 +30,12 @@
 #include "lce_prezza_mersenne.hpp"
 #include "lce_semi_synchronizing_sets.hpp"
 
+
+#include <sdsl/sdsl_concepts.hpp>
+#include <sdsl/construct.hpp>
+
+#include "lce_sdsl_cst.hpp"
+
 namespace fs = std::filesystem;
 
 class lce_benchmark {
@@ -162,6 +168,22 @@ public:
         } else {
           lce_structure = std::make_unique<LceSemiSyncSets<256, false>>(text, i == 0);
         }
+        construction_times.add(t.get_and_reset());
+        lce_mem.add(malloc_count_current() - mem_before);
+        construction_mem_peak.add(malloc_count_peak() - mem_before);
+      } else if (algorithm == "sada") {
+        // sdsl::store_to_file(text, tmp_file);
+        size_t const mem_before = malloc_count_current();
+        t.reset();
+        lce_structure = std::make_unique<LceSDSLsada>(file_path);
+        construction_times.add(t.get_and_reset());
+        lce_mem.add(malloc_count_current() - mem_before);
+        construction_mem_peak.add(malloc_count_peak() - mem_before);
+        //sdsl::ram_fs::remove(tmp_file);
+      } else if (algorithm == "sct3") {
+        size_t const mem_before = malloc_count_current();
+        t.reset();
+        //lce_structure = std::make_unique<LceSDSLsada>(text);
         construction_times.add(t.get_and_reset());
         lce_mem.add(malloc_count_current() - mem_before);
         construction_mem_peak.add(malloc_count_peak() - mem_before);
@@ -332,6 +354,10 @@ private:
       name = "sss512";
     } else if (algorithm == "s256") {
       name = "sss256";
+    } else if (algorithm == "sada") {
+      name = "sdsl_sada";
+    } else if (algorithm == "sct3") {
+      name = "sdsl_sct3";
     }
 
     if (name.rfind("sss", 0) == 0 && prefer_long_queries) {

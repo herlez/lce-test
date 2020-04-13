@@ -27,9 +27,12 @@ target_include_directories(bench_time PUBLIC
   ${PROJECT_SOURCE_DIR}/extlib/stash/include
 )
 
+find_package(SDSL REQUIRED)
+find_package(divsufsort REQUIRED)
+find_package(divsufsort64 REQUIRED)
 
 target_link_libraries(bench_time
-  ferrada_rmq tlx stdc++fs sais_lcp malloc_count -ldl)
+  ferrada_rmq tlx stdc++fs sais_lcp ${SDSL} ${divsufsort} ${divsufsort64} malloc_count -ldl)
 
 option(LCE_BUILD_SDSL
   "Build the minimal benchmark based on the SDSL which uses CSTs to compute LCEs" OFF)
