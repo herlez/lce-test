@@ -172,7 +172,6 @@ public:
         lce_mem.add(malloc_count_current() - mem_before);
         construction_mem_peak.add(malloc_count_peak() - mem_before);
       } else if (algorithm == "sada") {
-        // sdsl::store_to_file(text, tmp_file);
         size_t const mem_before = malloc_count_current();
         t.reset();
         lce_structure = std::make_unique<LceSDSLsada>(file_path);
@@ -183,7 +182,7 @@ public:
       } else if (algorithm == "sct3") {
         size_t const mem_before = malloc_count_current();
         t.reset();
-        //lce_structure = std::make_unique<LceSDSLsada>(text);
+        lce_structure = std::make_unique<LceSDSLsada>(file_path);
         construction_times.add(t.get_and_reset());
         lce_mem.add(malloc_count_current() - mem_before);
         construction_mem_peak.add(malloc_count_peak() - mem_before);
@@ -227,15 +226,32 @@ public:
         queries_times.add(t.get_and_reset());
       }
       if (check) {
+        wrong_queries = 0;
         correct = true;
+        size_t zeros = 0;
+        size_t eq = 0;
         auto lce_naive = LceUltraNaive(text);
-        for (size_t j = 0; correct && j < number_lce_queries * 2; j += 2) {
+        for (size_t j = 0; j < number_lce_queries * 2; j += 2) {
           size_t const lce = lce_structure->lce(lce_indices[j],
                                                 lce_indices[j + 1]);
           size_t const lce_res_naive = lce_naive.lce(lce_indices[j],
                                                      lce_indices[j + 1]);
-          correct = (lce == lce_res_naive);
+
+          if (lce_res_naive == 0) {
+            ++zeros;
+          }
+          
+          if (lce_indices[j] == lce_indices[j + 1]) {
+            ++eq;
+          }
+
+          if (lce != lce_res_naive) {
+            correct = false;
+            ++wrong_queries;
+          }
         }
+        std::cout << "zeros " << zeros << std::endl;
+        std::cout << "eq " << eq << std::endl;
       }
 
       std::cout << "lce_values_min=" << lce_values.min() << " "
@@ -246,7 +262,9 @@ public:
                 << "queries_times_max=" << queries_times.max() << " "
                 << "queries_times_avg=" << queries_times.avg() << " "
                 << "check="
-                << (check ? (correct ? "passed" : "failed") : "none") << " "
+                << (check ? (correct ? "passed" :
+                             ("failed(" + std::to_string(wrong_queries)
+                              + ")" )) : "none") << " "
                 << std::endl;
 
     } else if (sorted_) {

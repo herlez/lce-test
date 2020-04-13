@@ -11,6 +11,8 @@
 #include <cstdint>
 #include <vector>
 
+#include <tlx/define/likely.hpp>
+
 #include <sdsl/cst_sada.hpp>
 #include <sdsl/cst_sct3.hpp>
 
@@ -19,32 +21,40 @@
 template <typename t_index>
 class LceSDSL : public LceDataStructure {
 
-  t_index cst;
+  t_index cst_;
+  uint64_t size_;
 
 public:
   LceSDSL(std::string const& file) {
-    sdsl::construct(cst, file, 1);
+    sdsl::construct(cst_, file, 1);
+    size_ = cst_.size();
   }
 
   ~LceSDSL() { }
 
   uint64_t lce(uint64_t const i, uint64_t const j) {
-    uint64_t const ip = cst.csa.isa[i];
-    uint64_t const jp = cst.csa.isa[j];
+    if (TLX_UNLIKELY(i == j)) {
+      return getSizeInBytes() - 1 - i;
+    }
 
-    return cst.node_depth(cst.node(std::min(ip, jp), std::max(ip, jp)));
+    uint64_t const ip = cst_.csa.isa[i];
+    uint64_t const jp = cst_.csa.isa[j];
+
+    return cst_.depth(cst_.node(std::min(ip, jp), std::max(ip, jp)));
   };
 
   char operator[](const uint64_t i) { return 0; }
 
   int32_t isSmallerSuffix(uint64_t const i, uint64_t const j) {
-    uint64_t const ip = cst.csa.isa[i];
-    uint64_t const jp = cst.csa.isa[j];
+    uint64_t const ip = cst_.csa.isa[i];
+    uint64_t const jp = cst_.csa.isa[j];
 
     return ip < jp;
   }
 
-  uint64_t getSizeInBytes() { return 0; }
+  uint64_t getSizeInBytes() {
+    return size_;
+  }
 
 }; // class LceSDSL
 
