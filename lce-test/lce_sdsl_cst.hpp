@@ -13,8 +13,8 @@
 
 #include <tlx/define/likely.hpp>
 
-#include <sdsl/cst_sada.hpp>
-#include <sdsl/cst_sct3.hpp>
+#include "sdsl/cst_sada.hpp"
+#include "sdsl/cst_sct3.hpp"
 
 #include "util/lce_interface.hpp"
 

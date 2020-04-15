@@ -30,10 +30,6 @@
 #include "lce_prezza_mersenne.hpp"
 #include "lce_semi_synchronizing_sets.hpp"
 
-
-#include <sdsl/sdsl_concepts.hpp>
-#include <sdsl/construct.hpp>
-
 #include "lce_sdsl_cst.hpp"
 
 namespace fs = std::filesystem;
