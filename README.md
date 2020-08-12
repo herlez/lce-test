@@ -16,8 +16,8 @@ This repository contains different implementations to compute LCEs using differe
 For easier comparison, we also provide the different implementations ([based on in-place fingerprints](lce-test/lce_prezza_mersenne.hpp) and [using data structures contained in the SDSL](lce-test/lce_sdsl_cst.hpp)).
 
   <p align="center">
-    <img src="https://raw.githubusercontent.com/kurpicz/lce-test/master/.images/query_throughput_esa.png" alt="query_throughput" width="60%" height="60%">
-    <img src="https://raw.githubusercontent.com/kurpicz/lce-test/master/.images/query_throughput_esa_legend.png" alt="query_throughput_legend" width="60%" height="60%">
+    <img src="https://raw.githubusercontent.com/kurpicz/lce-test/master/.images/query_throughput_esa.png" alt="query_throughput">
+    <img src="https://raw.githubusercontent.com/kurpicz/lce-test/master/.images/query_throughput_esa_legend.png" alt="query_throughput_legend">
   </p>
 
 ## How to Build the Code
@@ -87,3 +87,19 @@ alt="[2^i, 2^{i+1})">. The _X_ refers to queries that are longer than <img src=
 "https://render.githubusercontent.com/render/math?math=%5Ctextstyle+2%5E%7B20%7D" 
 alt="2^{20}">. If a file is empty, there are no text positions that would result in a query of the requested length.
 Otherwise, two lines _2i_ and _2i+1_ for _i=0,1,..._ are a pair of text positions that result in a query of the length indicated by the file name.
+
+### The Output
+
+The output of the benchmark looks similar to this (depending on your specific parameter configuration):
+
+```
+RESULT algo=sss256 runs=5 sss_construct_time=42961 pred_construct_time=65 string_sort_time=145024 sa_construct_time=27162 lcp_construct_time=129389 rmq_construct_time=1768 sync_set_size=31630093 construction_min_time=339954 construction_max_time=352858 construction_avg_time=344512 input=/work/kurpicz/pizza_chili_repetitive/cere size=461286644 lce_mem=662279960 construction_mem_peak=2638599596
+```
+
+Above, we see the timings and memory usage for the construction of a string synchronizing set LCE data structure. All times are given in milliseconds. The total time the construction\_[min|max|avg]\_time, where _min_, _max_, and _avg_ are the minimum, maximum, and average of the construction times of all _runs_ (in this example 5). The final memory requirements are shown as _lce\_mem_ and the memory peak during construction is described as _construction\_mem\_peak_. Note that both measurements can be the same (if the data structure can be computed in-place).
+
+```
+RESULT algo=sss256_queries runs=5 lce_query_type=sorted length_exp=1 input=/work/smflkurp/pizza_chili_repetitive/cere size=461286644 lce_values_min=1 lce_values_max=1 lce_values_avg=1 lce_values_count=5000000 queries_times_min=8 queries_times_max=8 queries_times_avg=8 check=passed 
+RESULT algo=sss256_queries runs=5 lce_query_type=sorted length_exp=20 input=/work/smflkurp/pizza_chili_repetitive/cere size=461286644 lce_values_min=18446744073709551615 lce_values_max=0 lce_values_avg=0 lce_values_count=0 queries_times_min=18446744073709551615 queries_times_max=0 queries_times_avg=0 check=passed
+```
+Then, there are also the results for the queries. Here, we describe the length of the queries as _length_exp_, which translates to queries from the file ``lce\__length\_exp_``. The number of answered queries is _lce\_values\_count_. Note that we count the number of queries in all runs. If there are no queries, the _queries\_times\_min_ can is 18446744073709551615 (64-bit unsigned integer). Otherwise, _queries\_times\_[min|max|avg]_ are the minimum, maximum, and average of the times required to answer the queries of all runs.
