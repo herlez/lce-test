@@ -15,10 +15,29 @@ This repository contains different implementations to compute LCEs using differe
 
 For easier comparison, we also provide the different implementations ([based on in-place fingerprints](lce-test/lce_prezza_mersenne.hpp) and [using data structures contained in the SDSL](lce-test/lce_sdsl_cst.hpp)).
 
+
+## Extensive Evaluation
+Using this code, we provide an extensive evaluation of different techniques to compute LCEs.
+We give a short excerpt below.
+
   <p align="center">
     <img src="https://raw.githubusercontent.com/kurpicz/lce-test/master/.images/query_throughput_esa.png" alt="query_throughput">
     <img src="https://raw.githubusercontent.com/kurpicz/lce-test/master/.images/query_throughput_esa_legend.png" alt="query_throughput_legend">
   </p>
+  
+More experiments and a description of the legend can be found in our paper which has been accepted at ESA2020. Please cite the following paper if you are using our code.
+
+```
+@inproceedings{DinklageFHKK20,
+  author    = {Patrick Dinklage and
+               Johannes Fischer and
+               Alexander Herlez and
+               Tomasz Kociumaka and
+               Florian Kurpicz},
+  title     = {Practical Performance of Space Efficient Data Structures for Longest Common Extensions},
+  booktitle = {Accepted at European Symposium on Algorithms (ESA) 2020}}
+}
+```
 
 ## How to Build the Code
 
