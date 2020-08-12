@@ -394,7 +394,8 @@ int32_t main(int argc, char *argv[]) {
   cp.set_description("This programs measures construction time and LCE query "
                      "time for several LCE data structures.");
   cp.set_author("Alexander Herlez <alexander.herlez@tu-dortmund.de>\n"
-                "        Florian Kurpicz  <florian.kurpicz@tu-dortmund.de>");
+                "        Florian Kurpicz  <florian.kurpicz@tu-dortmund.de>\n"
+                "        Patrick Dinklage <patrick.dinklage@tu-dortmund.de>");
 
   cp.add_param_string("file", lce_bench.file_path, "The for from which the LCE "
                       "data structures are build.");
