@@ -67,7 +67,7 @@ public:
                                     lce_path + "/lce_18", lce_path + "/lce_19",
                                     lce_path + "/lce_X"};
     if(sorted_) {
-      //build_lce_range(file_path, output_path + filename, prefix_length);
+      build_lce_range(file_path, output_path + filename, prefix_length);
     }
     
     /************************************
