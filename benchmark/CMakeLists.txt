@@ -21,15 +21,19 @@ target_include_directories(malloc_count PUBLIC
 add_executable(bench_time
   bench_time.cpp)
 
+find_package(SDSL REQUIRED)
+find_package(divsufsort REQUIRED)
+find_package(divsufsort64 REQUIRED)
+
 target_include_directories(bench_time PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/lce-test/>
   $<INSTALL_INTERFACE:${PROJECT_SOURCE_DIR}/lce-test/>
   ${PROJECT_SOURCE_DIR}/extlib/stash/include
+  ${SDSL_INCLUDE_DIRS}
 )
 
-
 target_link_libraries(bench_time
-  ferrada_rmq tlx stdc++fs sais_lcp malloc_count -ldl)
+  ferrada_rmq tlx stdc++fs sais_lcp ${SDSL} ${divsufsort} ${divsufsort64} malloc_count -ldl)
 
 option(LCE_BUILD_SDSL
   "Build the minimal benchmark based on the SDSL which uses CSTs to compute LCEs" OFF)
@@ -37,11 +41,12 @@ option(LCE_BUILD_SDSL
 if (LCE_BUILD_SDSL)
 
   find_package(SDSL REQUIRED)
+  find_package(divsufsort REQUIRED)
+  find_package(divsufsort64 REQUIRED)
 
   add_executable(sdsl_cst_benchmark
     sdsl_cst_benchmark.cpp)
-
-  target_link_libraries(sdsl_cst_benchmark ${SDSL})
+  target_link_libraries(sdsl_cst_benchmark ${SDSL} ${divsufsort} ${divsufsort64})
 
   target_include_directories(sdsl_cst_benchmark PUBLIC
     ${SDSL_INCLUDE_DIRS}
