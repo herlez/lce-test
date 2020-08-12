@@ -15,6 +15,11 @@ This repository contains different implementations to compute LCEs using differe
 
 For easier comparison, we also provide the different implementations ([based on in-place fingerprints](lce-test/lce_prezza_mersenne.hpp) and [using data structures contained in the SDSL](lce-test/lce_sdsl_cst.hpp)).
 
+  <p align="center">
+    <img src=".images/query_thoughput_esa.png" alt="query_throughput" width="60%" height="60%"/>
+    <img src=".images/query_thoughput_esa_legend.png" alt="query_throughput_legend" width="60%" height="60%">
+  </p>
+
 ## How to Build the Code
 
 First, we clone the code and submodules:
