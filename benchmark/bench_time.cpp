@@ -29,6 +29,7 @@
 #include "lce_prezza.hpp"
 #include "lce_prezza_mersenne.hpp"
 #include "lce_semi_synchronizing_sets.hpp"
+#include "lce_semi_synchronizing_sets_par.hpp"
 
 #include "lce_sdsl_cst.hpp"
 
@@ -163,6 +164,51 @@ public:
           lce_structure = std::make_unique<LceSemiSyncSets<256, true>>(text, i == 0);
         } else {
           lce_structure = std::make_unique<LceSemiSyncSets<256, false>>(text, i == 0);
+        }
+        construction_times.add(t.get_and_reset());
+        lce_mem.add(malloc_count_current() - mem_before);
+        construction_mem_peak.add(malloc_count_peak() - mem_before);
+      } else if (algorithm == "s2048_par") {
+        size_t const mem_before = malloc_count_current();
+        t.reset();
+        if (prefer_long_queries) {
+          lce_structure = std::make_unique<sss_par::LceSemiSyncSetsPar<2048, true>>(text, i == 0);
+        } else {
+          lce_structure = std::make_unique<sss_par::LceSemiSyncSetsPar<2048, false>>(text, i == 0);
+        }
+        construction_times.add(t.get_and_reset());
+        lce_mem.add(malloc_count_current() - mem_before);
+        construction_mem_peak.add(malloc_count_peak() - mem_before);
+      } else if (algorithm == "s1024_par") {
+        size_t const mem_before = malloc_count_current();
+        t.reset();
+        if (prefer_long_queries) {
+          lce_structure = std::make_unique<sss_par::LceSemiSyncSetsPar<1024, true>>(text, i == 0);
+        } else {
+          lce_structure = std::make_unique<sss_par::LceSemiSyncSetsPar<1024, false>>(text, i == 0);
+        }
+        construction_times.add(t.get_and_reset());
+        lce_mem.add(malloc_count_current() - mem_before);
+        construction_mem_peak.add(malloc_count_peak() - mem_before);
+        construction_mem_peak.add(malloc_count_peak() - mem_before);
+      } else if (algorithm == "s512_par") {
+        size_t const mem_before = malloc_count_current();
+        t.reset();
+        if (prefer_long_queries) {
+          lce_structure = std::make_unique<sss_par::LceSemiSyncSetsPar<512, true>>(text, i == 0);
+        } else {
+          lce_structure = std::make_unique<sss_par::LceSemiSyncSetsPar<512, false>>(text, i == 0);
+        }
+        construction_times.add(t.get_and_reset());
+        lce_mem.add(malloc_count_current() - mem_before);
+        construction_mem_peak.add(malloc_count_peak() - mem_before);
+      } else if (algorithm == "s256_par") {
+        size_t const mem_before = malloc_count_current();
+        t.reset();
+        if (prefer_long_queries) {
+          lce_structure = std::make_unique<sss_par::LceSemiSyncSetsPar<256, true>>(text, i == 0);
+        } else {
+          lce_structure = std::make_unique<sss_par::LceSemiSyncSetsPar<256, false>>(text, i == 0);
         }
         construction_times.add(t.get_and_reset());
         lce_mem.add(malloc_count_current() - mem_before);
