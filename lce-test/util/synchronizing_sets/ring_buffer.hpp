@@ -26,6 +26,10 @@ public:
     return size_;
   }
 
+  void resize(size_t s) {
+    size_ = s;
+  }
+
   DataType operator[](size_t const index) {
     return data_[index & mod_mask_];
   }

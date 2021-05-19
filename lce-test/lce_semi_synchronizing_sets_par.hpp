@@ -15,6 +15,7 @@
 #include <tlx/define/likely.hpp>
 #include <vector>
 
+#include "util_ssss_par/ssss_par.hpp"
 #include "util/lce_interface.hpp"
 #include "util/successor/index.hpp"
 #include "util/synchronizing_sets/bit_vector_rank.hpp"
@@ -22,67 +23,30 @@
 #include "util/synchronizing_sets/ring_buffer.hpp"
 #include "util/util.hpp"
 
+
 #ifdef DETAILED_TIME
 #include <malloc_count.h>
 #endif
 
 namespace sss_par {
 
-static constexpr uint64_t calculatePowerModulo(unsigned int const power,
-                                               __int128 const kPrime) {
-  unsigned __int128 x = 256;
-  for (unsigned int i = 0; i < power; i++) {
-    x = (x * x) % kPrime;
-  }
-  return static_cast<uint64_t>(x);
-}
-
 /* This class stores a text as an array of characters and 
  * answers LCE-queries with the naive method. */
-
 template <uint64_t kTau = 1024, bool prefer_long = true>
 class LceSemiSyncSetsPar : public LceDataStructure {
  public:
-  // static constexpr __int128 kPrime = 562949953421231ULL;
-  // static constexpr __int128 kPrime = 1125899906842597ULL;
-  // static constexpr __int128 kPrime = 2251799813685119ULL;
-  // static constexpr __int128 kPrime = 4503599627370449ULL;
-  // static constexpr __int128 kPrime = 9007199254740881ULL;
-  // static constexpr __int128 kPrime = 18014398509481951ULL;
-  // static constexpr __int128 kPrime = 36028797018963913ULL;
-  // static constexpr __int128 kPrime = 72057594037927931ULL;
-  // static constexpr __int128 kPrime = 144115188075855859ULL;
-  // static constexpr __int128 kPrime = 288230376151711717ULL;
-  // static constexpr __int128 kPrime = 576460752303423433ULL;
-  // static constexpr __int128 kPrime = 1152921504606846883ULL;
-  // static constexpr __int128 kPrime = 2305843009213693951ULL;
-
-  static constexpr __int128 kPrime = 18446744073709551253ULL;
-  static constexpr uint64_t TwoPowTauModQ = calculatePowerModulo(std::log2(kTau), kPrime);
-
   using sss_type = uint32_t;
 
  public:
   LceSemiSyncSetsPar(std::vector<uint8_t> const& text, bool const print_ss_size)
       : text_(text), text_length_in_bytes_(text_.size()) {
-    unsigned __int128 fp = {0ULL};
-    for (uint64_t i = 0; i < kTau; ++i) {
-      fp *= 256;
-      fp += (unsigned char)text_[i];
-      fp %= kPrime;
-    }
-    ring_buffer<uint64_t> fingerprints(4 * kTau);
-
 #ifdef DETAILED_TIME
     size_t mem_before = malloc_count_current();
     malloc_count_reset_peak();
     std::chrono::system_clock::time_point begin = std::chrono::system_clock::now();
 #endif
 
-    std::vector<uint64_t> s_fingerprints;
-    fingerprints.push_back(static_cast<uint64_t>(fp));
-    fill_synchronizing_set(0, (text_length_in_bytes_ - (2 * kTau)), fp,
-                           fingerprints, s_fingerprints);
+    sync_set_ = string_synchronizing_set_par<kTau, sss_type>(text_).get_sss();
 
 #ifdef DETAILED_TIME
     std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
@@ -115,7 +79,7 @@ class LceSemiSyncSetsPar : public LceDataStructure {
                                                          sync_set_,
                                                          print_ss_size);
     if (print_ss_size) {
-      std::cout << "sync_set_size=" << getSyncSetSize() << " ";
+      std::cout << "sync_set_size=" << sync_set_.size() << " ";
     }
   }
 
@@ -234,65 +198,7 @@ class LceSemiSyncSetsPar : public LceDataStructure {
      Because s_ is ordered, that is equal to the 
      first element greater than i */
   inline uint64_t suc(uint64_t i) const {
-    //return s_bvr_->rank1(i);
     return ind_->successor(i).pos;
-  }
-
-  void fill_synchronizing_set(const uint64_t from, const uint64_t to,
-                              unsigned __int128& fp,
-                              ring_buffer<uint64_t>& fingerprints,
-                              std::vector<uint64_t>& out_s_fingerprints) {
-    uint64_t min = 0;
-    for (uint64_t i = from; i < to;) {
-      // Compare this id with every other index which is not in q
-      min = 0;
-      size_t required = i + kTau - (fingerprints.size() - 1);
-      calculate_fingerprints(required, fp, fingerprints);
-      for (unsigned int j = 1; j <= kTau; ++j) {
-        if (fingerprints[i + j] < fingerprints[i + min]) {
-          min = j;
-        }
-      }
-      if (min == 0 || min == kTau) {
-        sync_set_.push_back(i);
-        out_s_fingerprints.push_back(fingerprints[i]);
-      }
-
-      uint64_t local_min = i + min;
-      ++i;
-      calculate_fingerprints(1, fp, fingerprints);
-      while (i < to && i < local_min) {
-        if (fingerprints[i + kTau] <= fingerprints[local_min]) {
-          sync_set_.push_back(i);
-          out_s_fingerprints.push_back(fingerprints[i]);
-          if (fingerprints[i + kTau] != fingerprints[local_min]) {
-            local_min = i + kTau;
-          }
-        }
-        i++;
-        calculate_fingerprints(1, fp, fingerprints);
-      }
-    }
-  }
-
-  void calculate_fingerprints(size_t const count, unsigned __int128& fp,
-                              ring_buffer<uint64_t>& fingerprints) {
-    for (uint64_t i = 0; i < count; ++i) {
-      fp *= 256;
-      fp += (unsigned char)text_[kTau + fingerprints.size() - 1];
-      fp %= kPrime;
-
-      unsigned __int128 first_char_influence = text_[fingerprints.size() - 1];
-      first_char_influence *= TwoPowTauModQ;
-      first_char_influence %= kPrime;
-
-      if (first_char_influence < fp) {
-        fp -= first_char_influence;
-      } else {
-        fp = kPrime - (first_char_influence - fp);
-      }
-      fingerprints.push_back(static_cast<uint64_t>(fp));
-    }
   }
 
  private:

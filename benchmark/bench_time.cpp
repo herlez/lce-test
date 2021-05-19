@@ -68,7 +68,7 @@ public:
                                     lce_path + "/lce_18", lce_path + "/lce_19",
                                     lce_path + "/lce_X"};
     if(sorted_) {
-      build_lce_range(file_path, output_path + filename, prefix_length);
+      //build_lce_range(file_path, output_path + filename, prefix_length);
     }
     
     /************************************
@@ -414,6 +414,14 @@ private:
       name = "sss512";
     } else if (algorithm == "s256") {
       name = "sss256";
+    } else if (algorithm == "s2048_par") {
+      name = "sss2048_par";
+    } else if (algorithm == "s1024_par") {
+      name = "sss1024_par";
+    } else if (algorithm == "s512_par") {
+      name = "sss512_par";
+    } else if (algorithm == "s256_par") {
+      name = "sss256_par";
     } else if (algorithm == "sada") {
       name = "sdsl_sada";
     } else if (algorithm == "sct3") {
