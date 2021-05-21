@@ -17,7 +17,7 @@
 
 #include "util_ssss_par/ssss_par.hpp"
 #include "util/lce_interface.hpp"
-#include "util/successor/index.hpp"
+#include "util/successor/index_par.hpp"
 #include "util/synchronizing_sets/bit_vector_rank.hpp"
 #include "util/synchronizing_sets/lce-rmq.hpp"
 #include "util/synchronizing_sets/ring_buffer.hpp"
@@ -63,7 +63,7 @@ class LceSemiSyncSetsPar : public LceDataStructure {
     begin = std::chrono::system_clock::now();
 #endif
 
-    ind_ = std::make_unique<stash::pred::index<std::vector<sss_type>, sss_type, 7>>(sync_set_);
+    ind_ = std::make_unique<stash::pred::index_par<std::vector<sss_type>, sss_type, 7>>(sync_set_);
 
 #ifdef DETAILED_TIME
     end = std::chrono::system_clock::now();
@@ -205,7 +205,7 @@ class LceSemiSyncSetsPar : public LceDataStructure {
   std::vector<uint8_t> const& text_;
   size_t const text_length_in_bytes_;
 
-  std::unique_ptr<stash::pred::index<std::vector<uint32_t>, uint32_t, 7>> ind_;
+  std::unique_ptr<stash::pred::index_par<std::vector<uint32_t>, uint32_t, 7>> ind_;
   std::vector<sss_type> sync_set_;
   std::unique_ptr<Lce_rmq<sss_type, kTau>> lce_rmq_;
 };

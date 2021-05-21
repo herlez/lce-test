@@ -40,7 +40,7 @@ class string_synchronizing_set_par {
     #pragma omp parallel
     {
       const size_t size_per_thread = text.size() / omp_get_num_threads();
-      int t = omp_get_thread_num();
+      const int t = omp_get_thread_num();
       sss_part[t] = fill_synchronizing_set(text, size_per_thread * t, std::min(text.size(), size_per_thread * (t + 1)));
     }
 
@@ -54,7 +54,7 @@ class string_synchronizing_set_par {
 
     #pragma omp parallel
     {
-      int t = omp_get_thread_num();
+      const int t = omp_get_thread_num();
       std::copy(sss_part[t].begin(), sss_part[t].end(), m_sss.begin() + write_pos[t]);
     }
   }
