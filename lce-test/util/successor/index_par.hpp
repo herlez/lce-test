@@ -71,21 +71,6 @@ public:
                 prev_key = cur_key;
             }
         }
-
-        /*
-        uint64_t prev_key = m_key_min;
-        for(size_t i = 1; i < m_num; i++) {
-            const uint64_t cur_key = hi(array[i]);
-            if(cur_key > prev_key) {
-                for(uint64_t key = prev_key + 1; key <= cur_key; key++) {
-                    m_hi_idx[key - m_key_min] = i - 1;
-                }
-            }
-            prev_key = cur_key;
-        }
-        */
-
-        assert(prev_key == m_key_max);
         m_hi_idx[m_key_max - m_key_min] = m_num - 1;
 
         // build the predecessor data structure for low bits
