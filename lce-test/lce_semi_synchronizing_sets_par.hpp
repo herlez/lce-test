@@ -18,9 +18,8 @@
 #include "util_ssss_par/ssss_par.hpp"
 #include "util/lce_interface.hpp"
 #include "util/successor/index_par.hpp"
-#include "util/synchronizing_sets/bit_vector_rank.hpp"
-#include "util/synchronizing_sets/lce-rmq.hpp"
-#include "util/synchronizing_sets/ring_buffer.hpp"
+
+#include "util_ssss_par/lce-rmq.hpp"
 #include "util/util.hpp"
 
 
@@ -28,7 +27,7 @@
 #include <malloc_count.h>
 #endif
 
-namespace sss_par {
+namespace lce_test::par {
 
 /* This class stores a text as an array of characters and 
  * answers LCE-queries with the naive method. */
@@ -74,7 +73,7 @@ class LceSemiSyncSetsPar : public LceDataStructure {
     }
 #endif
 
-    lce_rmq_ = std::make_unique<Lce_rmq<sss_type, kTau>>(text_.data(),
+    lce_rmq_ = std::make_unique<Lce_rmq_par<sss_type, kTau>>(text_.data(),
                                                          text_length_in_bytes_,
                                                          sync_set_,
                                                          print_ss_size);
@@ -207,7 +206,7 @@ class LceSemiSyncSetsPar : public LceDataStructure {
 
   std::unique_ptr<stash::pred::index_par<std::vector<uint32_t>, uint32_t, 7>> ind_;
   std::vector<sss_type> sync_set_;
-  std::unique_ptr<Lce_rmq<sss_type, kTau>> lce_rmq_;
+  std::unique_ptr<Lce_rmq_par<sss_type, kTau>> lce_rmq_;
 };
 }  // namespace sss_par
 /******************************************************************************/

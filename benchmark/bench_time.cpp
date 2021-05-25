@@ -172,9 +172,9 @@ public:
         size_t const mem_before = malloc_count_current();
         t.reset();
         if (prefer_long_queries) {
-          lce_structure = std::make_unique<sss_par::LceSemiSyncSetsPar<2048, true>>(text, i == 0);
+          lce_structure = std::make_unique<lce_test::par::LceSemiSyncSetsPar<2048, true>>(text, i == 0);
         } else {
-          lce_structure = std::make_unique<sss_par::LceSemiSyncSetsPar<2048, false>>(text, i == 0);
+          lce_structure = std::make_unique<lce_test::par::LceSemiSyncSetsPar<2048, false>>(text, i == 0);
         }
         construction_times.add(t.get_and_reset());
         lce_mem.add(malloc_count_current() - mem_before);
@@ -183,9 +183,9 @@ public:
         size_t const mem_before = malloc_count_current();
         t.reset();
         if (prefer_long_queries) {
-          lce_structure = std::make_unique<sss_par::LceSemiSyncSetsPar<1024, true>>(text, i == 0);
+          lce_structure = std::make_unique<lce_test::par::LceSemiSyncSetsPar<1024, true>>(text, i == 0);
         } else {
-          lce_structure = std::make_unique<sss_par::LceSemiSyncSetsPar<1024, false>>(text, i == 0);
+          lce_structure = std::make_unique<lce_test::par::LceSemiSyncSetsPar<1024, false>>(text, i == 0);
         }
         construction_times.add(t.get_and_reset());
         lce_mem.add(malloc_count_current() - mem_before);
@@ -195,9 +195,9 @@ public:
         size_t const mem_before = malloc_count_current();
         t.reset();
         if (prefer_long_queries) {
-          lce_structure = std::make_unique<sss_par::LceSemiSyncSetsPar<512, true>>(text, i == 0);
+          lce_structure = std::make_unique<lce_test::par::LceSemiSyncSetsPar<512, true>>(text, i == 0);
         } else {
-          lce_structure = std::make_unique<sss_par::LceSemiSyncSetsPar<512, false>>(text, i == 0);
+          lce_structure = std::make_unique<lce_test::par::LceSemiSyncSetsPar<512, false>>(text, i == 0);
         }
         construction_times.add(t.get_and_reset());
         lce_mem.add(malloc_count_current() - mem_before);
@@ -206,9 +206,9 @@ public:
         size_t const mem_before = malloc_count_current();
         t.reset();
         if (prefer_long_queries) {
-          lce_structure = std::make_unique<sss_par::LceSemiSyncSetsPar<256, true>>(text, i == 0);
+          lce_structure = std::make_unique<lce_test::par::LceSemiSyncSetsPar<256, true>>(text, i == 0);
         } else {
-          lce_structure = std::make_unique<sss_par::LceSemiSyncSetsPar<256, false>>(text, i == 0);
+          lce_structure = std::make_unique<lce_test::par::LceSemiSyncSetsPar<256, false>>(text, i == 0);
         }
         construction_times.add(t.get_and_reset());
         lce_mem.add(malloc_count_current() - mem_before);
