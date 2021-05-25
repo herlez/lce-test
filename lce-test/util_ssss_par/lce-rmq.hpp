@@ -14,10 +14,10 @@
 #include <vector>
 #include <algorithm> //std::sort
 #include <string>
-#include <includes/RMQRMM64.h>
 
 #include "sais.h"
 #include "string_sorting.hpp"
+#include "par_rmq_n.hpp"
 
 #ifdef DETAILED_TIME
 #include <malloc_count.h>
@@ -50,10 +50,18 @@ public:
 #endif
 
     std::vector<indexed_string> strings_to_sort;
-    for (uint64_t i = 0; i < sync_set.size(); ++i) {
-      strings_to_sort.emplace_back(sync_set[i], text, text_size, kTau * 3);
-    }
+    strings_to_sort.resize(sync_set.size());
+    #pragma omp parallel
+    {
+      const size_t size_per_thread = sync_set.size() / omp_get_num_threads();
+      const int t = omp_get_thread_num();
+      const size_t start_i = t * size_per_thread;
 
+      for(size_t i = start_i; i < std::min((t + 1) * size_per_thread, sync_set.size()); ++i) {
+        strings_to_sort[i] =  {sync_set[i], text, text_size, kTau * 3};
+      }
+    }
+    //TODO
     radixsort(strings_to_sort.data(), strings_to_sort.size());
 
 #ifdef DETAILED_TIME
@@ -70,6 +78,7 @@ public:
     malloc_count_reset_peak();
     begin = std::chrono::system_clock::now();
 #endif
+    //TODO
     std::vector<rank_tuple> rank_tuples;
     rank_tuples.reserve(strings_to_sort.size());
     uint64_t cur_rank = 1;
@@ -118,6 +127,7 @@ public:
     lcp = std::vector<uint64_t>(new_sa.size() - 1, 0);
     isa.resize(new_sa.size() - 1);
 
+    #pragma omp parallel for
     for(uint64_t i = 1; i < new_sa.size() - 1; ++i) {
       isa[new_sa[i]] = i - 1;
       lcp[i] = lce_in_text(sync_set[new_sa[i]],
@@ -141,7 +151,7 @@ public:
     begin = std::chrono::system_clock::now();
 #endif
 
-    rmq_ds1 = std::make_unique<RMQRMM64>((long int*)lcp.data(), lcp.size());
+    rmq_ds1 = std::make_unique<par_RMQ_n<uint64_t>>(lcp);
 
 #ifdef DETAILED_TIME
     end = std::chrono::system_clock::now();
@@ -164,7 +174,7 @@ public:
     auto max = std::max(isa[i], isa[j]);
 
     if (max - min > 1024) {
-      return lcp[rmq_ds1->queryRMQ(min, max)];
+      return lcp[rmq_ds1->rmq(min, max)];
     }
     auto result = lcp[min];
     for (auto i = min + 1; i <= max; ++i) {
@@ -183,9 +193,9 @@ private:
     
   std::vector<uint64_t> isa;
   std::vector<uint64_t> lcp;
-  //Rmq * rmq_ds;
-  std::unique_ptr<RMQRMM64> rmq_ds1;
+  std::unique_ptr<par_RMQ_n<uint64_t>> rmq_ds1;
 
+  //TODO: parallel
   inline void radixsort(indexed_string* strings, size_t n) {
     bingmann_msd_CI3_sb(strings, n);
   }
