@@ -14,6 +14,7 @@
 #include <vector>
 #include <algorithm> //std::sort
 #include <string>
+#include <execution>
 
 #include "src/libsais.h"
 #include "src/libsais_internal.h"
@@ -133,7 +134,7 @@ public:
       }
     }
     size_t max_rank = rank_tuples.back().rank + 1;
-    std::sort(rank_tuples.begin(), rank_tuples.end(),
+    std::sort(std::execution::par_unseq, rank_tuples.begin(), rank_tuples.end(),
               [](rank_tuple const& lhs, rank_tuple const& rhs) {
                 return lhs.index < rhs.index;
     });
