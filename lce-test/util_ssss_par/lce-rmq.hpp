@@ -28,6 +28,7 @@ struct rank_tuple {
   uint64_t index;
   uint64_t rank;
 
+  rank_tuple() = default;
   rank_tuple(uint64_t _index, uint64_t _rank) : index(_index), rank(_rank) { }
 
   friend std::ostream& operator<<(std::ostream& os, rank_tuple const& rt) {
@@ -53,11 +54,13 @@ public:
     strings_to_sort.resize(sync_set.size());
     #pragma omp parallel
     {
-      const size_t size_per_thread = sync_set.size() / omp_get_num_threads();
       const int t = omp_get_thread_num();
+      const int nt = omp_get_num_threads();
+      const size_t size_per_thread = sync_set.size() / nt;
       const size_t start_i = t * size_per_thread;
+      const size_t end_i = (t == nt-1) ? sync_set.size() : (t+1)*size_per_thread;  
 
-      for(size_t i = start_i; i < std::min((t + 1) * size_per_thread, sync_set.size()); ++i) {
+      for(size_t i = start_i; i < end_i; ++i) {
         strings_to_sort[i] =  {sync_set[i], text, text_size, kTau * 3};
       }
     }
@@ -78,24 +81,57 @@ public:
     malloc_count_reset_peak();
     begin = std::chrono::system_clock::now();
 #endif
-    //TODO
+
     std::vector<rank_tuple> rank_tuples;
-    rank_tuples.reserve(strings_to_sort.size());
-    uint64_t cur_rank = 1;
-    rank_tuples.emplace_back(strings_to_sort[0].index(), cur_rank);
-    for (uint64_t i = 1; i < strings_to_sort.size(); ++i) {
-      uint64_t const max_length = std::min(strings_to_sort[i].max_length(),
-                                           strings_to_sort[i - 1].max_length());
-      uint64_t depth = 0;
-      while (depth < max_length &&
-             strings_to_sort[i][depth] == strings_to_sort[i - 1][depth]) {
-        ++depth;
+    rank_tuples.resize(strings_to_sort.size()); 
+    #pragma omp parallel
+    {
+      const int t = omp_get_thread_num();
+      const int nt = omp_get_num_threads();
+      const size_t size_per_thread = strings_to_sort.size() / nt;
+      const size_t start_i = t * size_per_thread;
+      const size_t end_i = (t == nt-1) ? strings_to_sort.size() : (t+1)*size_per_thread;  
+
+      uint64_t cur_rank = start_i + 1;
+      rank_tuples[start_i] = {strings_to_sort[start_i].index(), cur_rank};
+      for (uint64_t i = start_i + 1; i < end_i; ++i) {
+        uint64_t const max_length = std::min(strings_to_sort[i].max_length(),
+                                            strings_to_sort[i - 1].max_length());
+        uint64_t depth = 0;
+        while (depth < max_length &&
+              strings_to_sort[i][depth] == strings_to_sort[i - 1][depth]) {
+          ++depth;
+        }
+        if (strings_to_sort[i][depth] != strings_to_sort[i - 1][depth]) {
+          ++cur_rank;
+        }
+        rank_tuples[i] = {strings_to_sort[i].index(), cur_rank};
       }
-      if (strings_to_sort[i][depth] != strings_to_sort[i - 1][depth]) {
-        ++cur_rank;
+
+      #pragma omp barrier
+      //Check whether first string is equal to last string of last block.
+      if(start_i != 0) {
+        uint64_t const max_length = std::min(strings_to_sort[start_i].max_length(),
+                                            strings_to_sort[start_i - 1].max_length());
+        uint64_t depth = 0;
+        while (depth < max_length &&
+              strings_to_sort[start_i][depth] == strings_to_sort[start_i - 1][depth]) {
+          ++depth;
+        }
+        //If strings are equal, we need to align rank of the latter
+        if(strings_to_sort[start_i][depth] == strings_to_sort[start_i - 1][depth]) {
+          const size_t rank_to_decrease = rank_tuples[start_i].rank;
+          for (uint64_t i = start_i; i < std::min((t + 1) * size_per_thread, strings_to_sort.size()); ++i) {
+            if(rank_tuples[i].rank == rank_to_decrease) {
+              rank_tuples[i].rank = rank_tuples[i-1].rank;
+            } else {
+              break;
+            }
+          }
+        }
       }
-      rank_tuples.emplace_back(strings_to_sort[i].index(), cur_rank);
     }
+    size_t max_rank = rank_tuples.back().rank + 1;
     std::sort(rank_tuples.begin(), rank_tuples.end(),
               [](rank_tuple const& lhs, rank_tuple const& rhs) {
                 return lhs.index < rhs.index;
@@ -103,12 +139,13 @@ public:
 
     std::vector<int32_t> new_text;
     std::vector<int32_t> new_sa(rank_tuples.size() + 1, 0);
-    new_text.reserve(rank_tuples.size());
+    new_text.resize(rank_tuples.size());
+    #pragma omp parallel for
     for (size_t i = 0; i < rank_tuples.size(); ++i) {
-      new_text.push_back(static_cast<int32_t>(rank_tuples[i].rank));
+      new_text[i] = static_cast<int32_t>(rank_tuples[i].rank);
     }
     new_text.push_back(0);
-    sais_int(new_text.data(), new_sa.data(), new_text.size(), cur_rank + 1);
+    sais_int(new_text.data(), new_sa.data(), new_text.size(), max_rank + 1);
 #ifdef DETAILED_TIME
     end = std::chrono::system_clock::now();
     if (print_times) {
