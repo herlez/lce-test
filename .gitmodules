@@ -10,3 +10,6 @@
 [submodule "libs/sais-lite-lcp"]
 	path = extlib/sais-lite-lcp
 	url = https://github.com/kurpicz/sais-lite-lcp
+[submodule "extlib/libsais"]
+	path = extlib/libsais
+	url = git@github.com:IlyaGrebnov/libsais.git

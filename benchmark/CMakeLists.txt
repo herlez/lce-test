@@ -33,7 +33,7 @@ target_include_directories(bench_time PUBLIC
 )
 
 target_link_libraries(bench_time
-  ferrada_rmq tlx stdc++fs sais_lcp ${SDSL} ${divsufsort} ${divsufsort64} malloc_count -ldl -fopenmp)
+  ferrada_rmq tlx stdc++fs sais_lcp libsais ${SDSL} ${divsufsort} ${divsufsort64} malloc_count -ldl -fopenmp)
 
 option(LCE_BUILD_SDSL
   "Build the minimal benchmark based on the SDSL which uses CSTs to compute LCEs" OFF)

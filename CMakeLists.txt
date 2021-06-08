@@ -64,6 +64,15 @@ target_include_directories(sais_lcp PUBLIC
   $<INSTALL_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/extlib/sais-lite-lcp/>
 )
 
+# include parallel-sais
+add_library(libsais
+  extlib/libsais/src/libsais.c
+)
+target_include_directories(libsais PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/extlib/libsais/>
+  $<INSTALL_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/extlib/libsais/>
+)
+
 add_subdirectory(benchmark)
 
 ################################################################################

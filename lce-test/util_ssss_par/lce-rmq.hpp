@@ -15,7 +15,8 @@
 #include <algorithm> //std::sort
 #include <string>
 
-#include "sais.h"
+#include "src/libsais.h"
+#include "src/libsais_internal.h"
 #include "string_sorting.hpp"
 #include "par_rmq_n.hpp"
 
@@ -145,7 +146,8 @@ public:
       new_text[i] = static_cast<int32_t>(rank_tuples[i].rank);
     }
     new_text.push_back(0);
-    sais_int(new_text.data(), new_sa.data(), new_text.size(), max_rank + 1);
+    libsais_main_32s_internal(new_text.data(), new_sa.data(), new_text.size(), max_rank + 1, 0, omp_get_num_threads());
+
 #ifdef DETAILED_TIME
     end = std::chrono::system_clock::now();
     if (print_times) {
