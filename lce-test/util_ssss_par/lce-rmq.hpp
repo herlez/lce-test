@@ -21,6 +21,7 @@
 #include "string_sorting.hpp"
 #include "par_rmq_n.hpp"
 
+#define DETAILED_TIME
 #ifdef DETAILED_TIME
 #include <malloc_count.h>
 #endif

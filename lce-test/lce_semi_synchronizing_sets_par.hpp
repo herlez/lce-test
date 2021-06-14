@@ -22,7 +22,7 @@
 #include "util_ssss_par/lce-rmq.hpp"
 #include "util/util.hpp"
 
-
+#define DETAILED_TIME
 #ifdef DETAILED_TIME
 #include <malloc_count.h>
 #endif
