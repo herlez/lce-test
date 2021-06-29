@@ -186,7 +186,7 @@ private:
   std::unique_ptr<RMQRMM64> rmq_ds1;
 
   inline void radixsort(indexed_string* strings, size_t n) {
-    bingmann_msd_CI3_sb(strings, n);
+    ssss_lce::bingmann_msd_CI3_sb(strings, n);
   }
 
 

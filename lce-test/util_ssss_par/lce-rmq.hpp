@@ -18,7 +18,7 @@
 
 #include "src/libsais.h"
 #include "src/libsais_internal.h"
-#include "string_sorting.hpp"
+#include "bingmann-sample-sort/src/parallel/bingmann-parallel_sample_sort.hpp"
 #include "par_rmq_n.hpp"
 
 #define DETAILED_TIME
@@ -166,15 +166,53 @@ public:
 #endif
 
     lcp = std::vector<uint64_t>(new_sa.size() - 1, 0);
+    std::vector<uint64_t> suffix_pred(lcp.size());
     isa.resize(new_sa.size() - 1);
 
-    #pragma omp parallel for
-    for(uint64_t i = 1; i < new_sa.size() - 1; ++i) {
+    #pragma omp parallel for 
+    for(uint64_t i = 1; i < new_sa.size(); ++i) {
       isa[new_sa[i]] = i - 1;
-      lcp[i] = lce_in_text(sync_set[new_sa[i]],
-                           sync_set[new_sa[i + 1]]);
+      suffix_pred[new_sa[i]] = new_sa[i - 1];
     }
-    isa[new_sa[new_sa.size() - 1]] = new_sa.size() - 2;
+
+    // #pragma omp parallel for
+    // for(uint64_t i = 1; i < new_sa.size() - 1; ++i) {
+    //   isa[new_sa[i]] = i - 1;
+    //   lcp[i] = lce_in_text(sync_set[new_sa[i]],
+    //                        sync_set[new_sa[i + 1]]);
+    // }
+    // isa[new_sa[new_sa.size() - 1]] = new_sa.size() - 2;
+
+
+    uint64_t cur_lce = 0;
+    #pragma omp parallel for firstprivate(cur_lce)
+    for(uint64_t i = 0; i < new_text.size(); ++i) {
+      if(i == new_sa[0]) {
+        continue;
+      }
+      //We look at the suffix starting at 'i' and its preceding suffix.
+      const uint64_t preceding_suffix = suffix_pred[i];
+      cur_lce += lce_in_text(sync_set[i] + cur_lce, sync_set[preceding_suffix] + cur_lce);
+      suffix_pred[i] = cur_lce;
+      //If the current lcp is too small, we can't deduce that the following positions synchronize
+      uint64_t diff = sync_set[i+1] - sync_set[i];
+      if (cur_lce < kTau + diff) {
+        cur_lce = 0;
+      } else {
+        cur_lce -= diff;
+      }
+    }
+
+    //We put the values back into suffix array order.
+    #pragma omp parallel for
+    for (uint64_t i = 0; i < lcp.size(); ++i) {
+      lcp[i] = suffix_pred[new_sa[i+1]];
+    }
+    // for(uint64_t i = 0; i < 20; ++i) {
+    //   std::cout << lcp[i] << "  ";
+    // }
+    // std::cout << '\n';
+
 
 #ifdef DETAILED_TIME
     end = std::chrono::system_clock::now();
@@ -238,7 +276,9 @@ private:
 
   //TODO: parallel
   inline void radixsort(indexed_string* strings, size_t n) {
-    bingmann_msd_CI3_sb(strings, n);
+    //ssss_lce_par::bingmann_msd_CI3_sb(strings, n);
+    //std::vector<std::string> strs{};
+    //bingmann_parallel_sample_sort::parallel_sample_sort_base(strs, 1);
   }
 
 

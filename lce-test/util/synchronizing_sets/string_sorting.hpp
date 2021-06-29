@@ -30,6 +30,7 @@
 #include "indexed_string.hpp"
 #include <stack>
 
+namespace ssss_lce {
 static inline uint16_t get_char(indexed_string str, size_t depth) {
     uint16_t v = 0;
     if (str[depth] == 0) return v;
@@ -312,5 +313,5 @@ bingmann_msd_CI3_sb(indexed_string* strings, size_t n)
 
   delete[] charcache;
 }
-
+}
 /******************************************************************************/

@@ -32,9 +32,9 @@ void build_lce_range(std::string const& file, std::string const& output_folder,
   std::cout << "output_folder_name.c_str() " << output_folder_name.c_str()
             << std::endl;
   if(!fs::create_directory(output_folder_name.c_str())) {
-    std::cout << "Folder for sorted lce queries could not get created. "
-              << "If it was already created and you want to calculate new "
-              << "values, delete the folder first." << std::endl;
+    //std::cout << "Folder for sorted lce queries could not get created. "
+    //          << "If it was already created and you want to calculate new "
+    //          << "values, delete the folder first." << std::endl;
     return;
   }
 
