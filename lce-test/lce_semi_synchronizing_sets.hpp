@@ -22,6 +22,7 @@
 #include <vector>
 #include <memory>
 
+#define DETAILED_TIME
 #ifdef DETAILED_TIME
 #include <malloc_count.h>
 #endif

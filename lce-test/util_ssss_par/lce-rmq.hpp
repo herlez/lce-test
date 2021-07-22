@@ -16,10 +16,10 @@
 #include <string>
 #include <execution>
 
-#include "src/libsais.h"
-#include "src/libsais_internal.h"
-#include "bingmann-sample-sort/src/parallel/bingmann-parallel_sample_sort.hpp"
+#include <src/libsais_internal.h>
+#include <tlx/sort/strings/parallel_sample_sort.hpp>
 #include "par_rmq_n.hpp"
+#include "ips4o.hpp"
 
 #define DETAILED_TIME
 #ifdef DETAILED_TIME
@@ -39,6 +39,78 @@ struct rank_tuple {
   }
 }; // struct rank_tuple
 
+class StringShortSuffixSet
+    : public tlx::sort_strings_detail::StringSuffixSetTraits,
+      public tlx::sort_strings_detail::StringSetBase<StringShortSuffixSet, tlx::sort_strings_detail::StringSuffixSetTraits>
+{
+public:
+    //! Construct from begin and end string pointers
+    StringShortSuffixSet(const Text& text,
+                    const Iterator& begin, const Iterator& end)
+        : text_(&text),
+          begin_(begin), end_(end)
+    { }
+
+    //! Initializing constructor which fills output vector sa with indices.
+    static StringShortSuffixSet
+    Initialize(const Text& text, std::vector<String>& sa) {
+        sa.resize(text.size());
+        for (size_t i = 0; i < text.size(); ++i)
+            sa[i] = i;
+        return StringShortSuffixSet(text, sa.begin(), sa.end());
+    }
+
+    //! Return size of string array
+    size_t size() const { return end_ - begin_; }
+    //! Iterator representing first String position
+    Iterator begin() const { return begin_; }
+    //! Iterator representing beyond last String position
+    Iterator end() const { return end_; }
+
+    //! Array access (readable and writable) to String objects.
+    String& operator [] (const Iterator& i) const
+    { return *i; }
+
+    //! Return CharIterator for referenced string, which belongs to this set.
+    CharIterator get_chars(const String& s, size_t depth) const
+    { return reinterpret_cast<CharIterator>(text_->data()) + s + depth; }
+
+    //! Returns true if CharIterator is at end of the given String
+    bool is_end(const String& pos, const CharIterator& i) const
+    { return i >= reinterpret_cast<CharIterator>(std::min(text_->data() + pos + (3*1024), text_->data() + text_->size()));}
+    //{ return (i >= reinterpret_cast<CharIterator>(text_->data()) + text_->size()); }
+    
+    //! Return complete string (for debugging purposes)
+    std::string get_string(const String& s, size_t depth = 0) const
+    { return text_->substr(s + depth); }
+
+    //! Subset this string set using iterator range.
+    StringShortSuffixSet sub(Iterator begin, Iterator end) const
+    { return StringShortSuffixSet(*text_, begin, end); }
+
+    //! Allocate a new temporary string container with n empty Strings
+    Container allocate(size_t n) const
+    { return std::make_pair(*text_, std::vector<String>(n)); }
+
+    //! Deallocate a temporary string container
+    static void deallocate(Container& c)
+    { std::vector<String> v; v.swap(c.second); }
+
+    //! Construct from a string container
+    explicit StringShortSuffixSet(Container& c)
+        : text_(&c.first),
+          begin_(c.second.begin()), end_(c.second.end())
+    { }
+
+protected:
+    //! reference to base text
+    const Text* text_;
+
+    //! iterators inside the output suffix array.
+    Iterator begin_, end_;
+};
+
+
 template <typename sss_type, uint64_t kTau = 1024>
 class Lce_rmq_par {
 
@@ -46,29 +118,20 @@ public:
   Lce_rmq_par(uint8_t const * const v_text, uint64_t const v_text_size,
           std::vector<sss_type> const& sync_set, bool print_times=false) 
     : text(v_text), text_size(v_text_size) {
-
 #ifdef DETAILED_TIME
     size_t mem_before = malloc_count_current();
     malloc_count_reset_peak();
     std::chrono::system_clock::time_point begin = std::chrono::system_clock::now();
 #endif
+    
+    //parallel
+    std::vector<size_t> strings_to_sort(sync_set.begin(), sync_set.end());
+    std::string text_str(reinterpret_cast<const char* const>(  v_text), v_text_size);
 
-    std::vector<indexed_string> strings_to_sort;
-    strings_to_sort.resize(sync_set.size());
-    #pragma omp parallel
-    {
-      const int t = omp_get_thread_num();
-      const int nt = omp_get_num_threads();
-      const size_t size_per_thread = sync_set.size() / nt;
-      const size_t start_i = t * size_per_thread;
-      const size_t end_i = (t == nt-1) ? sync_set.size() : (t+1)*size_per_thread;  
-
-      for(size_t i = start_i; i < end_i; ++i) {
-        strings_to_sort[i] =  {sync_set[i], text, text_size, kTau * 3};
-      }
-    }
-    //TODO
-    radixsort(strings_to_sort.data(), strings_to_sort.size());
+    StringShortSuffixSet sufset{text_str, strings_to_sort.begin(), strings_to_sort.end()};
+    std::vector<size_t> lcp_string_sorting(strings_to_sort.size());
+    tlx::sort_strings_detail::StringLcpPtr strptr(sufset, lcp_string_sorting.data());
+    tlx::sort_strings_detail::parallel_sample_sort(strptr, 0, 0);
 
 #ifdef DETAILED_TIME
     std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
@@ -96,33 +159,29 @@ public:
       const size_t end_i = (t == nt-1) ? strings_to_sort.size() : (t+1)*size_per_thread;  
 
       uint64_t cur_rank = start_i + 1;
-      rank_tuples[start_i] = {strings_to_sort[start_i].index(), cur_rank};
+      rank_tuples[start_i] = {strings_to_sort[start_i], cur_rank};
+
       for (uint64_t i = start_i + 1; i < end_i; ++i) {
-        uint64_t const max_length = std::min(strings_to_sort[i].max_length(),
-                                            strings_to_sort[i - 1].max_length());
-        uint64_t depth = 0;
-        while (depth < max_length &&
-              strings_to_sort[i][depth] == strings_to_sort[i - 1][depth]) {
-          ++depth;
-        }
-        if (strings_to_sort[i][depth] != strings_to_sort[i - 1][depth]) {
+        uint64_t const max_length = std::min(std::min(text_size - strings_to_sort[i],
+                                            text_size - strings_to_sort[i - 1]), 3*kTau);
+        if(lcp_string_sorting[i] != max_length) {
           ++cur_rank;
         }
-        rank_tuples[i] = {strings_to_sort[i].index(), cur_rank};
+        rank_tuples[i] = {strings_to_sort[i], cur_rank};
       }
 
       #pragma omp barrier
       //Check whether first string is equal to last string of last block.
       if(start_i != 0) {
-        uint64_t const max_length = std::min(strings_to_sort[start_i].max_length(),
-                                            strings_to_sort[start_i - 1].max_length());
+        uint64_t const max_length = std::min(std::min(text_size - strings_to_sort[start_i],
+                                            text_size - strings_to_sort[start_i - 1]), 3*kTau);
         uint64_t depth = 0;
         while (depth < max_length &&
-              strings_to_sort[start_i][depth] == strings_to_sort[start_i - 1][depth]) {
+              text[strings_to_sort[start_i] + depth] == text[strings_to_sort[start_i - 1] + depth]) {
           ++depth;
         }
         //If strings are equal, we need to align rank of the latter
-        if(strings_to_sort[start_i][depth] == strings_to_sort[start_i - 1][depth]) {
+        if(lcp_string_sorting[start_i] == max_length) {
           const size_t rank_to_decrease = rank_tuples[start_i].rank;
           for (uint64_t i = start_i; i < std::min((t + 1) * size_per_thread, strings_to_sort.size()); ++i) {
             if(rank_tuples[i].rank == rank_to_decrease) {
@@ -135,11 +194,12 @@ public:
       }
     }
     size_t max_rank = rank_tuples.back().rank + 1;
-    std::sort(std::execution::par_unseq, rank_tuples.begin(), rank_tuples.end(),
+
+    ips4o::sort(rank_tuples.begin(), rank_tuples.end(), 
               [](rank_tuple const& lhs, rank_tuple const& rhs) {
                 return lhs.index < rhs.index;
     });
-
+    
     std::vector<int32_t> new_text;
     std::vector<int32_t> new_sa(rank_tuples.size() + 1, 0);
     new_text.resize(rank_tuples.size());
@@ -158,13 +218,13 @@ public:
                 << "sa_construct_mem=" << (malloc_count_peak() - mem_before) << " ";
     }
 #endif
-
+    
 #ifdef DETAILED_TIME
     mem_before = malloc_count_current();
     malloc_count_reset_peak();
     begin = std::chrono::system_clock::now();
 #endif
-
+    
     lcp = std::vector<uint64_t>(new_sa.size() - 1, 0);
     std::vector<uint64_t> suffix_pred(lcp.size());
     isa.resize(new_sa.size() - 1);
@@ -174,19 +234,9 @@ public:
       isa[new_sa[i]] = i - 1;
       suffix_pred[new_sa[i]] = new_sa[i - 1];
     }
-
-    // #pragma omp parallel for
-    // for(uint64_t i = 1; i < new_sa.size() - 1; ++i) {
-    //   isa[new_sa[i]] = i - 1;
-    //   lcp[i] = lce_in_text(sync_set[new_sa[i]],
-    //                        sync_set[new_sa[i + 1]]);
-    // }
-    // isa[new_sa[new_sa.size() - 1]] = new_sa.size() - 2;
-
-
     uint64_t cur_lce = 0;
     #pragma omp parallel for firstprivate(cur_lce)
-    for(uint64_t i = 0; i < new_text.size(); ++i) {
+    for(uint64_t i = 0; i < new_sa.size(); ++i) {
       if(i == new_sa[0]) {
         continue;
       }
@@ -208,11 +258,6 @@ public:
     for (uint64_t i = 0; i < lcp.size(); ++i) {
       lcp[i] = suffix_pred[new_sa[i+1]];
     }
-    // for(uint64_t i = 0; i < 20; ++i) {
-    //   std::cout << lcp[i] << "  ";
-    // }
-    // std::cout << '\n';
-
 
 #ifdef DETAILED_TIME
     end = std::chrono::system_clock::now();
@@ -273,14 +318,6 @@ private:
   std::vector<uint64_t> isa;
   std::vector<uint64_t> lcp;
   std::unique_ptr<par_RMQ_n<uint64_t>> rmq_ds1;
-
-  //TODO: parallel
-  inline void radixsort(indexed_string* strings, size_t n) {
-    //ssss_lce_par::bingmann_msd_CI3_sb(strings, n);
-    //std::vector<std::string> strs{};
-    //bingmann_parallel_sample_sort::parallel_sample_sort_base(strs, 1);
-  }
-
 
   uint64_t lce_in_text(uint64_t i, uint64_t j) {
     const uint64_t maxLce = text_size - (i > j ? i : j); 

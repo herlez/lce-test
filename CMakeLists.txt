@@ -48,7 +48,12 @@ target_include_directories(ferrada_rmq PUBLIC
 # include command line parser from tlx
 add_library(tlx
   extlib/tlx/tlx/cmdline_parser.cpp
-  extlib/tlx/tlx/string/parse_si_iec_units.cpp)
+  extlib/tlx/tlx/string/parse_si_iec_units.cpp
+  extlib/tlx/tlx/thread_pool.cpp
+  extlib/tlx/tlx/multi_timer.cpp
+  extlib/tlx/tlx/logger/core.cpp
+  extlib/tlx/tlx/die/core.cpp
+  )
 
 target_include_directories(tlx PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/extlib/tlx/>
@@ -74,5 +79,7 @@ target_include_directories(libsais PUBLIC
 )
 
 add_subdirectory(benchmark)
+set(IPS4O_USE_OPENMP TRUE)
+add_subdirectory(extlib/ips4o)
 
 ################################################################################

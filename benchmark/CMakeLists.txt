@@ -28,12 +28,12 @@ find_package(divsufsort64 REQUIRED)
 target_include_directories(bench_time PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/lce-test/>
   $<INSTALL_INTERFACE:${PROJECT_SOURCE_DIR}/lce-test/>
-  ${PROJECT_SOURCE_DIR}/extlib/stash/include
   ${SDSL_INCLUDE_DIRS}
+  ${PROJECT_SOURCE_DIR}/extlib/ips4o/include
 )
 
-target_link_libraries(bench_time
-  ferrada_rmq tlx stdc++fs sais_lcp libsais ${SDSL} ${divsufsort} ${divsufsort64} malloc_count -ldl -fopenmp)
+target_link_libraries(bench_time PRIVATE
+  ferrada_rmq tlx stdc++fs sais_lcp libsais ${SDSL} ${divsufsort} ${divsufsort64} malloc_count -ldl -fopenmp PRIVATE)
 
 option(LCE_BUILD_SDSL
   "Build the minimal benchmark based on the SDSL which uses CSTs to compute LCEs" OFF)
