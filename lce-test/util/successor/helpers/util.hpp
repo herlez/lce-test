@@ -5,7 +5,7 @@
 namespace stash {
 
 template<typename array_t>
-void assert_sorted_ascending(const array_t& a) {
+void assert_sorted_ascending([[maybe_unused]] const array_t& a) {
     #ifndef NDEBUG
     const size_t num = a.size();
     if(num > 1) {                

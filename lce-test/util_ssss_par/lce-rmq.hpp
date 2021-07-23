@@ -236,7 +236,7 @@ public:
     uint64_t cur_lce = 0;
     #pragma omp parallel for firstprivate(cur_lce)
     for(uint64_t i = 0; i < new_sa.size(); ++i) {
-      if(i == new_sa[0]) {
+      if(i == static_cast<uint64_t>(new_sa[0])) {
         continue;
       }
       //We look at the suffix starting at 'i' and its preceding suffix.

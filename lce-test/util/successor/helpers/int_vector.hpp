@@ -25,7 +25,7 @@ private:
             const size_t da = j & 63ULL;
             const size_t wa = 64ULL - da;
             const size_t wb = m_width - wa;
-            const size_t db = 64ULL - wb;
+            //const size_t db = 64ULL - wb;
 
             // combine the da lowest bits from a and the wa lowest bits of v
             const uint64_t a_lo = m_data[a] & bit_mask(da);

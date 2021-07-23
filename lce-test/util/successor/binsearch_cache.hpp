@@ -28,10 +28,10 @@ public:
     }
 
     inline binsearch_cache(const array_t& array)
-        : m_num(array.size()),
+        : m_array(&array),
+          m_num(array.size()),
           m_min(array[0]),
-          m_max(array[m_num-1]),
-          m_array(&array) {
+          m_max(array[m_num-1]) {
 
         assert_sorted_ascending(array);
     }

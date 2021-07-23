@@ -43,7 +43,7 @@ public:
     return cst_.depth(cst_.node(std::min(ip, jp), std::max(ip, jp)));
   };
 
-  char operator[](const uint64_t i) { return 0; }
+  char operator[]([[maybe_unused]] const uint64_t i) { return 0; }
 
   int32_t isSmallerSuffix(uint64_t const i, uint64_t const j) {
     uint64_t const ip = cst_.csa.isa[i];
