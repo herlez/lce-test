@@ -19,7 +19,6 @@
 #include "sais.h"
 #include "string_sorting.hpp"
 
-#define DETAILED_TIME
 #ifdef DETAILED_TIME
 #include <malloc_count.h>
 #endif

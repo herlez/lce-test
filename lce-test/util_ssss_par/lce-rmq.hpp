@@ -21,7 +21,6 @@
 #include "par_rmq_n.hpp"
 #include "ips4o.hpp"
 
-#define DETAILED_TIME
 #ifdef DETAILED_TIME
 #include <malloc_count.h>
 #endif
