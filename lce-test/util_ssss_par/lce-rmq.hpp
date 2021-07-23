@@ -26,12 +26,14 @@
 #endif
 
 namespace lce_test::par {
+  
+template <typename sss_type>
 struct rank_tuple {
-  uint64_t index;
-  uint64_t rank;
+  sss_type index;
+  sss_type rank;
 
   rank_tuple() = default;
-  rank_tuple(uint64_t _index, uint64_t _rank) : index(_index), rank(_rank) { }
+  rank_tuple(sss_type _index, sss_type _rank) : index(_index), rank(_rank) { }
 
   friend std::ostream& operator<<(std::ostream& os, rank_tuple const& rt) {
     return os << "[ " << rt.index << ", " << rt.rank << "]";
@@ -114,7 +116,7 @@ template <typename sss_type, uint64_t kTau = 1024>
 class Lce_rmq_par {
 
 public:
-  Lce_rmq_par(uint8_t const * const v_text, uint64_t const v_text_size,
+  Lce_rmq_par(uint8_t const * const v_text, size_t const v_text_size,
           std::vector<sss_type> const& sync_set, bool print_times=false) 
     : text(v_text), text_size(v_text_size) {
 #ifdef DETAILED_TIME
@@ -128,7 +130,7 @@ public:
     std::string text_str(reinterpret_cast<const char* const>(  v_text), v_text_size);
 
     StringShortSuffixSet sufset{text_str, strings_to_sort.begin(), strings_to_sort.end()};
-    std::vector<size_t> lcp_string_sorting(strings_to_sort.size());
+    std::vector<sss_type> lcp_string_sorting(strings_to_sort.size());
     tlx::sort_strings_detail::StringLcpPtr strptr(sufset, lcp_string_sorting.data());
     tlx::sort_strings_detail::parallel_sample_sort(strptr, 0, 0);
 
@@ -147,7 +149,7 @@ public:
     begin = std::chrono::system_clock::now();
 #endif
 
-    std::vector<rank_tuple> rank_tuples;
+    std::vector<rank_tuple<sss_type>> rank_tuples;
     rank_tuples.resize(strings_to_sort.size()); 
     #pragma omp parallel
     {
@@ -157,16 +159,16 @@ public:
       const size_t start_i = t * size_per_thread;
       const size_t end_i = (t == nt-1) ? strings_to_sort.size() : (t+1)*size_per_thread;  
 
-      uint64_t cur_rank = start_i + 1;
-      rank_tuples[start_i] = {strings_to_sort[start_i], cur_rank};
+      sss_type cur_rank = start_i + 1;
+      rank_tuples[start_i] = {static_cast<sss_type>(strings_to_sort[start_i]), cur_rank};
 
-      for (uint64_t i = start_i + 1; i < end_i; ++i) {
+      for (size_t i = start_i + 1; i < end_i; ++i) {
         uint64_t const max_length = std::min(std::min(text_size - strings_to_sort[i],
                                             text_size - strings_to_sort[i - 1]), 3*kTau);
         if(lcp_string_sorting[i] != max_length) {
           ++cur_rank;
         }
-        rank_tuples[i] = {strings_to_sort[i], cur_rank};
+        rank_tuples[i] = {static_cast<sss_type>(strings_to_sort[i]), cur_rank};
       }
 
       #pragma omp barrier
@@ -182,7 +184,7 @@ public:
         //If strings are equal, we need to align rank of the latter
         if(lcp_string_sorting[start_i] == max_length) {
           const size_t rank_to_decrease = rank_tuples[start_i].rank;
-          for (uint64_t i = start_i; i < std::min((t + 1) * size_per_thread, strings_to_sort.size()); ++i) {
+          for (size_t i = start_i; i < std::min((t + 1) * size_per_thread, strings_to_sort.size()); ++i) {
             if(rank_tuples[i].rank == rank_to_decrease) {
               rank_tuples[i].rank = rank_tuples[i-1].rank;
             } else {
@@ -195,7 +197,7 @@ public:
     size_t max_rank = rank_tuples.back().rank + 1;
 
     ips4o::sort(rank_tuples.begin(), rank_tuples.end(), 
-              [](rank_tuple const& lhs, rank_tuple const& rhs) {
+              [](rank_tuple<sss_type> const& lhs, rank_tuple<sss_type> const& rhs) {
                 return lhs.index < rhs.index;
     });
     
@@ -224,18 +226,18 @@ public:
     begin = std::chrono::system_clock::now();
 #endif
     
-    lcp = std::vector<uint64_t>(new_sa.size() - 1, 0);
-    std::vector<uint64_t> suffix_pred(lcp.size());
+    lcp = std::vector<sss_type>(new_sa.size() - 1, 0);
+    std::vector<sss_type> suffix_pred(lcp.size());
     isa.resize(new_sa.size() - 1);
 
     #pragma omp parallel for 
-    for(uint64_t i = 1; i < new_sa.size(); ++i) {
+    for(size_t i = 1; i < new_sa.size(); ++i) {
       isa[new_sa[i]] = i - 1;
       suffix_pred[new_sa[i]] = new_sa[i - 1];
     }
     uint64_t cur_lce = 0;
     #pragma omp parallel for firstprivate(cur_lce)
-    for(uint64_t i = 0; i < new_sa.size(); ++i) {
+    for(size_t i = 0; i < new_sa.size(); ++i) {
       if(i == static_cast<uint64_t>(new_sa[0])) {
         continue;
       }
@@ -254,7 +256,7 @@ public:
 
     //We put the values back into suffix array order.
     #pragma omp parallel for
-    for (uint64_t i = 0; i < lcp.size(); ++i) {
+    for (size_t i = 0; i < lcp.size(); ++i) {
       lcp[i] = suffix_pred[new_sa[i+1]];
     }
 
@@ -274,7 +276,7 @@ public:
     begin = std::chrono::system_clock::now();
 #endif
 
-    rmq_ds1 = std::make_unique<par_RMQ_n<uint64_t>>(lcp);
+    rmq_ds1 = std::make_unique<par_RMQ_n<sss_type>>(lcp);
 
 #ifdef DETAILED_TIME
     end = std::chrono::system_clock::now();
@@ -312,11 +314,11 @@ public:
 
 private:
   uint8_t const * const text;
-  uint64_t text_size;
+  size_t text_size;
     
-  std::vector<uint64_t> isa;
-  std::vector<uint64_t> lcp;
-  std::unique_ptr<par_RMQ_n<uint64_t>> rmq_ds1;
+  std::vector<sss_type> isa;
+  std::vector<sss_type> lcp;
+  std::unique_ptr<par_RMQ_n<sss_type>> rmq_ds1;
 
   uint64_t lce_in_text(uint64_t i, uint64_t j) {
     const uint64_t maxLce = text_size - (i > j ? i : j); 

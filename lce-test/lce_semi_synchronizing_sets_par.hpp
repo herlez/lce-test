@@ -171,7 +171,7 @@ class LceSemiSyncSetsPar : public LceDataStructure {
     }
   }
 
-  char operator[](uint64_t i) {
+  char operator[](size_t i) {
     if (i > text_length_in_bytes_) {
       return '\00';
     }
@@ -195,7 +195,7 @@ class LceSemiSyncSetsPar : public LceDataStructure {
   /* Finds the smallest element that is greater or equal to i
      Because s_ is ordered, that is equal to the 
      first element greater than i */
-  inline uint64_t suc(uint64_t i) const {
+  inline sss_type suc(sss_type i) const {
     return ind_->successor(i).pos;
   }
 
@@ -203,7 +203,7 @@ class LceSemiSyncSetsPar : public LceDataStructure {
   std::vector<uint8_t> const& text_;
   size_t const text_length_in_bytes_;
 
-  std::unique_ptr<stash::pred::index_par<std::vector<uint32_t>, uint32_t, 7>> ind_;
+  std::unique_ptr<stash::pred::index_par<std::vector<sss_type>, sss_type, 7>> ind_;
   std::vector<sss_type> sync_set_;
   std::unique_ptr<Lce_rmq_par<sss_type, kTau>> lce_rmq_;
 };
