@@ -17,6 +17,10 @@
 #include <execution>
 
 #include <src/libsais_internal.h>
+//#include <src/libsais64.h>
+
+#undef SS //RMQ library defines SS, conflicting with libsais members
+#include <src/libsais64.c>
 #include <tlx/sort/strings/parallel_sample_sort.hpp>
 #include "par_rmq_n.hpp"
 #include "string_sort_helper.hpp"
@@ -130,19 +134,21 @@ public:
                 return lhs.index < rhs.index;
     });
     
-    std::vector<int32_t> new_text(rank_tuples.size() + 1, 0);
-    std::vector<int32_t> new_sa(rank_tuples.size() + 1, 0);
+    std::vector<sss_type> new_text(rank_tuples.size() + 1, 0);
+    std::vector<sss_type> new_sa(rank_tuples.size() + 1, 0);
     #pragma omp parallel for
     for (size_t i = 0; i < rank_tuples.size(); ++i) {
       new_text[i] = static_cast<int32_t>(rank_tuples[i].rank);
     }
     new_text.back() = 0;
     if constexpr(std::is_same<sss_type, uint32_t>::value) {
-      libsais_main_32s_internal(new_text.data(), new_sa.data(), new_text.size(), max_rank + 1, 0, omp_get_num_threads());
+      libsais_main_32s_internal(reinterpret_cast<int32_t*>(new_text.data()), reinterpret_cast<int32_t*>(new_sa.data()), new_text.size(), max_rank + 1, 0, omp_get_num_threads());
+    } else if constexpr(std::is_same<sss_type, uint64_t>::value) {
+      libsais64_main_32s(reinterpret_cast<int32_t*>(new_text.data()), reinterpret_cast<int32_t*>(new_sa.data()), new_text.size(), max_rank + 1, 0, omp_get_num_threads());
     } else {
-      //TODO
       std::cerr << "NO SUFFIX ARRAY CONSTRUCTION ALGORITHM FOR DATA TYPE\n";
     }
+
 #ifdef DETAILED_TIME
     end = std::chrono::system_clock::now();
     if (print_times) {
