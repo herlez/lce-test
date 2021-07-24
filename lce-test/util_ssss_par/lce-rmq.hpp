@@ -40,13 +40,63 @@ struct rank_tuple {
   }
 }; // struct rank_tuple
 
+class MockString
+{
+  const char* const m_ptr;
+  const int m_size;
+
+  public:
+  MockString(const char* const ptr, int size) : m_ptr(ptr), m_size(size) {
+  }
+
+  size_t size() const {
+    return m_size;
+  }
+
+  MockString substr(size_t i) const {
+    return MockString(m_ptr + i, m_size - i);
+  }
+
+  const char* data() const {
+    return m_ptr;
+  }
+};
+
+/*!
+ * Class implementing StringSet concept for suffix sorting indexes of a
+ * std::string text object.
+ */
+class StringShortSuffixSetTraits
+{
+public:
+    //! exported alias for assumed string container
+    typedef std::string Text;
+
+    //! exported alias for character type
+    typedef uint8_t Char;
+
+    //! String reference: suffix index of the text.
+    typedef typename Text::size_type String;
+
+    //! Iterator over string references: using std::vector's iterator over
+    //! suffix array vector
+    typedef typename std::vector<String>::iterator Iterator;
+
+    //! iterator of characters in a string
+    typedef const Char* CharIterator;
+
+    //! exported alias for assumed string container
+    typedef std::pair<MockString, std::vector<String> > Container;
+};
+
+template<uint64_t t_length>
 class StringShortSuffixSet
-    : public tlx::sort_strings_detail::StringSuffixSetTraits,
-      public tlx::sort_strings_detail::StringSetBase<StringShortSuffixSet, tlx::sort_strings_detail::StringSuffixSetTraits>
+    : public StringShortSuffixSetTraits,
+      public tlx::sort_strings_detail::StringSetBase<StringShortSuffixSet<t_length>, tlx::sort_strings_detail::StringSuffixSetTraits>
 {
 public:
     //! Construct from begin and end string pointers
-    StringShortSuffixSet(const Text& text,
+    StringShortSuffixSet(const MockString& text,
                     const Iterator& begin, const Iterator& end)
         : text_(&text),
           begin_(begin), end_(end)
@@ -54,11 +104,11 @@ public:
 
     //! Initializing constructor which fills output vector sa with indices.
     static StringShortSuffixSet
-    Initialize(const Text& text, std::vector<String>& sa) {
+    Initialize(const MockString& text, std::vector<String>& sa) {
         sa.resize(text.size());
         for (size_t i = 0; i < text.size(); ++i)
             sa[i] = i;
-        return StringShortSuffixSet(text, sa.begin(), sa.end());
+        return StringShortSuffixSet<t_length>(text, sa.begin(), sa.end());
     }
 
     //! Return size of string array
@@ -78,12 +128,12 @@ public:
 
     //! Returns true if CharIterator is at end of the given String
     bool is_end(const String& pos, const CharIterator& i) const
-    { return i >= reinterpret_cast<CharIterator>(std::min(text_->data() + pos + (3*1024), text_->data() + text_->size()));}
+    { return i >= reinterpret_cast<CharIterator>(std::min(text_->data() + pos + t_length, text_->data() + text_->size()));}
     //{ return (i >= reinterpret_cast<CharIterator>(text_->data()) + text_->size()); }
     
     //! Return complete string (for debugging purposes)
-    std::string get_string(const String& s, size_t depth = 0) const
-    { return text_->substr(s + depth); }
+    //std::string get_string(const String& s, size_t depth = 0) const
+    //{ return text_->substr(s + depth); }
 
     //! Subset this string set using iterator range.
     StringShortSuffixSet sub(Iterator begin, Iterator end) const
@@ -105,7 +155,7 @@ public:
 
 protected:
     //! reference to base text
-    const Text* text_;
+    const MockString* text_;
 
     //! iterators inside the output suffix array.
     Iterator begin_, end_;
@@ -127,9 +177,11 @@ public:
     
     //parallel
     std::vector<size_t> strings_to_sort(sync_set.begin(), sync_set.end());
-    std::string text_str(reinterpret_cast<const char* const>(  v_text), v_text_size);
+    //std::string text_str(reinterpret_cast<const char* const>(  v_text), v_text_size);
+    MockString text_str(reinterpret_cast<const char* const>(v_text), v_text_size);
+    StringShortSuffixSet<3*kTau> sufset{text_str, strings_to_sort.begin(), strings_to_sort.end()};
 
-    StringShortSuffixSet sufset{text_str, strings_to_sort.begin(), strings_to_sort.end()};
+
     std::vector<sss_type> lcp_string_sorting(strings_to_sort.size());
     tlx::sort_strings_detail::StringLcpPtr strptr(sufset, lcp_string_sorting.data());
     tlx::sort_strings_detail::parallel_sample_sort(strptr, 0, 0);
@@ -298,7 +350,7 @@ public:
     auto min = std::min(isa[i], isa[j]) + 1;
     auto max = std::max(isa[i], isa[j]);
 
-    if (max - min > 1024) {
+    if (max - min > 1024) { //THIS 1024 HAS NOTHING TO DO WITH KTAU; DONT CHANGE IT
       return lcp[rmq_ds1->rmq(min, max)];
     }
     auto result = lcp[min];
