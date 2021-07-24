@@ -56,13 +56,11 @@ public:
     
     //parallel
     std::vector<size_t> strings_to_sort(sync_set.begin(), sync_set.end());
-    //std::string text_str(reinterpret_cast<const char* const>(  v_text), v_text_size);
     MockString text_str(reinterpret_cast<const char* const>(v_text), v_text_size);
     StringShortSuffixSet<3*kTau> sufset{text_str, strings_to_sort.begin(), strings_to_sort.end()};
 
-
-    std::vector<sss_type> lcp_string_sorting(strings_to_sort.size());
-    tlx::sort_strings_detail::StringLcpPtr strptr(sufset, lcp_string_sorting.data());
+    lcp.resize(strings_to_sort.size());
+    tlx::sort_strings_detail::StringLcpPtr strptr(sufset, lcp.data());
     tlx::sort_strings_detail::parallel_sample_sort(strptr, 0, 0);
 
 #ifdef DETAILED_TIME
@@ -96,7 +94,7 @@ public:
       for (size_t i = start_i + 1; i < end_i; ++i) {
         uint64_t const max_length = std::min(std::min(text_size - strings_to_sort[i],
                                             text_size - strings_to_sort[i - 1]), 3*kTau);
-        if(lcp_string_sorting[i] != max_length) {
+        if(lcp[i] != max_length) {
           ++cur_rank;
         }
         rank_tuples[i] = {static_cast<sss_type>(strings_to_sort[i]), cur_rank};
@@ -113,7 +111,7 @@ public:
           ++depth;
         }
         //If strings are equal, we need to align rank of the latter
-        if(lcp_string_sorting[start_i] == max_length) {
+        if(lcp[start_i] == max_length) {
           const size_t rank_to_decrease = rank_tuples[start_i].rank;
           for (size_t i = start_i; i < std::min((t + 1) * size_per_thread, strings_to_sort.size()); ++i) {
             if(rank_tuples[i].rank == rank_to_decrease) {
@@ -132,16 +130,19 @@ public:
                 return lhs.index < rhs.index;
     });
     
-    std::vector<int32_t> new_text;
+    std::vector<int32_t> new_text(rank_tuples.size() + 1, 0);
     std::vector<int32_t> new_sa(rank_tuples.size() + 1, 0);
-    new_text.resize(rank_tuples.size());
     #pragma omp parallel for
     for (size_t i = 0; i < rank_tuples.size(); ++i) {
       new_text[i] = static_cast<int32_t>(rank_tuples[i].rank);
     }
-    new_text.push_back(0);
-    libsais_main_32s_internal(new_text.data(), new_sa.data(), new_text.size(), max_rank + 1, 0, omp_get_num_threads());
-
+    new_text.back() = 0;
+    if constexpr(std::is_same<sss_type, uint32_t>::value) {
+      libsais_main_32s_internal(new_text.data(), new_sa.data(), new_text.size(), max_rank + 1, 0, omp_get_num_threads());
+    } else {
+      //TODO
+      std::cerr << "NO SUFFIX ARRAY CONSTRUCTION ALGORITHM FOR DATA TYPE\n";
+    }
 #ifdef DETAILED_TIME
     end = std::chrono::system_clock::now();
     if (print_times) {
@@ -157,7 +158,7 @@ public:
     begin = std::chrono::system_clock::now();
 #endif
     
-    lcp = std::vector<sss_type>(new_sa.size() - 1, 0);
+    //lcp = std::vector<sss_type>(new_sa.size() - 1, 0);
     std::vector<sss_type> suffix_pred(lcp.size());
     isa.resize(new_sa.size() - 1);
 
