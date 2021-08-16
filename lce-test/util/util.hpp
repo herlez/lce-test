@@ -11,7 +11,7 @@
 /* This header contains useful methods, which are used for my implementation of Prezza's lce data structure */
 
 class util{
-
+  __extension__ typedef unsigned __int128 uint128_t;
 public:
        
 	
@@ -32,7 +32,7 @@ public:
   }
     
   /* Prints the 128-bit long integer in HEX*/
-  static void printInt128(unsigned __int128 n) {
+  static void printInt128(uint128_t n) {
     uint64_t * numberHalf = new uint64_t[2];
     numberHalf = (uint64_t*) &n;
     printf("%016lX%016lX\n", numberHalf[1], numberHalf[0]);
@@ -60,14 +60,14 @@ public:
   }
     
   /* Returns a prime number from a precalculated set */
-  static unsigned __int128 getLow64BitPrime() {
+  static uint128_t getLow64BitPrime() {
 		
     srand(time(0));
-    unsigned const __int128 primes[] = { 0x800000000000001dULL, 0x8000000000000063ULL, 0x800000000000007bULL, 0x8000000000000083ULL, 0x800000000000009bULL };
+    const uint128_t primes[] = { 0x800000000000001dULL, 0x8000000000000063ULL, 0x800000000000007bULL, 0x8000000000000083ULL, 0x800000000000009bULL };
     unsigned const int numberOfPrimes = 5;
 		
 		
-    unsigned __int128 prime = primes[(rand() % numberOfPrimes)];
+    uint128_t prime = primes[(rand() % numberOfPrimes)];
     return primes[0];
     return prime;
   }

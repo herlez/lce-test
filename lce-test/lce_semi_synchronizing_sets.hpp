@@ -26,14 +26,7 @@
 #include <malloc_count.h>
 #endif
 
-static constexpr uint64_t calculatePowerModulo(unsigned int const power,
-                                               __int128 const kPrime) {
-  unsigned __int128 x = 256;
-  for (unsigned int i = 0; i < power; i++) {
-    x = (x*x) % kPrime;
-  }
-  return static_cast<uint64_t>(x);
-}
+
 
 /* This class stores a text as an array of characters and 
  * answers LCE-queries with the naive method. */
@@ -42,22 +35,21 @@ template <uint64_t kTau = 1024, bool prefer_long = true>
 class LceSemiSyncSets : public LceDataStructure {
 
 public:
-  // static constexpr __int128 kPrime = 562949953421231ULL;
-  // static constexpr __int128 kPrime = 1125899906842597ULL;
-  // static constexpr __int128 kPrime = 2251799813685119ULL;
-  // static constexpr __int128 kPrime = 4503599627370449ULL;
-  // static constexpr __int128 kPrime = 9007199254740881ULL;
-  // static constexpr __int128 kPrime = 18014398509481951ULL;
-  // static constexpr __int128 kPrime = 36028797018963913ULL;
-  // static constexpr __int128 kPrime = 72057594037927931ULL;
-  // static constexpr __int128 kPrime = 144115188075855859ULL;
-  // static constexpr __int128 kPrime = 288230376151711717ULL;
-  // static constexpr __int128 kPrime = 576460752303423433ULL;
-  // static constexpr __int128 kPrime = 1152921504606846883ULL;
-  // static constexpr __int128 kPrime = 2305843009213693951ULL;
+  __extension__ typedef unsigned __int128 uint128_t;
 
-  static constexpr __int128 kPrime = 18446744073709551253ULL;
-  static constexpr uint64_t TwoPowTauModQ = calculatePowerModulo(std::log2(kTau), kPrime);
+  // static constexpr uint128_t kPrime = 562949953421231ULL;
+  // static constexpr uint128_t kPrime = 1125899906842597ULL;
+  // static constexpr uint128_t kPrime = 2251799813685119ULL;
+  // static constexpr uint128_t kPrime = 4503599627370449ULL;
+  // static constexpr uint128_t kPrime = 9007199254740881ULL;
+  // static constexpr uint128_t kPrime = 18014398509481951ULL;
+  // static constexpr uint128_t kPrime = 36028797018963913ULL;
+  // static constexpr uint128_t kPrime = 72057594037927931ULL;
+  // static constexpr uint128_t kPrime = 144115188075855859ULL;
+  // static constexpr uint128_t kPrime = 288230376151711717ULL;
+  // static constexpr uint128_t kPrime = 576460752303423433ULL;
+  // static constexpr uint128_t kPrime = 1152921504606846883ULL;
+  // static constexpr uint128_t kPrime = 2305843009213693951ULL;
 
   using sss_type = uint32_t;
 
@@ -65,7 +57,7 @@ public:
   LceSemiSyncSets(std::vector<uint8_t> const& text, bool const print_ss_size)
     : text_(text), text_length_in_bytes_(text_.size()) {
 
-    unsigned __int128 fp = { 0ULL };
+    uint128_t fp = { 0ULL };
     for(uint64_t i = 0; i < kTau; ++i) {
       fp *= 256;
       fp += (unsigned char) text_[i];
@@ -150,10 +142,10 @@ public:
       }
 
       lce = 0;
-      unsigned __int128 const* const text_blocks_i =
-        reinterpret_cast<unsigned __int128 const*>(text_.data() + i);
-      unsigned __int128 const * const text_blocks_j =
-        reinterpret_cast<unsigned __int128 const *>(text_.data() + j);
+      uint128_t const* const text_blocks_i =
+        reinterpret_cast<uint128_t const*>(text_.data() + i);
+      uint128_t const * const text_blocks_j =
+        reinterpret_cast<uint128_t const *>(text_.data() + j);
       for(; lce < max_length/16; ++lce) {
         if(text_blocks_i[lce] != text_blocks_j[lce]) {
           break;
@@ -192,10 +184,10 @@ public:
       }
 
       lce = 0;
-      unsigned __int128 const* const text_blocks_i =
-        reinterpret_cast<unsigned __int128 const*>(text_.data() + i);
-      unsigned __int128 const * const text_blocks_j =
-        reinterpret_cast<unsigned __int128 const *>(text_.data() + j);
+      uint128_t const* const text_blocks_i =
+        reinterpret_cast<uint128_t const*>(text_.data() + i);
+      uint128_t const * const text_blocks_j =
+        reinterpret_cast<uint128_t const *>(text_.data() + j);
       for(; lce < max_length/16; ++lce) {
         if(text_blocks_i[lce] != text_blocks_j[lce]) {
           break;
@@ -248,7 +240,7 @@ private:
   }
 
   void fill_synchronizing_set(const uint64_t from, const uint64_t to,
-                              unsigned __int128& fp,
+                              uint128_t& fp,
                               ring_buffer<uint64_t>& fingerprints,
                               std::vector<uint64_t>& out_s_fingerprints) {
 
@@ -286,14 +278,14 @@ private:
     }
   }
 
-  void calculate_fingerprints(size_t const count, unsigned __int128& fp,
+  void calculate_fingerprints(size_t const count, uint128_t& fp,
                               ring_buffer<uint64_t>& fingerprints) {
     for(uint64_t i = 0; i < count; ++i) {
       fp *= 256;
       fp += (unsigned char) text_[kTau+fingerprints.size() - 1];
       fp %= kPrime;
                 
-      unsigned __int128 first_char_influence = text_[fingerprints.size() - 1];
+      uint128_t first_char_influence = text_[fingerprints.size() - 1];
       first_char_influence *= TwoPowTauModQ;
       first_char_influence %= kPrime;
                 
@@ -307,6 +299,18 @@ private:
   }
 
 private:
+  static constexpr uint64_t calculatePowerModulo(unsigned int const power,
+                                               uint128_t const kPrime) {
+  uint128_t x = 256;
+  for (unsigned int i = 0; i < power; i++) {
+    x = (x*x) % kPrime;
+  }
+  return static_cast<uint64_t>(x);
+  }
+  
+  static constexpr uint128_t kPrime = 18446744073709551253ULL;
+  static constexpr uint64_t TwoPowTauModQ = calculatePowerModulo(std::log2(kTau), kPrime);
+
   std::vector<uint8_t> const& text_;
   size_t const text_length_in_bytes_;
   

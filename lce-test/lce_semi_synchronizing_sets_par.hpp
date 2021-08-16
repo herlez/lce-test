@@ -27,7 +27,7 @@
 #endif
 
 namespace lce_test::par {
-
+__extension__ typedef unsigned __int128 uint128_t;
 /* This class stores a text as an array of characters and 
  * answers LCE-queries with the naive method. */
 template <uint64_t kTau = 1024, bool prefer_long = true>
@@ -108,10 +108,10 @@ class LceSemiSyncSetsPar : public LceDataStructure {
       }
 
       lce = 0;
-      unsigned __int128 const* const text_blocks_i =
-          reinterpret_cast<unsigned __int128 const*>(text_.data() + i);
-      unsigned __int128 const* const text_blocks_j =
-          reinterpret_cast<unsigned __int128 const*>(text_.data() + j);
+      uint128_t const* const text_blocks_i =
+          reinterpret_cast<uint128_t const*>(text_.data() + i);
+      uint128_t const* const text_blocks_j =
+          reinterpret_cast<uint128_t const*>(text_.data() + j);
       for (; lce < max_length / 16; ++lce) {
         if (text_blocks_i[lce] != text_blocks_j[lce]) {
           break;
@@ -144,10 +144,10 @@ class LceSemiSyncSetsPar : public LceDataStructure {
       }
 
       lce = 0;
-      unsigned __int128 const* const text_blocks_i =
-          reinterpret_cast<unsigned __int128 const*>(text_.data() + i);
-      unsigned __int128 const* const text_blocks_j =
-          reinterpret_cast<unsigned __int128 const*>(text_.data() + j);
+      uint128_t const* const text_blocks_i =
+          reinterpret_cast<uint128_t const*>(text_.data() + i);
+      uint128_t const* const text_blocks_j =
+          reinterpret_cast<uint128_t const*>(text_.data() + j);
       for (; lce < max_length / 16; ++lce) {
         if (text_blocks_i[lce] != text_blocks_j[lce]) {
           break;

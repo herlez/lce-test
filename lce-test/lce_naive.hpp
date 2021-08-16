@@ -20,6 +20,8 @@
 
 class LceNaive : public LceDataStructure {
 public:
+  __extension__ typedef unsigned __int128 uint128_t;
+
   LceNaive(std::vector<uint8_t> const& text)
     : text_(text), text_length_in_bytes_(text.size()) { }
 
@@ -45,10 +47,10 @@ public:
 
     // Accelerate search by comparing 16-byte blocks
     lce = 0;
-    unsigned __int128 const* const text_blocks_i =
-      reinterpret_cast<unsigned __int128 const*>(text_.data() + i);
-    unsigned __int128 const * const text_blocks_j =
-      reinterpret_cast<unsigned __int128 const *>(text_.data() + j);
+    uint128_t const* const text_blocks_i =
+      reinterpret_cast<uint128_t const*>(text_.data() + i);
+    uint128_t const * const text_blocks_j =
+      reinterpret_cast<uint128_t const *>(text_.data() + j);
     for(; lce < max_length/16; ++lce) {
       if(text_blocks_i[lce] != text_blocks_j[lce]) {
         break;

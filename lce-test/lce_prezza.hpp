@@ -20,6 +20,7 @@
 template <uint64_t t_naive_scan = 128>
 class LcePrezza : public LceDataStructure {
 public:
+  __extension__ typedef unsigned __int128 uint128_t;
   LcePrezza() = delete;
   /* Loads the full file located at PATH and builds Prezza's LCE data structure */
   LcePrezza(uint64_t * const text, size_t const size)
@@ -88,8 +89,8 @@ public:
     uint64_t dist = t_naive_scan * 2;
     int exp = __builtin_ctz(t_naive_scan)+1;
 
-    unsigned const __int128 fingerprint_to_i = (i != 0) ? fingerprintTo(i - 1) : 0;
-    unsigned const __int128 fingerprint_to_j = (j != 0) ? fingerprintTo(j - 1) : 0;
+    const uint128_t fingerprint_to_i = (i != 0) ? fingerprintTo(i - 1) : 0;
+    const uint128_t fingerprint_to_j = (j != 0) ? fingerprintTo(j - 1) : 0;
 
     while (dist <= max_lce &&
            fingerprintExp(fingerprint_to_i, i, exp) == fingerprintExp(fingerprint_to_j, j, exp)) {
@@ -115,7 +116,7 @@ public:
   }
 
   /* Returns the prime*/
-  unsigned __int128 getPrime() const {
+  uint128_t getPrime() const {
     return prime_;
   }
 
@@ -142,7 +143,7 @@ public:
 private:
   const uint64_t text_length_in_bytes_;
   const uint64_t text_length_in_blocks_;
-  static constexpr unsigned __int128 prime_ = 0x800000000000001dULL;
+  static constexpr uint128_t prime_ = 0x800000000000001dULL;
   uint64_t * const fingerprints_;
   uint64_t * const power_table_;
 
@@ -186,7 +187,7 @@ private:
 
   /* Returns the i'th block. A block contains 8 character. */
   uint64_t getBlock(const uint64_t i) const {
-    unsigned __int128 x = (i != 0) ? fingerprints_[i - 1] & 0x7FFFFFFFFFFFFFFFULL : 0;
+    uint128_t x = (i != 0) ? fingerprints_[i - 1] & 0x7FFFFFFFFFFFFFFFULL : 0;
     x <<= 64;
     x %= prime_;
 
@@ -203,7 +204,7 @@ private:
 
   /* Retruns the i'th block for i > 0. */
   uint64_t getBlockGuaranteeIgeqOne(const uint64_t i) const {
-    unsigned __int128 x = fingerprints_[i - 1] & 0x7FFFFFFFFFFFFFFFULL;
+    uint128_t x = fingerprints_[i - 1] & 0x7FFFFFFFFFFFFFFFULL;
     x <<= 64;
     x %= prime_;
 
@@ -220,9 +221,9 @@ private:
 
   /* Calculates the fingerprint of T[from, from + 2^exp) when the fingerprint
      of T[1, from) is already knwon */
-  uint64_t fingerprintExp(unsigned __int128 fingerprint_to_i,
+  uint64_t fingerprintExp(uint128_t fingerprint_to_i,
                           const uint64_t from, const int exp) const {
-    unsigned __int128 fingerprint_to_j = fingerprintTo(from + (1 << exp) - 1);
+    uint128_t fingerprint_to_j = fingerprintTo(from + (1 << exp) - 1);
     fingerprint_to_i *= power_table_[exp];
     fingerprint_to_i %= prime_;
 
@@ -233,8 +234,8 @@ private:
 
   /* Calculates the fingerprint of T[from, from + 2^exp) */
   uint64_t fingerprintExp(const uint64_t from, const int exp) const {
-    unsigned __int128 fingerprint_to_i = (from != 0) ? fingerprintTo(from - 1) : 0;
-    unsigned __int128 fingerprint_to_j = fingerprintTo(from + (1 << exp) - 1);
+    uint128_t fingerprint_to_i = (from != 0) ? fingerprintTo(from - 1) : 0;
+    uint128_t fingerprint_to_j = fingerprintTo(from + (1 << exp) - 1);
     fingerprint_to_i *= power_table_[exp];
     fingerprint_to_i %= prime_;
 
@@ -245,7 +246,7 @@ private:
 
   /* Calculates the fingerprint of T[0..i] */
   uint64_t fingerprintTo(const uint64_t i) const {
-    unsigned __int128 fingerprint = 0;
+    uint128_t fingerprint = 0;
     int pad = ((i+1) & 7); 
     if(TLX_UNLIKELY(pad == 0)) {
       // This fingerprints is already saved.
@@ -258,7 +259,7 @@ private:
       fingerprint = fingerprints_[((i/8) - 1)] & 0x7FFFFFFFFFFFFFFFULL;
       fingerprint <<= pad;
       {
-        unsigned __int128 x = fingerprints_[(i / 8) - 1] & 0x7FFFFFFFFFFFFFFFULL;
+        uint128_t x = fingerprints_[(i / 8) - 1] & 0x7FFFFFFFFFFFFFFFULL;
         x <<= 64;
         x %= prime_;
 
@@ -316,7 +317,7 @@ private:
 
     for (uint64_t i = 0; i < text_length_in_blocks_; ++i) {
       current_block = fingerprints_[i];
-      unsigned __int128 x = previous_fingerprint;
+      uint128_t x = previous_fingerprint;
       x = x << 64;
       x = x + current_block;
       x = x % prime_;
@@ -337,7 +338,7 @@ private:
     // and 8byte
     unsigned int number_of_levels = ((int) std::log2(text_length_in_blocks_)) + 6;
     //power_table_ = new uint64_t[number_of_levels];
-    unsigned __int128 x = 256;
+    uint128_t x = 256;
     power_table_[0] = (uint64_t) x;
     for (unsigned int i = 1; i < number_of_levels; ++i) {
       x = (x*x) % prime_;

@@ -21,6 +21,8 @@ target_include_directories(malloc_count PUBLIC
 add_executable(bench_time
   bench_time.cpp)
 
+target_compile_options(bench_time PRIVATE -Wall -Wextra -Werror -pedantic -O3) #-Winline
+
 find_package(SDSL REQUIRED)
 find_package(divsufsort REQUIRED)
 find_package(divsufsort64 REQUIRED)
@@ -28,6 +30,11 @@ find_package(divsufsort64 REQUIRED)
 target_include_directories(bench_time PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/lce-test/>
   $<INSTALL_INTERFACE:${PROJECT_SOURCE_DIR}/lce-test/>
+  #${SDSL_INCLUDE_DIRS}
+  #${PROJECT_SOURCE_DIR}/extlib/ips4o/include
+)
+
+target_include_directories(bench_time SYSTEM PRIVATE
   ${SDSL_INCLUDE_DIRS}
   ${PROJECT_SOURCE_DIR}/extlib/ips4o/include
 )
