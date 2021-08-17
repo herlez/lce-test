@@ -29,12 +29,12 @@ void build_lce_range(std::string const& file, std::string const& output_folder,
   } else {
     output_folder_name = output_folder + "_" + std::to_string(prefix_length);
   }
-  std::cout << "output_folder_name.c_str() " << output_folder_name.c_str()
-            << std::endl;
+  //std::cout << "output_folder_name.c_str() " << output_folder_name.c_str()
+  //          << std::endl;
   if(!fs::create_directory(output_folder_name.c_str())) {
     //std::cout << "Folder for sorted lce queries could not get created. "
-    //          << "If it was already created and you want to calculate new "
-    //          << "values, delete the folder first." << std::endl;
+    //         << "If it was already created and you want to calculate new "
+    //         << "values, delete the folder first." << std::endl;
     return;
   }
 
@@ -123,7 +123,7 @@ void build_lce_range(std::string const& file, std::string const& output_folder,
     
   for (i = 1; i < text_length; i++) {
     int lstart = 0;
-    if((LCP[i] + SA[i] != (text_length-1)) & (LCP[i] + SA[i-1] != (text_length-1))) {
+    //if((LCP[i] + SA[i] != (text_length-1)) & (LCP[i] + SA[i-1] != (text_length-1))) { //??????
       if(LCP[i] < (1L << lstart++)) {
         limit[0]++;
         if(limit[0] < limita) {
@@ -230,7 +230,7 @@ void build_lce_range(std::string const& file, std::string const& output_folder,
           ofX << SA[i-1] << '\n'; ofX << SA[i] << '\n';
         }
       }
-    }
+    //}
   }
    
   /* Deallocate memory. */
