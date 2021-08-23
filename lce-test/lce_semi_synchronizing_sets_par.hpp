@@ -45,6 +45,9 @@ class LceSemiSyncSetsPar : public LceDataStructure {
 #endif
 
     sync_set_ = string_synchronizing_set_par<kTau, sss_type>(text_).get_sss();
+    if (print_ss_size) {
+      std::cout << "sync_set_size=" << sync_set_.size() << " ";
+    }
 
 #ifdef DETAILED_TIME
     std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
@@ -71,14 +74,10 @@ class LceSemiSyncSetsPar : public LceDataStructure {
                 << "pred_construct_mem=" << (malloc_count_peak() - mem_before) << " ";
     }
 #endif
-
     lce_rmq_ = std::make_unique<Lce_rmq_par<sss_type, kTau>>(text_.data(),
                                                          text_length_in_bytes_,
                                                          sync_set_,
                                                          print_ss_size);
-    if (print_ss_size) {
-      std::cout << "sync_set_size=" << sync_set_.size() << " ";
-    }
   }
 
   /* Answers the lce query for position i and j */
