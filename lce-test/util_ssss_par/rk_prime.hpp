@@ -5,7 +5,6 @@
 #include <iterator>
 #include <random>
 
-#define my_inline inline
 
 namespace herlez::rolling_hash {
 __extension__ typedef unsigned __int128 uint128_t;
@@ -64,7 +63,7 @@ class rk_prime {
     }
   }
 
-  my_inline uint128_t roll() {
+  inline uint128_t roll() {
     m_cur_fp *= m_base;
     uint128_t border_char_influence = m_char_influence[(unsigned char)(*m_fp_begin)][(unsigned char)(*m_fp_end)];
     m_cur_fp += border_char_influence;
@@ -75,11 +74,11 @@ class rk_prime {
     return m_cur_fp;
   }
 
-  my_inline uint128_t get_currect_fp() const {
+  inline uint128_t get_current_fp() const {
     return m_cur_fp;
   }
 
-  my_inline uint128_t get_base() const {
+  inline uint128_t get_base() const {
     return m_base;
   }
 
@@ -98,7 +97,7 @@ class rk_prime {
     return (std::uniform_int_distribution<uint64_t>(min, max))(g);
   }
 
-  my_inline uint128_t mod_m_prime(uint128_t num) const {
+  inline uint128_t mod_m_prime(uint128_t num) const {
     //Does only work for 2^127 - 1
     // uint128_t const z = (num + 1) >> t_prime_exp;
     // return (num + z) & m_prime;
@@ -131,13 +130,15 @@ class rk_prime {
   }
 
   uint128_t calculatePowerModulo() const {
-    assert(__builtin_popcount(m_tau) == 1);
-    uint128_t x = m_base;
-    for (unsigned int i = 0; i < std::bit_width(m_tau-1); i++) {
-      x = mulmod(x, x);
-      //x = mod_m_prime(x*x); //overflows
+    uint128_t result = 1;
+    uint128_t b = m_base;
+    uint128_t exponent = m_tau;
+    while (exponent > 0) {
+      if (exponent & 1ULL) result = mulmod(b, result);
+      b = mulmod(b, b);
+      exponent >>= 1;
     }
-    return x;
+    return result;
   }
 
   void fillPowerTable() {
