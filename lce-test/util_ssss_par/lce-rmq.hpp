@@ -59,8 +59,8 @@ public:
 #endif
     
     //parallel
-    std::vector<size_t> strings_to_sort(sync_set.begin(), sync_set.end());
-    MockString text_str(reinterpret_cast<const char* const>(v_text), v_text_size);
+    std::vector<sss_type> strings_to_sort(sync_set.begin(), sync_set.end());
+    mock_string text_str(v_text, v_text_size);
     StringShortSuffixSet<3*kTau> sufset{text_str, strings_to_sort.begin(), strings_to_sort.end()};
 
     lcp.resize(strings_to_sort.size());
