@@ -50,7 +50,7 @@ class Lce_rmq_par {
 
 public:
   Lce_rmq_par(uint8_t const * const v_text, size_t const v_text_size,
-          std::vector<sss_type> const& sync_set, bool print_times=false) 
+          std::vector<sss_type> const& sync_set) 
     : text(v_text), text_size(v_text_size) {
 #ifdef DETAILED_TIME
     size_t mem_before = malloc_count_current();
@@ -69,11 +69,9 @@ public:
 
 #ifdef DETAILED_TIME
     std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
-    if (print_times) {
-      std::cout << "string_sort_time=" 
-                << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " "
-                << "string_sort_mem=" << (malloc_count_peak() - mem_before) << " ";
-    }
+    std::cout << "string_sort_time=" 
+              << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " "
+              << "string_sort_mem=" << (malloc_count_peak() - mem_before) << " ";
 #endif
 
 #ifdef DETAILED_TIME
@@ -98,7 +96,7 @@ public:
       for (size_t i = start_i + 1; i < end_i; ++i) {
         uint64_t const max_length = std::min(std::min(text_size - strings_to_sort[i],
                                             text_size - strings_to_sort[i - 1]), 3*kTau);
-        if(lcp[i] != max_length) {
+        if(lcp[i] != max_length) { //TODO: for r-sss: if(text[i+lcp] < text[j+lcp] 
           ++cur_rank;
         }
         rank_tuples[i] = {static_cast<sss_type>(strings_to_sort[i]), cur_rank};
@@ -151,11 +149,9 @@ public:
 
 #ifdef DETAILED_TIME
     end = std::chrono::system_clock::now();
-    if (print_times) {
-      std::cout << "sa_construct_time=" 
-                << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " "
-                << "sa_construct_mem=" << (malloc_count_peak() - mem_before) << " ";
-    }
+    std::cout << "sa_construct_time=" 
+              << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " "
+              << "sa_construct_mem=" << (malloc_count_peak() - mem_before) << " ";
 #endif
     
 #ifdef DETAILED_TIME
@@ -200,11 +196,9 @@ public:
 
 #ifdef DETAILED_TIME
     end = std::chrono::system_clock::now();
-    if (print_times) {
-      std::cout << "lcp_construct_time=" 
-                << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " "
-                << "lcp_construct_mem=" << (malloc_count_peak() - mem_before) << " ";
-    }
+    std::cout << "lcp_construct_time=" 
+              << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " "
+              << "lcp_construct_mem=" << (malloc_count_peak() - mem_before) << " ";
 #endif
     //Build RMQ data structure
 
@@ -218,11 +212,9 @@ public:
 
 #ifdef DETAILED_TIME
     end = std::chrono::system_clock::now();
-    if (print_times) {
-      std::cout << "rmq_construct_time=" 
-                << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " "
-                << "rmq_construct_mem=" << (malloc_count_peak() - mem_before) << " ";
-    }
+    std::cout << "rmq_construct_time=" 
+              << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " "
+              << "rmq_construct_mem=" << (malloc_count_peak() - mem_before) << " ";
 #endif
   }
     
