@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include "../util/synchronizing_sets/ring_buffer.hpp"
 #include "rk_prime.hpp"
@@ -15,12 +16,22 @@ class string_synchronizing_set_par {
  private:
   std::vector<t_index> m_sss;
   bool m_runs_detected;
+  std::unordered_map<t_index, int64_t> m_run_info;
 
  public:
-  std::vector<t_index> get_sss() {
+  std::vector<t_index>& get_sss() {
     return m_sss;
   }
 
+  size_t size() {
+    return m_sss.size();
+  }
+
+  inline t_index operator[](size_t i) {
+    return m_sss[i];
+  }
+
+  string_synchronizing_set_par() = default;
   string_synchronizing_set_par(const std::vector<uint8_t>& text) {
     std::vector<std::vector<t_index>> sss_part(omp_get_max_threads());
 
@@ -110,11 +121,11 @@ class string_synchronizing_set_par {
     return sss;
   }
 
-  std::vector<t_index> fill_synchronizing_set_runs(const std::vector<uint8_t>& text, const size_t from, const size_t to) const {
+  std::vector<t_index> fill_synchronizing_set_runs(const std::vector<uint8_t>& text, const size_t from, const size_t to) {
     //calculate Q
     std::vector<std::pair<t_index, t_index>> qset = calculate_q(text, from, to);
     
-    /*
+    
     #pragma omp critical
     {
       std::cout << "from " << from << " to " << to << '\n';
@@ -125,7 +136,7 @@ class string_synchronizing_set_par {
       //}
       //std::cout << "}; \n";
     }
-    */
+    
     
     
     qset.push_back(std::make_pair(std::numeric_limits<t_index>::max(), std::numeric_limits<t_index>::max()));
@@ -198,7 +209,7 @@ class string_synchronizing_set_par {
     return sss;
   }
 
-  std::vector<std::pair<t_index, t_index>> calculate_q(const std::vector<uint8_t>& text, const size_t from, const size_t to) const {
+  std::vector<std::pair<t_index, t_index>> calculate_q(const std::vector<uint8_t>& text, const size_t from, const size_t to) {
     std::vector<std::pair<t_index, t_index>> qset{};
     constexpr size_t small_tau = t_tau / 3;
     herlez::rolling_hash::rk_prime<decltype(text.cbegin()), 107> rk(text.cbegin() + from, small_tau, 296813);
@@ -245,9 +256,16 @@ class string_synchronizing_set_par {
         }
 
         //add run to set q
-        if (run_end - run_start + 1 > t_tau) {
+        if (run_end - run_start + 1 >= t_tau) {
           qset.push_back(std::make_pair(run_start, run_end - t_tau + 1));
           i = run_end - small_tau;
+
+          if(run_end - run_start + 1 >= 3 * t_tau - 1) {
+            size_t const sss_pos1 = run_start - 1;
+            size_t const sss_pos2 = run_end - (2*t_tau) + 2; 
+            int64_t const run_info = int64_t{1} * text.size() - sss_pos2 + sss_pos1;
+            m_run_info[run_start-1] = text[run_end + 1] > text[run_end - period] ? run_info : run_info * (-1); 
+          }
         } else {
           i = next_min - 1;
         }

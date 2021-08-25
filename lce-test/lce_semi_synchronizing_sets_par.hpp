@@ -44,7 +44,7 @@ class LceSemiSyncSetsPar : public LceDataStructure {
     std::chrono::system_clock::time_point begin = std::chrono::system_clock::now();
 #endif
 
-    sync_set_ = string_synchronizing_set_par<kTau, sss_type>(text_).get_sss();
+    sync_set_ = string_synchronizing_set_par<kTau, sss_type>(text_);
     if (print_ss_size) {
       std::cout << "sync_set_size=" << sync_set_.size() << " ";
     }
@@ -64,7 +64,7 @@ class LceSemiSyncSetsPar : public LceDataStructure {
     begin = std::chrono::system_clock::now();
 #endif
 
-    ind_ = std::make_unique<stash::pred::index_par<std::vector<sss_type>, sss_type, 7>>(sync_set_);
+    ind_ = std::make_unique<stash::pred::index_par<std::vector<sss_type>, sss_type, 7>>(sync_set_.get_sss());
 
 #ifdef DETAILED_TIME
     end = std::chrono::system_clock::now();
@@ -76,7 +76,7 @@ class LceSemiSyncSetsPar : public LceDataStructure {
 #endif
     lce_rmq_ = std::make_unique<Lce_rmq_par<sss_type, kTau>>(text_.data(),
                                                          text_length_in_bytes_,
-                                                         sync_set_);
+                                                         sync_set_.get_sss());
   }
 
   /* Answers the lce query for position i and j */
@@ -202,7 +202,7 @@ class LceSemiSyncSetsPar : public LceDataStructure {
   size_t const text_length_in_bytes_;
 
   std::unique_ptr<stash::pred::index_par<std::vector<sss_type>, sss_type, 7>> ind_;
-  std::vector<sss_type> sync_set_;
+  string_synchronizing_set_par<1024, sss_type> sync_set_;
   std::unique_ptr<Lce_rmq_par<sss_type, kTau>> lce_rmq_;
 };
 }  // namespace sss_par
