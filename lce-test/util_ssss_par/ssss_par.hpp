@@ -127,6 +127,7 @@ class string_synchronizing_set_par {
     }
     */
     
+    
     qset.push_back(std::make_pair(std::numeric_limits<t_index>::max(), std::numeric_limits<t_index>::max()));
     auto it_q = qset.begin();
     //calculate SSS
@@ -212,44 +213,43 @@ class string_synchronizing_set_par {
       }
       //find first minimum
       size_t first_min = i;
-      for (size_t j = i; j < i + small_tau; ++j) {
+      for (size_t j = first_min; j < i + small_tau; ++j) {
         if (fingerprints[j] < fingerprints[first_min]) {
           first_min = j;
         }
       }
-      //look for next (same) minimum
-      size_t next_min = first_min;
-      for (size_t j = first_min + 1; j < first_min + small_tau; ++j) {
-        if (fingerprints[j] == fingerprints[first_min]) {
+      //find next minimum
+      size_t next_min = first_min + 1;
+      for (size_t j = next_min; j < first_min + small_tau; ++j) {
+        if (fingerprints[j] < fingerprints[first_min]) {
           next_min = j;
-          break;
         }
       }
 
-      if (next_min == first_min) {
-        //if no matching fingerprint exists, start again after the min
-        i = first_min;
+      //if minimum fps match, look for run
+      if (fingerprints[next_min] != fingerprints[first_min]) {
+        i = next_min - 1;
       } else {
         //if matching fingerprint exists, extend the run and add it to q
         size_t const period = next_min - first_min;
         //now extend run naivly to the left
         size_t run_start = first_min;
-        while (run_start != from && text[run_start] == text[run_start + period]) {
+        while (run_start > from && text[run_start-1] == text[run_start + period-1]) {
           --run_start;
         }
-        if (run_start != from || text[0] != text[0 + period]) {
-          ++run_start;
-        }
+        
         //extend run naivly to the right
         size_t run_end = next_min;
-        while (run_end < to + 2 * t_tau - 1 && text[run_end] == text[run_end - period]) {
+        while (run_end < to + 2 * t_tau - 2 && text[run_end+1] == text[run_end - period+1]) {
           ++run_end;
         }
-        --run_end;
 
+        //add run to set q
         if (run_end - run_start + 1 > t_tau) {
           qset.push_back(std::make_pair(run_start, run_end - t_tau + 1));
-          i = run_end - small_tau;  //TODO: too tight?
+          i = run_end - small_tau;
+        } else {
+          i = next_min - 1;
         }
       }
     }
