@@ -19,15 +19,15 @@ class string_synchronizing_set_par {
   std::unordered_map<t_index, int64_t> m_run_info;
 
  public:
-  std::vector<t_index>& get_sss() {
+  std::vector<t_index> const& get_sss() const {
     return m_sss;
   }
 
-  size_t size() {
+  size_t size() const {
     return m_sss.size();
   }
 
-  inline t_index operator[](size_t i) {
+  inline t_index operator[](size_t i) const {
     return m_sss[i];
   }
 

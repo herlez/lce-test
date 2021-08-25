@@ -50,7 +50,7 @@ class Lce_rmq_par {
 
 public:
   Lce_rmq_par(uint8_t const * const v_text, size_t const v_text_size,
-          std::vector<sss_type> const& sync_set) 
+          string_synchronizing_set_par<kTau, sss_type> const& sync_set) 
     : text(v_text), text_size(v_text_size) {
 #ifdef DETAILED_TIME
     size_t mem_before = malloc_count_current();
@@ -59,7 +59,7 @@ public:
 #endif
     
     //parallel
-    std::vector<sss_type> strings_to_sort(sync_set.begin(), sync_set.end());
+    std::vector<sss_type> strings_to_sort(sync_set.get_sss().begin(), sync_set.get_sss().end());
     mock_string text_str(v_text, v_text_size);
     StringShortSuffixSet<3*kTau> sufset{text_str, strings_to_sort.begin(), strings_to_sort.end()};
 

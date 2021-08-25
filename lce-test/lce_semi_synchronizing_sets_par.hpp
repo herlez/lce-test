@@ -76,7 +76,7 @@ class LceSemiSyncSetsPar : public LceDataStructure {
 #endif
     lce_rmq_ = std::make_unique<Lce_rmq_par<sss_type, kTau>>(text_.data(),
                                                          text_length_in_bytes_,
-                                                         sync_set_.get_sss());
+                                                         sync_set_);
   }
 
   /* Answers the lce query for position i and j */
