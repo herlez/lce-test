@@ -1,6 +1,6 @@
 #pragma once
 #include <algorithm>
-
+#include "ssss_par.hpp"
 namespace lce_test::par {
 
 struct mock_string {
@@ -35,10 +35,13 @@ class StringSetBase {
   //! check equality of two strings a and b at char iterators ai and bi.
   bool is_equal(const typename Traits::String& a,
                 const typename Traits::CharIterator& ai,
-                const typename Traits::String& b,
+                [[maybe_unused]]const typename Traits::String& b,
                 const typename Traits::CharIterator& bi) const {
     const StringSet& ss = *static_cast<const StringSet*>(this);
-    return !ss.is_end(a, ai) && !ss.is_end(b, bi) && (*ai == *bi);
+    //After scanning 3*tau character, suffixes  are ordered by run_info and then start position
+    //This guarantees that they are not equal
+    if(ss.is_exact_end(a, ai)) { return false; }
+    return (*ai == *bi);
   }
 
   //! check if string a is less or equal to string b at iterators ai and bi.
@@ -47,8 +50,11 @@ class StringSetBase {
                const typename Traits::String& b,
                const typename Traits::CharIterator& bi) const {
     const StringSet& ss = *static_cast<const StringSet*>(this);
-    return ss.is_end(a, ai) ||
-           (!ss.is_end(a, ai) && !ss.is_end(b, bi) && *ai < *bi);
+    if(ss.is_exact_end(a, ai)) {
+      if(ss.is_less_run(a, b)) { return true; }
+      return a > b;
+    }
+    return (*ai < *bi);
   }
 
   //! check if string a is less or equal to string b at iterators ai and bi.
@@ -57,8 +63,13 @@ class StringSetBase {
               const typename Traits::String& b,
               const typename Traits::CharIterator& bi) const {
     const StringSet& ss = *static_cast<const StringSet*>(this);
-    return ss.is_end(a, ai) ||
-           (!ss.is_end(a, ai) && !ss.is_end(b, bi) && *ai <= *bi);
+    //if(ss.has_runs() && ss.is_exact_end(a, ai) && ss.is_exact_end(b, bi)) { return ss.is_leq_run(a, b); }
+    if(ss.is_exact_end(a, ai)) { 
+      //if(ss.is_leq_run(a, b)) { return true; }
+      if(ss.is_less_run(a, b)) { return true; }
+      return a > b;
+    }
+    return (*ai <= *bi);
   }
 
   //! \}
@@ -236,9 +247,6 @@ class StringShortSuffixSetTraits {
 
   //! iterator of characters in a string
   typedef const Char* CharIterator;
-
-  //! exported alias for assumed string container
-  typedef std::pair<Text, std::vector<String>> Container;
 };
 
 /*!
@@ -249,13 +257,19 @@ template <uint32_t t_tau>
 class StringShortSuffixSet
     : public StringShortSuffixSetTraits,
       public StringSetBase<StringShortSuffixSet<t_tau>, StringShortSuffixSetTraits> {
+
  public:
+  //! exported alias for assumed string container
+  typedef std::tuple<Text, std::vector<String>, string_synchronizing_set_par<t_tau/3, uint32_t> const&> Container;
+
   //! Construct from begin and end string pointers
   StringShortSuffixSet(const Text& text,
-                       const Iterator& begin, const Iterator& end)
+                       const Iterator& begin, const Iterator& end, string_synchronizing_set_par<t_tau/3, uint32_t> const& sss)
       : text_(&text),
         begin_(begin),
-        end_(end) {}
+        end_(end),
+        sss_(sss),
+        sss_has_runs_(sss.has_runs()) {}
 
   //! Initializing constructor which fills output vector sa with indices.
 
@@ -273,30 +287,60 @@ class StringShortSuffixSet
   CharIterator get_chars(const String& s, size_t depth) const { return reinterpret_cast<CharIterator>(text_->data()) + s + depth; }
 
   //! Returns true if CharIterator is at end of the given String
-  bool is_end(const String& str, const CharIterator& i) const {
-    return i >= reinterpret_cast<CharIterator>(std::min(text_->data() + str + t_tau, text_->data() + text_->size()));
+  bool is_end([[maybe_unused]]const String& str, [[maybe_unused]]const CharIterator& i) const {
+    //We order equal suffixes by their starting index.
+    //Because of that we don't need an end.
+    return false;
+  }
+  //! Returns true if CharIterator is at the exact end of the given String
+  bool is_exact_end(const String& str, const CharIterator i) const {
+    return i == reinterpret_cast<CharIterator>(std::min(text_->data() + str + t_tau, text_->data() + text_->size()));
+  } //TODO: i == ... seems wrong; should be i >= ...
+
+  //if(ss.has_runs() && ss.is_exact_end(a, ai)) { return ss.is_smaller_run(a, b) };
+  bool has_runs() const {
+    return sss_has_runs_;
+  }  
+
+  bool is_less_run(const String& a, const String& b) const {
+    int64_t run_info_a = sss_.get_run_info(a);
+    int64_t run_info_b = sss_.get_run_info(b);
+    return run_info_a < run_info_b;
   }
 
+  bool is_equal_run(const String& a, const String& b) const {
+    int64_t run_info_a = sss_.get_run_info(a);
+    int64_t run_info_b = sss_.get_run_info(b);
+    return run_info_a == run_info_b;
+  }
+
+  bool is_leq_run(const String& a, const String& b) const {
+    int64_t run_info_a = sss_.get_run_info(a);
+    int64_t run_info_b = sss_.get_run_info(b);
+    return run_info_a <= run_info_b;
+  }
   //! Return complete string (for debugging purposes)
   //std::string get_string(const String& s, size_t depth = 0) const { return text_->substr(s + depth); }
 
   //! Subset this string set using iterator range.
-  StringShortSuffixSet sub(Iterator begin, Iterator end) const { return StringShortSuffixSet(*text_, begin, end); }
+  StringShortSuffixSet sub(Iterator begin, Iterator end) const { return StringShortSuffixSet(*text_, begin, end, sss_); }
 
   //! Allocate a new temporary string container with n empty Strings
-  Container allocate(size_t n) const { return std::make_pair(*text_, std::vector<String>(n)); }
+  Container allocate(size_t n) const { return std::make_tuple(*text_, std::vector<String>(n), sss_); }
 
   //! Deallocate a temporary string container
   static void deallocate(Container& c) {
     std::vector<String> v;
-    v.swap(c.second);
+    v.swap(std::get<1>(c));
   }
 
   //! Construct from a string container
   explicit StringShortSuffixSet(Container& c)
-      : text_(&c.first),
-        begin_(c.second.begin()),
-        end_(c.second.end()) {}
+      : text_(&std::get<0>(c)),  
+        begin_(std::get<1>(c).begin()),
+        end_(std::get<1>(c).end()),
+        sss_(std::get<2>(c)),
+        sss_has_runs_(std::get<2>(c).has_runs()) {}
 
  protected:
   //! reference to base text
@@ -304,5 +348,7 @@ class StringShortSuffixSet
 
   //! iterators inside the output suffix array.
   Iterator begin_, end_;
+  string_synchronizing_set_par<t_tau/3, uint32_t> const& sss_;
+  bool sss_has_runs_;
 };
 }  // namespace lce_test::par

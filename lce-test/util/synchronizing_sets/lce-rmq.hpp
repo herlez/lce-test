@@ -39,7 +39,7 @@ class Lce_rmq {
 
 public:
   Lce_rmq(uint8_t const * const v_text, uint64_t const v_text_size,
-          std::vector<sss_type> const& sync_set, bool print_times=false) 
+          std::vector<sss_type> const& sync_set, [[maybe_unused]] bool print_times=false) 
     : text(v_text), text_size(v_text_size) {
 
 #ifdef DETAILED_TIME

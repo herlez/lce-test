@@ -81,7 +81,8 @@ public:
     if (print_ss_size) {
       std::cout << "sss_construct_time=" 
                 << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " "
-                << "sss_construct_mem=" << (malloc_count_peak() - mem_before) << " ";
+                << "sss_construct_mem=" << (malloc_count_peak() - mem_before) << " "
+                << "sss_size=" << sync_set_.size() << " ";
     }
 #endif
 

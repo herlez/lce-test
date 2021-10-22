@@ -15,12 +15,11 @@
 #include <tlx/define/likely.hpp>
 #include <vector>
 
-#include "util_ssss_par/ssss_par.hpp"
 #include "util/lce_interface.hpp"
 #include "util/successor/index_par.hpp"
-
-#include "util_ssss_par/lce-rmq.hpp"
 #include "util/util.hpp"
+#include "util_ssss_par/lce-rmq.hpp"
+#include "util_ssss_par/ssss_par.hpp"
 
 #ifdef DETAILED_TIME
 #include <malloc_count.h>
@@ -30,7 +29,7 @@ namespace lce_test::par {
 __extension__ typedef unsigned __int128 uint128_t;
 /* This class stores a text as an array of characters and 
  * answers LCE-queries with the naive method. */
-template <uint64_t kTau = 1024, bool prefer_long = true>
+template <uint64_t kTau = 1024>
 class LceSemiSyncSetsPar : public LceDataStructure {
  public:
   using sss_type = uint32_t;
@@ -45,16 +44,24 @@ class LceSemiSyncSetsPar : public LceDataStructure {
 #endif
 
     sync_set_ = string_synchronizing_set_par<kTau, sss_type>(text_);
+    /* // PRINT SSS
     if (print_ss_size) {
-      std::cout << "sync_set_size=" << sync_set_.size() << " ";
+      std::cout << "\nsync_set_size=" << sync_set_.size() << " : ";
+      for(size_t i = 0; i < std::min(size_t{20}, sync_set_.size()); ++i) {
+        std::cout << sync_set_[i] << ", ";
+      }
+      std::cout << '\n';
     }
+    */
 
 #ifdef DETAILED_TIME
     std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
     if (print_ss_size) {
       std::cout << "sss_construct_time="
                 << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " "
-                << "sss_construct_mem=" << (malloc_count_peak() - mem_before) << " ";
+                << "sss_construct_mem=" << (malloc_count_peak() - mem_before) << " "
+                << "sss_size=" << sync_set_.size() << " "
+                << "sss_repetetive=" << std::boolalpha << sync_set_.has_runs() << " ";
     }
 #endif
 
@@ -75,100 +82,67 @@ class LceSemiSyncSetsPar : public LceDataStructure {
     }
 #endif
     lce_rmq_ = std::make_unique<Lce_rmq_par<sss_type, kTau>>(text_.data(),
-                                                         text_length_in_bytes_,
-                                                         sync_set_);
+                                                             text_length_in_bytes_,
+                                                             sync_set_);
   }
 
   /* Answers the lce query for position i and j */
-  inline uint64_t lce(const uint64_t i, const uint64_t j) {
+  inline uint64_t lce(uint64_t i, uint64_t j) {
     if (TLX_UNLIKELY(i == j)) {
       return text_length_in_bytes_ - i;
     }
+    if (i > j) {
+      std::swap(i, j);
+    }
 
-    if constexpr (prefer_long) {
-      uint64_t const i_ = suc(i + 1);
-      uint64_t const j_ = suc(j + 1);
-      uint64_t const dist_i = sync_set_[i_] - i;
-      uint64_t const dist_j = sync_set_[j_] - j;
-
-      uint64_t max_length = 0;
-      uint64_t lce = 0;
-      if (dist_i == dist_j) {
-        max_length = (i > j) ? ((i + dist_i > text_length_in_bytes_) ? i + dist_i - text_length_in_bytes_ : dist_i) : ((j + dist_i > text_length_in_bytes_) ? j + dist_i - text_length_in_bytes_ : dist_i);
-      } else {
-        max_length = 2 * kTau + std::min(dist_i, dist_j);
+    /* naive part */
+    uint64_t const sync_length = 3 * kTau;
+    //uint64_t const max_length = (i < j) ? ((sync_length + j > text_length_in_bytes_) ? text_length_in_bytes_ - j : sync_length) : ((sync_length + i > text_length_in_bytes_) ? text_length_in_bytes_ - i : sync_length);
+    uint64_t const max_length = std::min(sync_length, text_length_in_bytes_ - j);
+    uint64_t lce = 0;
+    for (; lce < 8; ++lce) {
+      if (TLX_UNLIKELY(lce >= max_length)) {
+        return max_length;
       }
+      if (text_[i + lce] != text_[j + lce]) {
+        return lce;
+      }
+    }
 
-      for (; lce < 8; ++lce) {
-        if (text_[i + lce] != text_[j + lce]) {
-          return lce;
+    lce = 0;
+    uint128_t const* const text_blocks_i =
+        reinterpret_cast<uint128_t const*>(text_.data() + i);
+    uint128_t const* const text_blocks_j =
+        reinterpret_cast<uint128_t const*>(text_.data() + j);
+    for (; lce < max_length / 16; ++lce) {
+      if (text_blocks_i[lce] != text_blocks_j[lce]) {
+        //break;
+        lce *= 16;
+        // The last block did not match. Here we compare its single characters
+        uint64_t lce_end = std::min(lce + 16, max_length);
+        for (; lce < lce_end; ++lce) {
+          if (text_[i + lce] != text_[j + lce]) {
+            return lce;
+          }
         }
+        return lce;
       }
+    }
+    lce *= 16;
 
-      lce = 0;
-      uint128_t const* const text_blocks_i =
-          reinterpret_cast<uint128_t const*>(text_.data() + i);
-      uint128_t const* const text_blocks_j =
-          reinterpret_cast<uint128_t const*>(text_.data() + j);
-      for (; lce < max_length / 16; ++lce) {
-        if (text_blocks_i[lce] != text_blocks_j[lce]) {
-          break;
-        }
-      }
-      lce *= 16;
-      // The last block did not match. Here we compare its single characters
-      uint64_t lce_end = lce + ((16 < max_length) ? 16 : max_length);
-      for (; lce < lce_end; ++lce) {
-        if (text_[i + lce] != text_[j + lce]) {
-          return lce;
-        }
-      }
+    /* strSync part */
+    uint64_t const i_ = suc(i + 1);
+    uint64_t const j_ = suc(j + 1);
 
-      uint64_t const l = lce_rmq_->lce(i_, j_);
-      return l + sync_set_[i_] - i;
+    uint64_t const i_diff = sync_set_[i_] - i;
+    uint64_t const j_diff = sync_set_[j_] - j;
+
+    if (i_diff == j_diff) {
+      return i_diff + lce_rmq_->lce(i_, j_);
     } else {
-      /* naive part */
-      uint64_t const sync_length = 3 * kTau;
-      uint64_t const max_length = (i < j) ? ((sync_length + j > text_length_in_bytes_) ? text_length_in_bytes_ - j : sync_length) : ((sync_length + i > text_length_in_bytes_) ? text_length_in_bytes_ - i : sync_length);
-
-      uint64_t lce = 0;
-      for (; lce < 8; ++lce) {
-        if (TLX_UNLIKELY(lce >= max_length)) {
-          return max_length;
-        }
-        if (text_[i + lce] != text_[j + lce]) {
-          return lce;
-        }
-      }
-
-      lce = 0;
-      uint128_t const* const text_blocks_i =
-          reinterpret_cast<uint128_t const*>(text_.data() + i);
-      uint128_t const* const text_blocks_j =
-          reinterpret_cast<uint128_t const*>(text_.data() + j);
-      for (; lce < max_length / 16; ++lce) {
-        if (text_blocks_i[lce] != text_blocks_j[lce]) {
-          break;
-        }
-      }
-      lce *= 16;
-      // The last block did not match. Here we compare its single characters
-      uint64_t lce_end = lce + ((16 < max_length) ? 16 : max_length);
-      for (; lce < lce_end; ++lce) {
-        if (text_[i + lce] != text_[j + lce]) {
-          return lce;
-        }
-      }
-      /* strSync part */
-      uint64_t const i_ = suc(i + 1);
-      uint64_t const j_ = suc(j + 1);
-
-      uint64_t const l = lce_rmq_->lce(i_, j_);
-
-      return l + sync_set_[i_] - i;
+      return std::min(i_diff, j_diff) + 2 * kTau - 1;
     }
   }
-
   char operator[](size_t i) {
     if (i > text_length_in_bytes_) {
       return '\00';
@@ -202,8 +176,8 @@ class LceSemiSyncSetsPar : public LceDataStructure {
   size_t const text_length_in_bytes_;
 
   std::unique_ptr<stash::pred::index_par<std::vector<sss_type>, sss_type, 7>> ind_;
-  string_synchronizing_set_par<1024, sss_type> sync_set_;
+  string_synchronizing_set_par<kTau, sss_type> sync_set_;
   std::unique_ptr<Lce_rmq_par<sss_type, kTau>> lce_rmq_;
 };
-}  // namespace sss_par
+}  // namespace lce_test::par
 /******************************************************************************/

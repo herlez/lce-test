@@ -21,7 +21,7 @@ target_include_directories(malloc_count PUBLIC
 add_executable(bench_time
   bench_time.cpp)
 
-target_compile_options(bench_time PRIVATE -Wall -Wextra -Werror -pedantic -O3) #-Winline
+target_compile_options(bench_time PRIVATE -Wall -Wextra -pedantic -O3) #-Winline -Werror
 
 find_package(SDSL REQUIRED)
 find_package(divsufsort REQUIRED)
@@ -37,6 +37,11 @@ target_include_directories(bench_time PUBLIC
 target_include_directories(bench_time SYSTEM PRIVATE
   ${SDSL_INCLUDE_DIRS}
   ${PROJECT_SOURCE_DIR}/extlib/ips4o/include
+)
+
+target_include_directories(bench_time SYSTEM PRIVATE
+	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/extlib/parallel-hashmap>
+  $<INSTALL_INTERFACE:${PROJECT_SOURCE_DIR}/extlib/parallel-hashmap>
 )
 
 target_link_libraries(bench_time PRIVATE
@@ -62,9 +67,5 @@ if (LCE_BUILD_SDSL)
     )
 
 endif()
-
-# add_executable(bench_memory ./src/bench_memory.cpp)
-# target_link_libraries(bench_memory ferrada_rmq tlx_command_line sais_lcp)
-# target_link_libraries(bench_memory malloc_count -ldl)
 
 ################################################################################

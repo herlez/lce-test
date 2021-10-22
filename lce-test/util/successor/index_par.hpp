@@ -58,10 +58,11 @@ public:
         {
             const size_t size_per_thread = m_num / omp_get_num_threads();
             const int t = omp_get_thread_num();
-            const size_t start_i = t * size_per_thread;
+            const size_t start_i = (t == 0) ? 1 : t * size_per_thread;
+            const size_t end_i = (t == omp_get_num_threads() - 1) ? m_num : (t + 1) * size_per_thread;
 
             uint64_t prev_key = hi(array[start_i]);
-            for(size_t i = start_i + 1; i < std::min(start_i + size_per_thread, m_num); ++i) {
+            for(size_t i = start_i + 1; i < end_i; ++i) {
                 const uint64_t cur_key = hi(array[i]);
                 if(cur_key > prev_key) {
                     for(uint64_t key = prev_key + 1; key <= cur_key; key++) {
@@ -70,7 +71,7 @@ public:
                 }
                 prev_key = cur_key;
             }
-        }   
+        }
         m_hi_idx[m_key_max - m_key_min] = m_num - 1;
 
         // build the predecessor data structure for low bits

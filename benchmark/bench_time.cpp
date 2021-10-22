@@ -39,14 +39,7 @@ class lce_benchmark {
 
 public:
   void run() {
-    if (mode == "r") {
-      random_ = true;
-    } else if (mode == "s") {
-      sorted_ = true;
-    } else if (mode == "c") {
-      complete_ = true;
-    }
-    
+ 
     fs::path input_path(file_path);
     std::string const filename = input_path.filename();
     
@@ -67,9 +60,9 @@ public:
                                     lce_path + "/lce_16",lce_path + "/lce_17",
                                     lce_path + "/lce_18", lce_path + "/lce_19",
                                     lce_path + "/lce_X"};
-    if(sorted_) {
-      build_lce_range(file_path, output_path + filename, prefix_length);
-    }
+    
+    build_lce_range(file_path, output_path + filename, prefix_length);
+    
     
     /************************************
      ****PREPARE LCE DATA STRUCTURES*****
@@ -172,9 +165,9 @@ public:
         size_t const mem_before = malloc_count_current();
         t.reset();
         if (prefer_long_queries) {
-          lce_structure = std::make_unique<lce_test::par::LceSemiSyncSetsPar<2048, true>>(text, i == 0);
+          lce_structure = std::make_unique<lce_test::par::LceSemiSyncSetsPar<2048>>(text, i == 0);
         } else {
-          lce_structure = std::make_unique<lce_test::par::LceSemiSyncSetsPar<2048, false>>(text, i == 0);
+          lce_structure = std::make_unique<lce_test::par::LceSemiSyncSetsPar<2048>>(text, i == 0);
         }
         construction_times.add(t.get_and_reset());
         lce_mem.add(malloc_count_current() - mem_before);
@@ -183,9 +176,9 @@ public:
         size_t const mem_before = malloc_count_current();
         t.reset();
         if (prefer_long_queries) {
-          lce_structure = std::make_unique<lce_test::par::LceSemiSyncSetsPar<1024, true>>(text, i == 0);
+          lce_structure = std::make_unique<lce_test::par::LceSemiSyncSetsPar<1024>>(text, i == 0);
         } else {
-          lce_structure = std::make_unique<lce_test::par::LceSemiSyncSetsPar<1024, false>>(text, i == 0);
+          lce_structure = std::make_unique<lce_test::par::LceSemiSyncSetsPar<1024>>(text, i == 0);
         }
         construction_times.add(t.get_and_reset());
         lce_mem.add(malloc_count_current() - mem_before);
@@ -195,9 +188,9 @@ public:
         size_t const mem_before = malloc_count_current();
         t.reset();
         if (prefer_long_queries) {
-          lce_structure = std::make_unique<lce_test::par::LceSemiSyncSetsPar<512, true>>(text, i == 0);
+          lce_structure = std::make_unique<lce_test::par::LceSemiSyncSetsPar<512>>(text, i == 0);
         } else {
-          lce_structure = std::make_unique<lce_test::par::LceSemiSyncSetsPar<512, false>>(text, i == 0);
+          lce_structure = std::make_unique<lce_test::par::LceSemiSyncSetsPar<512>>(text, i == 0);
         }
         construction_times.add(t.get_and_reset());
         lce_mem.add(malloc_count_current() - mem_before);
@@ -206,9 +199,9 @@ public:
         size_t const mem_before = malloc_count_current();
         t.reset();
         if (prefer_long_queries) {
-          lce_structure = std::make_unique<lce_test::par::LceSemiSyncSetsPar<256, true>>(text, i == 0);
+          lce_structure = std::make_unique<lce_test::par::LceSemiSyncSetsPar<256>>(text, i == 0);
         } else {
-          lce_structure = std::make_unique<lce_test::par::LceSemiSyncSetsPar<256, false>>(text, i == 0);
+          lce_structure = std::make_unique<lce_test::par::LceSemiSyncSetsPar<256>>(text, i == 0);
         }
         construction_times.add(t.get_and_reset());
         lce_mem.add(malloc_count_current() - mem_before);
@@ -248,54 +241,55 @@ public:
     bool correct = true;
     size_t wrong_queries = 0;
 
-    if(random_) {
-      std::cout << "random ";
-
+    for (size_t i = lce_from; i < lce_to; ++i) {
       tlx::Aggregate<size_t> queries_times;
       tlx::Aggregate<size_t> lce_values;
-    
-      std::srand(std::time(nullptr));
-      for(uint64_t i = 0; i < number_lce_queries * 2; ++i) {
-        lce_indices[i] = rand() % lce_structure->getSizeInBytes();
-      }
-      for (size_t i = 0; i < runs; ++i) {
-        t.reset();
-        for (size_t j = 0; j < number_lce_queries * 2; j += 2) {
-          size_t const lce = lce_structure->lce(lce_indices[j],
-                                                lce_indices[j + 1]);
-          lce_values.add(lce);
-        }
-        queries_times.add(t.get_and_reset());
-      }
-      if (check) {
-        wrong_queries = 0;
-        correct = true;
-        size_t zeros = 0;
-        size_t eq = 0;
-        auto lce_naive = LceUltraNaive(text);
-        for (size_t j = 0; j < number_lce_queries * 2; j += 2) {
-          size_t const lce = lce_structure->lce(lce_indices[j],
-                                                lce_indices[j + 1]);
-          size_t const lce_res_naive = lce_naive.lce(lce_indices[j],
-                                                     lce_indices[j + 1]);
-
-          if (lce_res_naive == 0) {
-            ++zeros;
-          }
+      std::cout << "RESULT "
+                << "algo=" << print_algo_name() << "_queries "
+                << "runs=" << runs << " "
+                << "length_exp=" << i << " "
+                << "input=" << file_path << " "
+                << "size=" << text.size() << " ";
+      vector<uint64_t> v;
+      std::ifstream lc(lce_set[i], ios::in);
+      util::inputErrorHandling(&lc);
           
-          if (lce_indices[j] == lce_indices[j + 1]) {
-            ++eq;
-          }
+      string line;
+      string::size_type sz;
+      while(getline(lc, line)) {
+        v.push_back(stoi(line, &sz));
+      }
+      lc.close();
 
-          if (lce != lce_res_naive) {
-            correct = false;
-            ++wrong_queries;
+      if (v.size() > 0) {
+        for(uint64_t i = 0; i < number_lce_queries * 2; ++i) {
+          lce_indices[i] = v[i % v.size()];
+        }
+        for (size_t i = 0; i < runs; ++i) {
+          t.reset();
+          for (size_t j = 0; j < number_lce_queries * 2; j += 2) {
+            size_t const lce = lce_structure->lce(lce_indices[j],
+                                                  lce_indices[j + 1]);
+            lce_values.add(lce);
+          }
+          queries_times.add(t.get_and_reset());
+        }
+        if (check) {
+          correct = true;
+          auto check_text = load_text(file_path, prefix_length);
+          auto lce_naive = LceUltraNaive(check_text);
+          for (size_t j = 0; j < number_lce_queries * 2; j += 2) {
+            size_t const lce = lce_structure->lce(lce_indices[j],
+                                                  lce_indices[j + 1]);
+            size_t const lce_res_naive = lce_naive.lce(lce_indices[j],
+                                                        lce_indices[j + 1]);
+            if (lce != lce_res_naive) {
+              correct = false;
+              ++wrong_queries;
+            }
           }
         }
-        std::cout << "zeros " << zeros << std::endl;
-        std::cout << "eq " << eq << std::endl;
       }
-
       std::cout << "lce_values_min=" << lce_values.min() << " "
                 << "lce_values_max=" << lce_values.max() << " "
                 << "lce_values_avg=" << lce_values.avg() << " "
@@ -305,75 +299,10 @@ public:
                 << "queries_times_avg=" << queries_times.avg() << " "
                 << "check="
                 << (check ? (correct ? "passed" :
-                             ("failed(" + std::to_string(wrong_queries)
+                              ("failed(" + std::to_string(wrong_queries)
                               + ")" )) : "none") << " "
                 << std::endl;
-
-    } else if (sorted_) {
-      for (size_t i = lce_from; i < lce_to; ++i) {
-        tlx::Aggregate<size_t> queries_times;
-        tlx::Aggregate<size_t> lce_values;
-        std::cout << "RESULT "
-                  << "algo=" << print_algo_name() << "_queries "
-                  << "runs=" << runs << " "
-                  << "lce_query_type=sorted "
-                  << "length_exp=" << i << " "
-                  << "input=" << file_path << " "
-                  << "size=" << text.size() << " ";
-        vector<uint64_t> v;
-        std::ifstream lc(lce_set[i], ios::in);
-        util::inputErrorHandling(&lc);
-            
-        string line;
-        string::size_type sz;
-        while(getline(lc, line)) {
-          v.push_back(stoi(line, &sz));
-        }
-        lc.close();
-
-        if (v.size() > 0) {
-          for(uint64_t i = 0; i < number_lce_queries * 2; ++i) {
-            lce_indices[i] = v[i % v.size()];
-          }
-          for (size_t i = 0; i < runs; ++i) {
-            t.reset();
-            for (size_t j = 0; j < number_lce_queries * 2; j += 2) {
-              size_t const lce = lce_structure->lce(lce_indices[j],
-                                                    lce_indices[j + 1]);
-              lce_values.add(lce);
-            }
-            queries_times.add(t.get_and_reset());
-          }
-          if (check) {
-            correct = true;
-            auto check_text = load_text(file_path, prefix_length);
-            auto lce_naive = LceUltraNaive(check_text);
-            for (size_t j = 0; j < number_lce_queries * 2; j += 2) {
-              size_t const lce = lce_structure->lce(lce_indices[j],
-                                                    lce_indices[j + 1]);
-              size_t const lce_res_naive = lce_naive.lce(lce_indices[j],
-                                                         lce_indices[j + 1]);
-              if (lce != lce_res_naive) {
-                correct = false;
-                ++wrong_queries;
-              }
-            }
-          }
-        }
-        std::cout << "lce_values_min=" << lce_values.min() << " "
-                  << "lce_values_max=" << lce_values.max() << " "
-                  << "lce_values_avg=" << lce_values.avg() << " "
-                  << "lce_values_count=" << lce_values.count() << " "
-                  << "queries_times_min=" << queries_times.min() << " "
-                  << "queries_times_max=" << queries_times.max() << " "
-                  << "queries_times_avg=" << queries_times.avg() << " "
-                  << "check="
-                  << (check ? (correct ? "passed" :
-                               ("failed(" + std::to_string(wrong_queries)
-                                + ")" )) : "none") << " "
-                  << std::endl;
-      }
-    } 
+    }
   }
 
 
@@ -386,8 +315,6 @@ public:
   bool prefer_long_queries = false;
 
   bool check = false;
-
-  std::string mode;
 
   size_t number_lce_queries = 1000000;
   uint32_t runs = 5;
@@ -435,10 +362,6 @@ private:
     return name;
   }
 
-private:
-  bool sorted_ = false;
-  bool random_ = false;
-  bool complete_ = false;
 }; // class lce_benchmark
 
 int32_t main(int argc, char *argv[]) {
@@ -451,8 +374,7 @@ int32_t main(int argc, char *argv[]) {
                 "        Florian Kurpicz  <florian.kurpicz@tu-dortmund.de>\n"
                 "        Patrick Dinklage <patrick.dinklage@tu-dortmund.de>");
 
-  cp.add_param_string("file", lce_bench.file_path, "The for from which the LCE "
-                      "data structures are build.");
+  cp.add_param_string("file", lce_bench.file_path, "The text which is queried");
   cp.add_string('o', "output_path", lce_bench.output_path, "Path where LCE "
                 "queries for [-m]ode [s]orted are stored "
                 "(default: /tmp/res_lce).");
@@ -468,15 +390,13 @@ int32_t main(int argc, char *argv[]) {
               "Only for [s]tring synchronizing sets.");
   cp.add_flag('c', "check", lce_bench.check, "Check correctness of LCE queries "
               "by comparing with results of naive computation.");
-  cp.add_string('m', "mode", lce_bench.mode, "Test mode: [r]andom, [c]omplete, "
-                "or [s]orted.");
   cp.add_size_t('q', "queries", lce_bench.number_lce_queries, "Number of LCE "
               "queries that are executed (default=1,000,000).");
   cp.add_uint('r', "runs", lce_bench.runs, "Number of runs that are used to "
               "report an average running time (default=5).");
-  cp.add_uint("from", lce_bench.lce_from, "If mode: sorted, use only lce "
-              "queries which return at least 2^{from} (optinal).");
-  cp.add_uint("to", lce_bench.lce_to, "If mode: sorted, use only lce queries "
+  cp.add_uint("from", lce_bench.lce_from, "Use only lce "
+              "queries which return at least 2^{from} (optional).");
+  cp.add_uint("to", lce_bench.lce_to, "Use only lce queries "
               "which return less than 2^{from} with from < 22 (optional)");
 
   if (!cp.process(argc, argv)) {

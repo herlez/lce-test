@@ -4,7 +4,8 @@
 
 #include <string>
 #include <vector>
-#include <unordered_map>
+#include <parallel_hashmap/phmap.h>
+#include <mutex>
 
 #include "../util/synchronizing_sets/ring_buffer.hpp"
 #include "rk_prime.hpp"
@@ -16,13 +17,24 @@ class string_synchronizing_set_par {
  private:
   std::vector<t_index> m_sss;
   bool m_runs_detected;
-  std::unordered_map<t_index, int64_t> m_run_info;
+  phmap::parallel_flat_hash_map<t_index, int64_t, phmap::priv::hash_default_hash<t_index>,
+      phmap::priv::hash_default_eq<t_index>, 
+      phmap::priv::Allocator<std::pair<const t_index, int64_t>>,
+      4, std::mutex> m_run_info;
 
  public:
   std::vector<t_index> const& get_sss() const {
     return m_sss;
   }
 
+  int64_t get_run_info(t_index i) const {
+    auto run_info_entry = m_run_info.find(i);
+    return run_info_entry == m_run_info.end() ? 0 : run_info_entry->second;
+  }
+  
+  bool has_runs() const {
+    return m_runs_detected;
+  }
   size_t size() const {
     return m_sss.size();
   }
@@ -99,18 +111,14 @@ class string_synchronizing_set_par {
         fingerprints.push_back(rk.roll());
       }
 
-      //if (min == 0) || min < i {min\Q = calculate_min(); if(min > i+ t_tau { update(i), update(min)})} else
       if (first_min == 0 || first_min < i) {
         first_min = i;
         for (size_t j = i; j <= i + t_tau; ++j) {
-          //compare values that are not in q
           if (fingerprints[j] < fingerprints[first_min]) {
             first_min = j;
           }
         }
-      }
-      //if min <= i+t_tau {if(i+t_tau not in q) maybe_update(min); } else
-      else if (fingerprints[i + t_tau] < fingerprints[first_min]) {
+      } else if (fingerprints[i + t_tau] < fingerprints[first_min]) {
         first_min = i + t_tau;
       }
 
@@ -125,19 +133,17 @@ class string_synchronizing_set_par {
     //calculate Q
     std::vector<std::pair<t_index, t_index>> qset = calculate_q(text, from, to);
     
-    
+    /* PRINT Q
     #pragma omp critical
     {
-      std::cout << "from " << from << " to " << to << '\n';
-      //std::cout << "qset = { ";
-      std::cout << qset.size() << '\n';
-      //for (auto n : qset) {
-      //  std::cout << "<" << n.first << ", " << n.second << "> ";
-      //}
-      //std::cout << "}; \n";
+      std::cout << "\nfrom " << from << " to " << to << " (" << to + t_tau <<")\n";
+      std::cout << "Q size: " << qset.size() << " = [";
+      for(size_t i = 0; i < std::min(qset.size(), size_t{10}); ++i) {
+        std::cout << "[" << qset[i].first << ", " << qset[i].second << "], ";
+      }
+      std::cout << "]; \n";
     }
-    
-    
+    */
     
     qset.push_back(std::make_pair(std::numeric_limits<t_index>::max(), std::numeric_limits<t_index>::max()));
     auto it_q = qset.begin();
@@ -150,11 +156,10 @@ class string_synchronizing_set_par {
     fingerprints.resize(from);
     fingerprints.push_back(rk.get_current_fp());
 
-    t_index first_min = 0;
-
+    t_index MIN_UNKNOWN = std::numeric_limits<t_index>::max();
+    t_index first_min = MIN_UNKNOWN;
     //Loop:
     for (size_t i = from; i < to; ++i) {
-      //get_fingerprints_until(i+t_tau);
       for (size_t j = fingerprints.size(); j <= i + t_tau; ++j) {
         fingerprints.push_back(rk.roll());
       }
@@ -162,8 +167,8 @@ class string_synchronizing_set_par {
         std::advance(it_q, 1);
       }
 
-      //if (min == 0) || min < i {min\Q = calculate_min(); if(min > i+ t_tau { update(i), update(min)})} else
-      if (first_min == 0 || first_min < i) {
+      //If then minimum in the current range is not known, we need to find one
+      if (first_min == MIN_UNKNOWN || first_min < i) {
         auto it_qt = it_q;
         for (size_t j = i; j <= i + t_tau; ++j) {
           //advance q pointer
@@ -172,12 +177,13 @@ class string_synchronizing_set_par {
           }
           //don't compare values from q
           if (it_qt->first <= j) {
-            first_min = it_qt->second + 1;
-            j = first_min;
+            //first_min = it_qt->second + 1;
+            //j = first_min;
+            j = it_qt->second;
             continue;
           }
           //take first fingerprint not in q
-          if (first_min == 0 || first_min < i) {
+          if (first_min == MIN_UNKNOWN || first_min < i) {
             first_min = j;
           }
           //compare values that are not in q
@@ -185,13 +191,13 @@ class string_synchronizing_set_par {
             first_min = j;
           }
         }
-        if (first_min > i + t_tau) {
-          i = first_min - t_tau;
-          --i;  //balance
+        //If no minimum exists, we jump to the next position, which may be part of sss 
+        if(first_min == MIN_UNKNOWN || first_min < i) {
+          i = it_qt->second - t_tau;
           continue;
         }
       }
-      //if min <= i+t_tau {if(i+t_tau not in q) maybe_update(min); } else
+      //If the minimum of the range is already known, we only need to compare with the new fingerprint
       else if (first_min <= i + t_tau) {
         auto it_qt = it_q;
         while (it_qt->second < i + t_tau) {
@@ -264,7 +270,7 @@ class string_synchronizing_set_par {
             size_t const sss_pos1 = run_start - 1;
             size_t const sss_pos2 = run_end - (2*t_tau) + 2; 
             int64_t const run_info = int64_t{1} * text.size() - sss_pos2 + sss_pos1;
-            m_run_info[run_start-1] = text[run_end + 1] > text[run_end - period] ? run_info : run_info * (-1); 
+            m_run_info[sss_pos1] = text[run_end + 1] > text[run_end - period + 1] ? run_info : run_info * (-1); 
           }
         } else {
           i = next_min - 1;
@@ -272,5 +278,11 @@ class string_synchronizing_set_par {
       }
     }
     return qset;
+  }
+
+  bool check_sss() {
+
+    //Check sss for 
+    return true;
   }
 };
