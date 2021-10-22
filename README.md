@@ -1,3 +1,7 @@
+This branch represents the data structures and benchmarks presented in our paper at ESA 2020.
+We improved the data structure since then and the current state is found on the master branch. 
+ 
+
 # Space Efficient Data Structures for Longest Common Extensions
 
 The _longest common extension_ (LCE) of two text positions in a text <img src=
