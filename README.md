@@ -25,7 +25,7 @@ We give a short excerpt below.
     <img src="https://raw.githubusercontent.com/kurpicz/lce-test/master/.images/query_throughput_esa_legend.png" alt="query_throughput_legend">
   </p>
   
-More experiments and a description of the legend can be found in our paper which has been accepted at ESA2020. Please cite the following paper if you are using our code.
+More experiments and a description of the legend can be found in our paper which has been accepted at ESA2020. Please cite the following paper if you are using our code. **Note that we have worked on this repository since the release of the paper. The state at ESA2020 is archived in the branch ESA2020**
 
 ```
 @inproceedings{DinklageFHKK20,
