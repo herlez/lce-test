@@ -234,7 +234,8 @@ public:
               << "size=" << text.size() << " "
 
               << "lce_mem=" << lce_mem.max() << " "
-              << "construction_mem_peak=" << construction_mem_peak.max() << " ";
+              << "construction_mem_peak=" << construction_mem_peak.max() << " "
+              << "threads=" << omp_get_max_threads() << " ";
     std::cout << std::endl;
 
     std::vector<uint64_t> lce_indices(number_lce_queries * 2);
