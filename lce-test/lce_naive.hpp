@@ -58,7 +58,7 @@ public:
     }
     lce *= 16;
     // The last block did not match. Here we compare its single characters
-    uint64_t lce_end = lce + ((16 < max_length) ? 16 : max_length);
+    uint64_t lce_end = std::min(lce + 16, lce + max_length);
     for (; lce < lce_end; ++lce) {
       if(text_[i + lce] != text_[j + lce]) {
         break;
