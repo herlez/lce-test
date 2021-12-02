@@ -11,6 +11,7 @@
 #include <filesystem>
 #include <iostream>
 #include <vector>
+#include <fstream>
 
 std::vector<uint8_t> load_text(std::string const& file_path,
                                size_t const prefix_size=0) {

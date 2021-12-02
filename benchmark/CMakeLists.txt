@@ -68,4 +68,22 @@ if (LCE_BUILD_SDSL)
 
 endif()
 
+add_executable(bench_sparse_ss bench_sparse_ss.cpp)
+
+target_compile_options(bench_sparse_ss PRIVATE -Wall -Wextra -pedantic -O3) #-Winline -Werror
+
+target_include_directories(bench_sparse_ss PUBLIC
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/lce-test/>
+  $<INSTALL_INTERFACE:${PROJECT_SOURCE_DIR}/lce-test/>
+  #${SDSL_INCLUDE_DIRS}
+  ${PROJECT_SOURCE_DIR}/extlib/ips4o/include
+  ${PROJECT_SOURCE_DIR}/extlib/parallel-hashmap
+)
+
+
+target_link_libraries(bench_sparse_ss tlx malloc_count -ldl libsais)
+
+
+
+
 ################################################################################

@@ -7,7 +7,7 @@
  ******************************************************************************/
 
 #pragma once
-
+#include <fstream>
 /* This header contains useful methods, which are used for my implementation of Prezza's lce data structure */
 
 class util{
