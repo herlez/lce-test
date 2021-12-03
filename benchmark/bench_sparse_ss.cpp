@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "io.hpp"
-#include "lce_prezza_fast.hpp"
+#include "lce_prezza.hpp"
 #include "lce_semi_synchronizing_sets_par.hpp"
 #include "timer.hpp"
 
@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
   if (algo == 0) {
     text.resize(text.size() + (8 - (text.size() % 8)));
     timer t;
-    LcePrezzaFast lce_ds(reinterpret_cast<uint64_t*>(text.data()), text.size());
+    LcePrezza lce_ds(reinterpret_cast<uint64_t*>(text.data()), text.size());
 
     std::sort(positions.begin(), positions.end(), [&lce_ds, &text_size, &text](size_t i, size_t j) {
       size_t lce = lce_ds.lce(i, j);
@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
   if (algo == 1) {
     text.resize(text.size() + (8 - (text.size() % 8)));
     timer t;
-    LcePrezzaFast lce_ds(reinterpret_cast<uint64_t*>(text.data()), text.size());
+    LcePrezza lce_ds(reinterpret_cast<uint64_t*>(text.data()), text.size());
 
     ips4o::sort(positions.begin(), positions.end(), [&lce_ds, &text_size, &text](size_t i, size_t j) {
       size_t lce = lce_ds.lce(i, j);

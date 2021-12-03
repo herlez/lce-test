@@ -10,15 +10,30 @@
 
 #include <algorithm>
 
-#include <tlx/define/likely.hpp>
-
 #include "util/lce_interface.hpp"
 #include "util/util.hpp"
+#include <cmath>
+#include <bit>
+#include <assert.h>
 
 /* This class builds Prezza's in-place LCE data structure and
  * answers LCE-queries in O(log(n)). */
 template <uint64_t t_naive_scan = 128>
 class LcePrezza : public LceDataStructure {
+
+/* Calculates the powers of 2. This supports LCE queries and reduces the time
+     from polylogarithmic to logarithmic. */
+  static constexpr std::array<uint64_t, 70> calculatePowers() {
+    std::array<uint64_t, 70> powers;
+    uint128_t x = 256;
+    powers[0] = static_cast<uint64_t>(x);
+    for (size_t i = 1; i < powers.size(); ++i) {
+      x = (x*x) % prime_;
+      powers[i] = static_cast<uint64_t>(x);
+    }
+    return powers;
+  }
+
 public:
   __extension__ typedef unsigned __int128 uint128_t;
   LcePrezza() = delete;
@@ -26,10 +41,8 @@ public:
   LcePrezza(uint64_t * const text, size_t const size)
   : text_length_in_bytes_(size),
     text_length_in_blocks_(size / 8 + (size % 8 == 0 ? 0 : 1)),
-    fingerprints_(text),
-    power_table_(new uint64_t[((int) std::log2(text_length_in_blocks_)) + 6]) {
+    fingerprints_(text) {
       calculateFingerprints();
-      calculatePowers();
   }
 
 
@@ -67,8 +80,8 @@ public:
     /* If everything except the stub matches, we compare the stub character-wise
        and return the result */
     if(lce != t_naive_scan) {
-      unsigned int const max_stub = (max_lce - lce) < 8 ? (max_lce - lce) : 8;
-      return lce + std::min<uint64_t>(((__builtin_clzl(comp_block_i ^ comp_block_j)) / 8), max_stub);
+      uint64_t max_stub = std::min((max_lce - lce), uint64_t{8});
+      return lce + std::min<uint64_t>(((std::countl_zero(comp_block_i ^ comp_block_j)) / 8), max_stub);
     }
     return t_naive_scan;
   }
@@ -77,7 +90,7 @@ public:
   
   /* Fast LCE-query in O(log(n)) time */
   uint64_t lce(const uint64_t i, const uint64_t j) {
-    if (TLX_UNLIKELY(i == j)) {
+    if (i == j) [[unlikely]] {
       return text_length_in_bytes_ - i;
     }
     uint64_t max_lce = text_length_in_bytes_ - ((i < j) ? j : i);
@@ -87,7 +100,7 @@ public:
     }
     /* exponential search */    
     uint64_t dist = t_naive_scan * 2;
-    int exp = __builtin_ctz(t_naive_scan)+1;
+    int exp = std::countr_zero(dist);
 
     const uint128_t fingerprint_to_i = (i != 0) ? fingerprintTo(i - 1) : 0;
     const uint128_t fingerprint_to_j = (j != 0) ? fingerprintTo(j - 1) : 0;
@@ -104,7 +117,7 @@ public:
     dist /= 2;
     uint64_t add = dist;
 
-    while(exp != __builtin_ctz(t_naive_scan)) {
+    while(dist > t_naive_scan) {
       --exp;
       dist /= 2;
       if(fingerprintExp(i + add, exp) == fingerprintExp(j + add, exp)) {
@@ -129,10 +142,8 @@ public:
 
   int isSmallerSuffix(const uint64_t i, const uint64_t j) {
     uint64_t lce_s = lce(i, j);
-    if(TLX_UNLIKELY((i + lce_s + 1 == text_length_in_bytes_) ||
-                    (j + lce_s + 1 == text_length_in_bytes_))) {
-      return true;
-    }
+    if(i + lce_s + 1 == text_length_in_bytes_) [[unlikely]] { return true;}
+    if(j + lce_s + 1 == text_length_in_bytes_) [[unlikely]] { return false;}
     return (operator[](i + lce_s) < operator[](j + lce_s));
   }
 
@@ -141,11 +152,13 @@ public:
   }
 
 private:
-  const uint64_t text_length_in_bytes_;
-  const uint64_t text_length_in_blocks_;
-  static constexpr uint128_t prime_ = 0x800000000000001dULL;
-  uint64_t * const fingerprints_;
-  uint64_t * const power_table_;
+  uint64_t text_length_in_bytes_;
+  uint64_t text_length_in_blocks_;
+  static constexpr uint128_t prime_{0x800000000000001d};
+
+
+  uint64_t * fingerprints_; //We overwrite the text and store the pointer here;
+  static constexpr std::array<uint64_t, 70> power_table_ = calculatePowers();
 
   uint64_t lce_scan_to_end(const uint64_t i, const uint64_t j, uint64_t max_lce) {
     uint64_t lce = 0;
@@ -180,8 +193,8 @@ private:
     /* If everything except the stub matches, we compare the stub character-wise
  *        and return the result */
    
-      unsigned int const max_stub = (max_lce - lce) < 8 ? (max_lce - lce) : 8;
-      return lce + std::min<uint64_t>(((__builtin_clzl(comp_block_i ^ comp_block_j)) / 8), max_stub);
+      uint64_t max_stub = std::min((max_lce - lce), uint64_t{8});
+      return lce + std::min<uint64_t>(((std::countl_zero(comp_block_i ^ comp_block_j)) / 8), max_stub);
   }
 
 
@@ -195,7 +208,7 @@ private:
     uint64_t s_bit = current_fingerprint >> 63;
     current_fingerprint &= 0x7FFFFFFFFFFFFFFFULL;
 
-    uint64_t y = (uint64_t) x;
+    uint64_t y = static_cast<uint64_t>(x);
 
     y = y <= current_fingerprint ?
       current_fingerprint - y : prime_ - (y - current_fingerprint);
@@ -204,6 +217,7 @@ private:
 
   /* Retruns the i'th block for i > 0. */
   uint64_t getBlockGuaranteeIgeqOne(const uint64_t i) const {
+    assert(i >= 1);
     uint128_t x = fingerprints_[i - 1] & 0x7FFFFFFFFFFFFFFFULL;
     x <<= 64;
     x %= prime_;
@@ -212,7 +226,7 @@ private:
     uint64_t s_bit = current_fingerprint >> 63;
     current_fingerprint &= 0x7FFFFFFFFFFFFFFFULL;
 
-    uint64_t y = (uint64_t) x;
+    uint64_t y = static_cast<uint64_t>(x);
 
     y = y <= current_fingerprint ?
       current_fingerprint - y : prime_ - (y - current_fingerprint);
@@ -247,46 +261,28 @@ private:
   /* Calculates the fingerprint of T[0..i] */
   uint64_t fingerprintTo(const uint64_t i) const {
     uint128_t fingerprint = 0;
-    int pad = ((i+1) & 7); 
-    if(TLX_UNLIKELY(pad == 0)) {
+    int pad = ((i+1) & 7) * 8; 
+    if(pad == 0) [[unlikely]] {
       // This fingerprints is already saved.
       // We only have to remove the helping bit.
       return fingerprints_[i/8] & 0x7FFFFFFFFFFFFFFFULL; 
     }
-    pad *= 8;
     /* Add fingerprint from previous block */
-    if (TLX_LIKELY(i > 7)) {
-      fingerprint = fingerprints_[((i/8) - 1)] & 0x7FFFFFFFFFFFFFFFULL;
-      fingerprint <<= pad;
-      {
-        uint128_t x = fingerprints_[(i / 8) - 1] & 0x7FFFFFFFFFFFFFFFULL;
-        x <<= 64;
-        x %= prime_;
-
-        uint64_t current_fingerprint = fingerprints_[i / 8];
-        uint64_t s_bit = current_fingerprint >> 63;
-        current_fingerprint &= 0x7FFFFFFFFFFFFFFFULL;
-
-        uint64_t y = (uint64_t) x;
-
-        y = y <= current_fingerprint ? 
-          current_fingerprint - y : prime_ - (y - current_fingerprint);
-        fingerprint += ((y + s_bit*static_cast<uint64_t>(prime_)) >> (64 - pad));
-      }
+    if (i > 7) [[likely]] {
+      fingerprint = fingerprints_[(i/8) - 1] & 0x7FFFFFFFFFFFFFFFULL;
+      fingerprint <<= pad;    
+      uint64_t y = getBlockGuaranteeIgeqOne(i/8);
+      fingerprint += (y >> (64 - pad));
+      
     } else {
-      uint64_t current_fingerprint = fingerprints_[0];
-      uint64_t s_bit = current_fingerprint >> 63;
-      current_fingerprint &= 0x7FFFFFFFFFFFFFFFULL;
-  
-      uint64_t y = (uint64_t) 0;
-
-      y = y <= current_fingerprint ?
-        current_fingerprint - y : prime_ - (y - current_fingerprint);
-      fingerprint += ((y + s_bit*static_cast<uint64_t>(prime_)) >> (64 - pad));
+      const uint64_t current_fingerprint = fingerprints_[0];
+      const uint64_t s_bit = current_fingerprint >> 63;
+      
+      fingerprint = current_fingerprint & 0x7FFFFFFFFFFFFFFFULL;
+      fingerprint += (s_bit*prime_);
+      fingerprint >>= (64 - pad);
     }
 
-    /* Add relevant part of block */
-    //fingerprint += (getBlock(i/8) >> (64-pad));
     fingerprint %= prime_;
     return static_cast<uint64_t>(fingerprint);
   }
@@ -295,54 +291,29 @@ private:
      Because the Rabin-Karp fingerprint uses a rolling hash function,
      this is done in O(n) time. */
   void calculateFingerprints() {
-    /* We run into problems with small endian systems, if we do not reverse the
-       order of the characters. I could not find a way to calculate fingerprints
-       without this "endian reversal". Luckily this step is not that slow. */
-    char * input = (char*) fingerprints_;
-    for(uint64_t i = 0; i < text_length_in_blocks_; i++) {
-      uint64_t paquet = *(uint64_t*)"\x1\x0\x0\x0\x0\x0\x0\x0";
-      if(paquet == 1){
-        //reverse
-        char *f=&input[0], *b=&input[7];
-        while(f<b){
-          char tmp = *f;
-          *f++ = *b;
-          *b-- = tmp;
-        }
+    /* For small endian systems we need to swap the order of bytes in order to
+      calculate fingerprints. Luckily this step is fast. */
+    if constexpr (std::endian::native == std::endian::little) {
+      for(size_t i = 0; i < text_length_in_blocks_; ++i) {
+        fingerprints_[i] = __builtin_bswap64(fingerprints_[i]); //C++23 std::byteswap!
       }
-      input += 8;
     }
-    uint64_t previous_fingerprint = 0;
+    uint128_t previous_fingerprint = 0;
     uint64_t current_block = fingerprints_[0];
 
     for (uint64_t i = 0; i < text_length_in_blocks_; ++i) {
       current_block = fingerprints_[i];
       uint128_t x = previous_fingerprint;
-      x = x << 64;
-      x = x + current_block;
+      x <<= 64;
+      x += current_block;
       x = x % prime_;
-      previous_fingerprint = (uint64_t) x;
+      previous_fingerprint = static_cast<uint64_t>(x);
 
       /* Additionally store if block > prime */
       if(current_block > prime_) {
         x = x + 0x8000000000000000ULL;
       }
       fingerprints_[i] = (uint64_t) x;
-    }
-  }
-
-  /* Calculates the powers of 2. This supports LCE queries and reduces the time
-     from polylogarithmic to logarithmic. */
-  void calculatePowers() {
-    // +1 to round up and +4 because we need bit shifts by 1byte, 2byte, 4byte,
-    // and 8byte
-    unsigned int number_of_levels = ((int) std::log2(text_length_in_blocks_)) + 6;
-    //power_table_ = new uint64_t[number_of_levels];
-    uint128_t x = 256;
-    power_table_[0] = (uint64_t) x;
-    for (unsigned int i = 1; i < number_of_levels; ++i) {
-      x = (x*x) % prime_;
-      power_table_[i] = (uint64_t) x;
     }
   }
 };
