@@ -151,6 +151,14 @@ public:
     return text_length_in_bytes_;
   }
 
+  void retransform_text() {
+    for(size_t i{text_length_in_blocks_}; i > 0; --i) {
+      fingerprints_[i] = getBlockGuaranteeIgeqOne(i);
+      fingerprints_[i] = __builtin_bswap64(fingerprints_[i]);
+    }
+    fingerprints_[0] &= 0x7FFFFFFFFFFFFFFFULL;
+  }
+
 private:
   uint64_t text_length_in_bytes_;
   uint64_t text_length_in_blocks_;

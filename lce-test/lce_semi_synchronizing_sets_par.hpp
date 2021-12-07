@@ -163,6 +163,10 @@ class LceSemiSyncSetsPar : public LceDataStructure {
     return sync_set_.size();
   }
 
+  std::vector<sss_type> getSyncSet() {
+    return sync_set_.get_sss();
+  }
+
  private:
   /* Finds the smallest element that is greater or equal to i
      Because s_ is ordered, that is equal to the 

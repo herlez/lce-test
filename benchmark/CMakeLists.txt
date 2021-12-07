@@ -78,6 +78,7 @@ target_include_directories(bench_sparse_ss PUBLIC
   #${SDSL_INCLUDE_DIRS}
   ${PROJECT_SOURCE_DIR}/extlib/ips4o/include
   ${PROJECT_SOURCE_DIR}/extlib/parallel-hashmap
+  ${PROJECT_SOURCE_DIR}/extlib/libsais
 )
 
 
