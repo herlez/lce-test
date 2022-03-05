@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <ips4o.hpp>
+#include <numeric>
 #include <string>
 #include <string_view>
 #include <tlx/sort/strings/parallel_sample_sort.hpp>
@@ -21,7 +22,8 @@ int main(int argc, char** argv) {
     std::cout << "Use: bench_sparse_ss text_path sample_distance algo\n";
     return -1;
   }
-  std::string text_path = argv[1];
+  std::filesystem::path text_path = argv[1];
+  std::string text_name = text_path.filename();
   size_t sample_distance = std::stoi(argv[2]);
   size_t algo = std::atoi(argv[3]);
   std::cout << "Text: " << text_path << " Sample Distance: " << sample_distance << " Algo: " << algo << '\n';
@@ -32,19 +34,37 @@ int main(int argc, char** argv) {
   std::vector<uint8_t> text_check = text;
   // Sample Positions
   std::vector<size_t> positions;
-  if (sample_distance != 0) {
+  if (!std::has_single_bit(sample_distance) || sample_distance == 1) {
     for (size_t i{0}; i < text.size(); i += sample_distance) {
       positions.push_back(i);
     }
   } else {
-    lce_test::par::LceSemiSyncSetsPar<> lce_ds(text, false);
-    auto positions64 = lce_ds.getSyncSet();
-    positions = std::vector<size_t>(positions64.begin(), positions64.end());
+    if (sample_distance == 256) {
+      lce_test::par::LceSemiSyncSetsPar<256> lce_ds(text, false);
+      auto positions64 = lce_ds.getSyncSet();
+      positions = std::vector<size_t>(positions64.begin(), positions64.end());
+    }
+    if (sample_distance == 512) {
+      lce_test::par::LceSemiSyncSetsPar<512> lce_ds(text, false);
+      auto positions64 = lce_ds.getSyncSet();
+      positions = std::vector<size_t>(positions64.begin(), positions64.end());
+    }
+    if (sample_distance == 1024) {
+      lce_test::par::LceSemiSyncSetsPar<1024> lce_ds(text, false);
+      auto positions64 = lce_ds.getSyncSet();
+      positions = std::vector<size_t>(positions64.begin(), positions64.end());
+    }
+    if (sample_distance == 2048) {
+      lce_test::par::LceSemiSyncSetsPar<2048> lce_ds(text, false);
+      auto positions64 = lce_ds.getSyncSet();
+      positions = std::vector<size_t>(positions64.begin(), positions64.end());
+    }
   }
   std::vector<size_t> positions_check = positions;
 
   // Naive
   if (algo == 0) {
+    malloc_count_reset_peak();
     auto mem_before = malloc_count_current();
     timer t;
     LceNaive lce_ds(text);
@@ -59,18 +79,23 @@ int main(int argc, char** argv) {
       return text[i + lce] < text[j + lce];
     });
     std::cout << "RESULT algo=naive_ips4o time=" << t.get_and_reset()
+              << " sample_distance=" << sample_distance
+              << " text_name=" << text_name
               << " mem_ds=" << malloc_count_current() - mem_before
               << " mem_peak=" << malloc_count_peak() - mem_before
               << "\n";
   }
   // Memcmp
   if (algo == 1) {
+    malloc_count_reset_peak();
     auto mem_before = malloc_count_current();
     timer t;
     std::sort(positions.begin(), positions.end(), [&text_size, &text](size_t i, size_t j) {
       return (std::memcmp(text.data() + i, text.data() + j, text_size - std::max(i, j)) < 0);
     });
     std::cout << "RESULT algo=memcmp time=" << t.get_and_reset()
+              << " sample_distance=" << sample_distance
+              << " text_name=" << text_name
               << " mem_ds=" << malloc_count_current() - mem_before
               << " mem_peak=" << malloc_count_peak() - mem_before
               << "\n";
@@ -79,6 +104,7 @@ int main(int argc, char** argv) {
   // In-Place Fingerprinting
   if (algo == 2) {
     text.resize(text.size() + (8 - (text.size() % 8)));
+    malloc_count_reset_peak();
 
     auto mem_before = malloc_count_current();
     timer t;
@@ -104,6 +130,8 @@ int main(int argc, char** argv) {
     auto reconstruct_time = t_reconstruct.get();
 
     std::cout << "RESULT algo=prezza_ips4o time=" << t.get_and_reset()
+              << " sample_distance=" << sample_distance
+              << " text_name=" << text_name
               << " constr_time=" << constr_time
               << " sort_time=" << sort_time
               << " reconstruct_time=" << reconstruct_time
@@ -114,9 +142,10 @@ int main(int argc, char** argv) {
 
   // SSS
   if (algo == 3) {
+    malloc_count_reset_peak();
     auto mem_before = malloc_count_current();
     timer t;
-    lce_test::par::LceSemiSyncSetsPar<> lce_ds(text, false);
+    lce_test::par::LceSemiSyncSetsPar<256> lce_ds(text, false);
     auto constr_time = t.get();
     std::sort(positions.begin(), positions.end(), [&lce_ds, &text_size, &text](size_t i, size_t j) {
       size_t lce = lce_ds.lce(i, j);
@@ -128,7 +157,81 @@ int main(int argc, char** argv) {
       }
       return text[i + lce] < text[j + lce];
     });
-    std::cout << "RESULT algo=sss_ips4o time=" << t.get_and_reset()
+    std::cout << "RESULT algo=sss256_ips4o time=" << t.get_and_reset()
+              << " sample_distance=" << sample_distance
+              << " text_name=" << text_name
+              << " constr_time=" << constr_time
+              << " mem_ds=" << malloc_count_current() - mem_before
+              << " mem_peak=" << malloc_count_peak() - mem_before
+              << "\n";
+  }
+  if (algo == 4) {
+    malloc_count_reset_peak();
+    auto mem_before = malloc_count_current();
+    timer t;
+    lce_test::par::LceSemiSyncSetsPar<512> lce_ds(text, false);
+    auto constr_time = t.get();
+    std::sort(positions.begin(), positions.end(), [&lce_ds, &text_size, &text](size_t i, size_t j) {
+      size_t lce = lce_ds.lce(i, j);
+      if (i + lce >= text_size) [[unlikely]] {
+        return true;
+      }
+      if (j + lce >= text_size) [[unlikely]] {
+        return false;
+      }
+      return text[i + lce] < text[j + lce];
+    });
+    std::cout << "RESULT algo=sss512_ips4o time=" << t.get_and_reset()
+              << " sample_distance=" << sample_distance
+              << " text_name=" << text_name
+              << " constr_time=" << constr_time
+              << " mem_ds=" << malloc_count_current() - mem_before
+              << " mem_peak=" << malloc_count_peak() - mem_before
+              << "\n";
+  }
+  if (algo == 5) {
+    malloc_count_reset_peak();
+    auto mem_before = malloc_count_current();
+    timer t;
+    lce_test::par::LceSemiSyncSetsPar<1024> lce_ds(text, false);
+    auto constr_time = t.get();
+    std::sort(positions.begin(), positions.end(), [&lce_ds, &text_size, &text](size_t i, size_t j) {
+      size_t lce = lce_ds.lce(i, j);
+      if (i + lce >= text_size) [[unlikely]] {
+        return true;
+      }
+      if (j + lce >= text_size) [[unlikely]] {
+        return false;
+      }
+      return text[i + lce] < text[j + lce];
+    });
+    std::cout << "RESULT algo=sss1024_ips4o time=" << t.get_and_reset()
+              << " sample_distance=" << sample_distance
+              << " text_name=" << text_name
+              << " constr_time=" << constr_time
+              << " mem_ds=" << malloc_count_current() - mem_before
+              << " mem_peak=" << malloc_count_peak() - mem_before
+              << "\n";
+  }
+  if (algo == 6) {
+    malloc_count_reset_peak();
+    auto mem_before = malloc_count_current();
+    timer t;
+    lce_test::par::LceSemiSyncSetsPar<2048> lce_ds(text, false);
+    auto constr_time = t.get();
+    std::sort(positions.begin(), positions.end(), [&lce_ds, &text_size, &text](size_t i, size_t j) {
+      size_t lce = lce_ds.lce(i, j);
+      if (i + lce >= text_size) [[unlikely]] {
+        return true;
+      }
+      if (j + lce >= text_size) [[unlikely]] {
+        return false;
+      }
+      return text[i + lce] < text[j + lce];
+    });
+    std::cout << "RESULT algo=sss2048_ips4o time=" << t.get_and_reset()
+              << " sample_distance=" << sample_distance
+              << " text_name=" << text_name
               << " constr_time=" << constr_time
               << " mem_ds=" << malloc_count_current() - mem_before
               << " mem_peak=" << malloc_count_peak() - mem_before
@@ -136,12 +239,12 @@ int main(int argc, char** argv) {
   }
 
   // String Sorting
-  if (algo == 4) {
+  if (algo == 7) {
     std::string str;
     for (size_t i{0}; i < text.size(); ++i) {
       str.push_back(text[i]);
     }
-
+    malloc_count_reset_peak();
     auto mem_before = malloc_count_current();
     timer t;
     tlx::sort_strings_detail::StringSuffixSet string_suf_set(str, positions.begin(), positions.end());
@@ -149,23 +252,25 @@ int main(int argc, char** argv) {
     tlx::sort_strings_detail::parallel_sample_sort(strptr, 0, 0);
 
     std::cout << "RESULT algo=string_sort time=" << t.get_and_reset()
+              << " sample_distance=" << sample_distance
+              << " text_name=" << text_name
               << " mem_ds=" << malloc_count_current() - mem_before
               << " mem_peak=" << malloc_count_peak() - mem_before
               << "\n";
   }
 
   // Libsais
-  if (algo == 5 && sample_distance == 1) {
+  if (algo == 8 && sample_distance == 1) {
+    malloc_count_reset_peak();
     auto mem_before = malloc_count_current();
     timer t;
     libsais(text.data(), reinterpret_cast<int32_t*>(positions.data()), text_size, 0);
     std::cout << "RESULT algo=libsais time=" << t.get()
+              << " sample_distance=" << sample_distance
+              << " text_name=" << text_name
               << " mem_ds=" << malloc_count_current() - mem_before
               << " mem_peak=" << malloc_count_peak() - mem_before
               << "\n";
-  }
-
-  if (algo > 5) {
   }
 
   // Check if text is the same as before
