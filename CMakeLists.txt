@@ -14,6 +14,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project (lce-test)
 
+
 option(DETAILED_TIME "Get detailed timing and memory output of SSS construction. This invalidates other memory mesurements." OFF)
 if (DETAILED_TIME)
   set(CMAKE_CXX_FLAGS
@@ -78,8 +79,11 @@ target_include_directories(libsais PUBLIC
   $<INSTALL_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/extlib/libsais/>
 )
 
+# Change this line to your tbb path
+list(APPEND CMAKE_PREFIX_PATH /work/smarherl/tbb/lib64/cmake/TBB)
+find_package(TBB REQUIRED)
 add_subdirectory(benchmark)
-set(IPS4O_USE_OPENMP TRUE)
-add_subdirectory(extlib/ips4o)
+#set(IPS4O_USE_OPENMP TRUE)
+#add_subdirectory(extlib/ips4o)
 
 ################################################################################

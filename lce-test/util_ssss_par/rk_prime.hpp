@@ -4,6 +4,7 @@
 #include <chrono>
 #include <iterator>
 #include <random>
+#include <bit>
 
 
 namespace herlez::rolling_hash {
