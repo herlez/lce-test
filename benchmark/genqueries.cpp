@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <signal.h>
 
 struct {
   std::string file_text;
@@ -29,6 +30,7 @@ struct {
   uint width = 5;
   size_t limit = 100'000;
   size_t bufsize = 1024 * 1024;
+  bool show_progress = false;
 } options;
 
 class BufferedReader {
@@ -72,6 +74,30 @@ public:
   }
 };
 
+template<std::input_iterator It>
+void print_counts(It begin, It end) {
+  size_t x = 0;
+  while(begin != end) {
+    auto const count = *begin;
+    std::cout << "[" << x << "]="
+      << uint(100.0 * double(count) / double(options.limit))
+      << "% ";
+    ++begin;
+    ++x;
+  }
+  std::cout << std::endl;
+}
+
+bool cancel = false;
+void on_interrupt(int) {
+  std::cerr
+    << std::endl
+    << "canceling as per user request (SIGINT)"
+    << std::endl;
+
+  cancel = true;
+}
+
 int main(int argc, char** argv) {
   {
     tlx::CmdlineParser cp;
@@ -97,6 +123,8 @@ int main(int argc, char** argv) {
     cp.add_bytes('l', "limit", options.limit,
                 "the maximum number of queries to generate per CP length"
                 "(default: 100,000)");
+    cp.add_flag('p', "progress", options.show_progress,
+                 "show progess each time 1% of the input has been scanned");
     cp.add_bytes('b', "bufsize", options.bufsize,
                  "the size of the SA and LCP read buffers in # of entries "
                  "(default: 1Mi)");
@@ -135,6 +163,16 @@ int main(int argc, char** argv) {
               << " ..." << std::endl;
   }
 
+  // install sigint handler
+  {
+    struct sigaction action;
+    action.sa_handler = on_interrupt;
+    sigemptyset(&action.sa_mask);
+    action.sa_flags = 0;
+
+    sigaction(SIGINT, &action, NULL);
+  }
+
   // init
   size_t constexpr max_lcp_exp = 20;
   size_t const n = std::filesystem::file_size(options.file_text);
@@ -167,13 +205,15 @@ int main(int argc, char** argv) {
   auto sa_prev = sa.read();
   lcp.read();
 
-  for(size_t i = 1; i < n; i++) {
+  for(size_t i = 1; i < n && !cancel; i++) {
     // progress
-    {
+    if(options.show_progress) {
       if(i >= next_progress) {
-        std::cout << i << " / " << n << " ("
-                  << (100.0 * double(i) / double(n)) << "%)"
+        std::cout << "scanned " << i << " / " << n << " entries ("
+                  << (100.0 * double(i) / double(n)) << "%); queries:"
                   << std::endl;
+        std::cout << "\t";
+        print_counts(count.begin(), count.end());
 
         next_progress += one_pct;
       }
