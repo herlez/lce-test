@@ -79,9 +79,7 @@ void print_counts(It begin, It end) {
   size_t x = 0;
   while(begin != end) {
     auto const count = *begin;
-    std::cout << "[" << x << "]="
-      << uint(100.0 * double(count) / double(options.limit))
-      << "% ";
+    std::cout << "[" << x << "]=" << count << " ";
     ++begin;
     ++x;
   }
@@ -92,7 +90,8 @@ bool cancel = false;
 void on_interrupt(int) {
   std::cerr
     << std::endl
-    << "canceling as per user request (SIGINT)"
+    << "canceling as per user request (SIGINT) "
+    << "-- the current read operation may have to finish first"
     << std::endl;
 
   cancel = true;
