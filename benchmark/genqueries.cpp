@@ -28,6 +28,7 @@ struct {
   std::string out_dir = ".";
   uint width = 5;
   size_t limit = 100'000;
+  size_t bufsize = 1024 * 1024;
 } options;
 
 class BufferedReader {
@@ -96,6 +97,9 @@ int main(int argc, char** argv) {
     cp.add_bytes('l', "limit", options.limit,
                 "the maximum number of queries to generate per CP length"
                 "(default: 100,000)");
+    cp.add_bytes('b', "bufsize", options.bufsize,
+                 "the size of the SA and LCP read buffers in # of entries "
+                 "(default: 1Mi)");
     if(!cp.process(argc, argv)) {
       return -1;
     }
@@ -132,7 +136,6 @@ int main(int argc, char** argv) {
   }
 
   // init
-  size_t constexpr bufnum = 1024 * 1024;
   size_t constexpr max_lcp_exp = 20;
   size_t const n = std::filesystem::file_size(options.file_text);
 
@@ -142,8 +145,8 @@ int main(int argc, char** argv) {
   int fd_lcp = open(options.file_lcp.c_str(), O_RDONLY);
   posix_fadvise(fd_lcp, 0, 0, POSIX_FADV_SEQUENTIAL);
 
-  BufferedReader sa(fd_sa, bufnum * options.width);
-  BufferedReader lcp(fd_lcp, bufnum * options.width);
+  BufferedReader sa(fd_sa, options.bufsize * options.width);
+  BufferedReader lcp(fd_lcp, options.bufsize * options.width);
 
   // open outputs
   std::array<std::ofstream, max_lcp_exp+1> out;
