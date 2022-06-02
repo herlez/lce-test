@@ -3,6 +3,7 @@
 #
 # Copyright (C) 2019 Alexander Herlez <alexander.herlez@tu-dortmund.de>
 # Copyright (C) 2019 Florian Kurpicz <florian.kurpicz@tu-dortmund.de>
+# Copyright (C) 2022 Patrick Dinklage <patrick.dinklage@tu-dortmund.de>
 #
 # All rights reserved. Published under the BSD-2 license in the LICENSE file.
 ################################################################################
@@ -86,7 +87,8 @@ target_include_directories(bench_sparse_ss PUBLIC
 
 target_link_libraries(bench_sparse_ss PRIVATE tlx malloc_count -ldl libsais TBB::tbb)
 
-
+add_executable(genqueries genqueries.cpp)
+target_link_libraries(genqueries PRIVATE tlx)
 
 
 ################################################################################
