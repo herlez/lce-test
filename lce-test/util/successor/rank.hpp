@@ -1,10 +1,10 @@
 #pragma once
 
-#include "bit_vector.hpp"
-#include "bit_rank.hpp"
-#include "bit_select.hpp"
+#include "helpers/bit_vector.hpp"
+#include "helpers/bit_rank.hpp"
+#include "helpers/bit_select.hpp"
 
-#include "util.hpp"
+#include "helpers/util.hpp"
 #include "result.hpp"
 
 namespace stash {
