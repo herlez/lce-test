@@ -9,7 +9,7 @@ namespace pred {
 // the "bs*" data structure for successor queries
 template<typename array_t, typename item_t, size_t m_cache_num = 512ULL / sizeof(item_t)>
 class binsearch_cache {
-private:
+protected:
     const array_t* m_array;
     size_t m_num;
     item_t m_min;

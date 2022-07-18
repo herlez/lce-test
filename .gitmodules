@@ -19,3 +19,6 @@
 [submodule "extlib/parallel-hashmap"]
 	path = extlib/parallel-hashmap
 	url = https://github.com/greg7mdp/parallel-hashmap
+[submodule "extlib/PGM-index"]
+	path = extlib/PGM-index
+	url = https://github.com/gvinciguerra/PGM-index.git
