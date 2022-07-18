@@ -47,7 +47,7 @@ target_include_directories(bench_time SYSTEM PRIVATE
 )
 
 target_link_libraries(bench_time PRIVATE
-  ferrada_rmq tlx sais_lcp libsais ${SDSL} ${divsufsort} ${divsufsort64} pgm_index malloc_count -ldl -fopenmp PRIVATE TBB::tbb)
+  ferrada_rmq tlx sais_lcp libsais ${SDSL} ${divsufsort} ${divsufsort64} pgm_index malloc_count -ldl PRIVATE TBB::tbb)
 
 
 option(LCE_BUILD_SDSL
