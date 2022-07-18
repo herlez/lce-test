@@ -3,6 +3,7 @@
 #
 # Copyright (C) 2019 Alexander Herlez <alexander.herlez@tu-dortmund.de>
 # Copyright (C) 2019 Florian Kurpicz <florian.kurpicz@tu-dortmund.de>
+# Copyright (C) 2022 Patrick Dinklage <patrick.dinklage@tu-dortmund.de>
 #
 # All rights reserved. Published under the BSD-2 license in the LICENSE file.
 ################################################################################
@@ -85,5 +86,12 @@ find_package(TBB REQUIRED)
 add_subdirectory(benchmark)
 #set(IPS4O_USE_OPENMP TRUE)
 #add_subdirectory(extlib/ips4o)
+
+# include PGM index
+add_library(pgm_index INTERFACE)
+target_include_directories(pgm_index INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/extlib/PGM-index/include/>
+  $<INSTALL_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/extlib/PGM-index/include/>
+)
 
 ################################################################################
