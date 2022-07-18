@@ -90,5 +90,12 @@ target_link_libraries(bench_sparse_ss PRIVATE tlx malloc_count -ldl libsais TBB:
 add_executable(genqueries genqueries.cpp)
 target_link_libraries(genqueries PRIVATE tlx)
 
+add_executable(bench_predecessor bench_predecessor.cpp)
+target_link_libraries(bench_predecessor PRIVATE pgm_index tlx malloc_count -ldl)
+
+target_include_directories(bench_predecessor PUBLIC
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/lce-test/>
+  $<INSTALL_INTERFACE:${PROJECT_SOURCE_DIR}/lce-test/>
+)
 
 ################################################################################
