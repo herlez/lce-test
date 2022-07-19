@@ -12,7 +12,7 @@
 	url = https://github.com/kurpicz/sais-lite-lcp
 [submodule "extlib/libsais"]
 	path = extlib/libsais
-	url = git@github.com:IlyaGrebnov/libsais.git
+	url = https://github.com/IlyaGrebnov/libsais
 [submodule "extlib/ips4o"]
 	path = extlib/ips4o
 	url = https://github.com/ips4o/ips4o
