@@ -24,9 +24,16 @@ add_executable(bench_time
 
 target_compile_options(bench_time PRIVATE -Wall -Wextra -pedantic -O3) #-Winline -Werror
 
-find_package(SDSL REQUIRED)
-find_package(divsufsort REQUIRED)
-find_package(divsufsort64 REQUIRED)
+if (LCE_BUILD_SDSL)
+  find_package(SDSL REQUIRED)
+  find_package(divsufsort REQUIRED)
+  find_package(divsufsort64 REQUIRED)
+else()
+  set(SDSL_INCLUDE_DIRS "")
+  set(SDSL "")
+  set(divsufsort "")
+  set(divsufsort64 "")
+endif()
 
 target_include_directories(bench_time PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/lce-test/>
