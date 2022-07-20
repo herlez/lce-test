@@ -23,6 +23,10 @@
 #include "util/successor/pgm_index.hpp"
 #include "util/successor/rank.hpp"
 
+#ifdef ALLOW_PARALLEL
+#include "util/successor/index_par.hpp"
+#endif
+
 uint64_t time() {
     using namespace std::chrono;
     return uint64_t(duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count());
@@ -52,6 +56,11 @@ using rank            = pred::rank<std::vector<value_t>, value_t>;
 
 template<size_t k>
 using index = pred::index<std::vector<value_t>, value_t, k>;
+
+#ifdef ALLOW_PARALLEL
+template<size_t k>
+using index_par = pred::index_par<std::vector<value_t>, value_t, k>;
+#endif
 
 template<size_t epsilon>
 using pgm_index = pred::pgm_index<std::vector<value_t>, value_t, epsilon>;
@@ -175,9 +184,15 @@ int main(int argc, char** argv) {
     if (!cp.process(argc, argv)) {
         return -1;
     }
+    
+    #ifdef ALLOW_PARALLEL
+    std::cout << "# benchmarking PARALLEL construction" << std::endl;
+    #else
+    std::cout << "# benchmarking SEQUENTIAL construction" << std::endl;
+    #endif
 
     // load input
-    std::cout << "# loading input ..." << std::endl;
+    std::cout << "# loading input: " << input_filename << std::endl;
 
     auto array = load_file_lines_as_vector<value_t>(input_filename);
     if(!universe) {
@@ -208,16 +223,25 @@ int main(int argc, char** argv) {
     // run tests
     if(!no_pred) {
     std::cout << "# predecessor ..." << std::endl;
+    
+    #ifdef ALLOW_PARALLEL
+    print_result("idx<4>", test_predecessor<index_par<4>>(array, queries));
+    print_result("idx<5>", test_predecessor<index_par<5>>(array, queries));
+    print_result("idx<6>", test_predecessor<index_par<6>>(array, queries));
+    print_result("idx<7>", test_predecessor<index_par<7>>(array, queries));
+    print_result("idx<8>", test_predecessor<index_par<8>>(array, queries));
+    print_result("idx<9>", test_predecessor<index_par<9>>(array, queries));
+    print_result("idx<10>", test_predecessor<index_par<10>>(array, queries));
+    print_result("idx<11>", test_predecessor<index_par<11>>(array, queries));
+    print_result("idx<12>", test_predecessor<index_par<12>>(array, queries));
+    print_result("idx<13>", test_predecessor<index_par<13>>(array, queries));
+    print_result("idx<14>", test_predecessor<index_par<14>>(array, queries));
+    print_result("idx<15>", test_predecessor<index_par<15>>(array, queries));
+    print_result("idx<16>", test_predecessor<index_par<16>>(array, queries));
+    #else
     print_result("bs", test_predecessor<binsearch>(array, queries));
     print_result("bs*", test_predecessor<binsearch_cache>(array, queries));
     print_result("rank", test_predecessor<rank>(array, queries));
-    print_result("pgm<4>", test_predecessor<pgm_index<4>>(array, queries));
-    print_result("pgm<8>", test_predecessor<pgm_index<8>>(array, queries));
-    print_result("pgm<12>", test_predecessor<pgm_index<12>>(array, queries));
-    print_result("pgm<16>", test_predecessor<pgm_index<16>>(array, queries));
-    print_result("pgm<20>", test_predecessor<pgm_index<20>>(array, queries));
-    print_result("pgm<24>", test_predecessor<pgm_index<24>>(array, queries));
-    print_result("pgm<32>", test_predecessor<pgm_index<32>>(array, queries));
     print_result("idx<4>", test_predecessor<index<4>>(array, queries));
     print_result("idx<5>", test_predecessor<index<5>>(array, queries));
     print_result("idx<6>", test_predecessor<index<6>>(array, queries));
@@ -231,20 +255,38 @@ int main(int argc, char** argv) {
     print_result("idx<14>", test_predecessor<index<14>>(array, queries));
     print_result("idx<15>", test_predecessor<index<15>>(array, queries));
     print_result("idx<16>", test_predecessor<index<16>>(array, queries));
+    #endif
+    
+    print_result("pgm<4>", test_predecessor<pgm_index<4>>(array, queries));
+    print_result("pgm<8>", test_predecessor<pgm_index<8>>(array, queries));
+    print_result("pgm<12>", test_predecessor<pgm_index<12>>(array, queries));
+    print_result("pgm<16>", test_predecessor<pgm_index<16>>(array, queries));
+    print_result("pgm<20>", test_predecessor<pgm_index<20>>(array, queries));
+    print_result("pgm<24>", test_predecessor<pgm_index<24>>(array, queries));
+    print_result("pgm<32>", test_predecessor<pgm_index<32>>(array, queries));
     }
 
     if(!no_succ) {
     std::cout << "# successor ..." << std::endl;
+    
+    #ifdef ALLOW_PARALLEL
+    print_result("idx<4>", test_successor<index_par<4>>(array, queries));
+    print_result("idx<5>", test_successor<index_par<5>>(array, queries));
+    print_result("idx<6>", test_successor<index_par<6>>(array, queries));
+    print_result("idx<7>", test_successor<index_par<7>>(array, queries));
+    print_result("idx<8>", test_successor<index_par<8>>(array, queries));
+    print_result("idx<9>", test_successor<index_par<9>>(array, queries));
+    print_result("idx<10>", test_successor<index_par<10>>(array, queries));
+    print_result("idx<11>", test_successor<index_par<11>>(array, queries));
+    print_result("idx<12>", test_successor<index_par<12>>(array, queries));
+    print_result("idx<13>", test_successor<index_par<13>>(array, queries));
+    print_result("idx<14>", test_successor<index_par<14>>(array, queries));
+    print_result("idx<15>", test_successor<index_par<15>>(array, queries));
+    print_result("idx<16>", test_successor<index_par<16>>(array, queries));
+    #else
     print_result("bs", test_successor<binsearch>(array, queries));
     print_result("bs*", test_successor<binsearch_cache>(array, queries));
     print_result("rank", test_successor<rank>(array, queries));
-    print_result("pgm<4>", test_successor<pgm_index<4>>(array, queries));
-    print_result("pgm<8>", test_successor<pgm_index<8>>(array, queries));
-    print_result("pgm<12>", test_successor<pgm_index<12>>(array, queries));
-    print_result("pgm<16>", test_successor<pgm_index<16>>(array, queries));
-    print_result("pgm<20>", test_successor<pgm_index<20>>(array, queries));
-    print_result("pgm<24>", test_successor<pgm_index<24>>(array, queries));
-    print_result("pgm<32>", test_successor<pgm_index<32>>(array, queries));
     print_result("idx<4>", test_successor<index<4>>(array, queries));
     print_result("idx<5>", test_successor<index<5>>(array, queries));
     print_result("idx<6>", test_successor<index<6>>(array, queries));
@@ -258,5 +300,14 @@ int main(int argc, char** argv) {
     print_result("idx<14>", test_successor<index<14>>(array, queries));
     print_result("idx<15>", test_successor<index<15>>(array, queries));
     print_result("idx<16>", test_successor<index<16>>(array, queries));
+    #endif
+    
+    print_result("pgm<4>", test_successor<pgm_index<4>>(array, queries));
+    print_result("pgm<8>", test_successor<pgm_index<8>>(array, queries));
+    print_result("pgm<12>", test_successor<pgm_index<12>>(array, queries));
+    print_result("pgm<16>", test_successor<pgm_index<16>>(array, queries));
+    print_result("pgm<20>", test_successor<pgm_index<20>>(array, queries));
+    print_result("pgm<24>", test_successor<pgm_index<24>>(array, queries));
+    print_result("pgm<32>", test_successor<pgm_index<32>>(array, queries));
     }
 }
