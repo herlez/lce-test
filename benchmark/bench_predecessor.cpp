@@ -256,7 +256,6 @@ int main(int argc, char** argv) {
     print_result("idx<15>", test_predecessor<index<15>>(array, queries));
     print_result("idx<16>", test_predecessor<index<16>>(array, queries));
     #endif
-    
     print_result("pgm<4>", test_predecessor<pgm_index<4>>(array, queries));
     print_result("pgm<8>", test_predecessor<pgm_index<8>>(array, queries));
     print_result("pgm<12>", test_predecessor<pgm_index<12>>(array, queries));
@@ -264,6 +263,12 @@ int main(int argc, char** argv) {
     print_result("pgm<20>", test_predecessor<pgm_index<20>>(array, queries));
     print_result("pgm<24>", test_predecessor<pgm_index<24>>(array, queries));
     print_result("pgm<32>", test_predecessor<pgm_index<32>>(array, queries));
+    print_result("pgm<48>", test_predecessor<pgm_index<48>>(array, queries));
+    print_result("pgm<64>", test_predecessor<pgm_index<64>>(array, queries));
+    print_result("pgm<80>", test_predecessor<pgm_index<80>>(array, queries));
+    print_result("pgm<96>", test_predecessor<pgm_index<96>>(array, queries));
+    print_result("pgm<112>", test_predecessor<pgm_index<112>>(array, queries));
+    print_result("pgm<128>", test_predecessor<pgm_index<128>>(array, queries));
     }
 
     if(!no_succ) {
@@ -309,5 +314,11 @@ int main(int argc, char** argv) {
     print_result("pgm<20>", test_successor<pgm_index<20>>(array, queries));
     print_result("pgm<24>", test_successor<pgm_index<24>>(array, queries));
     print_result("pgm<32>", test_successor<pgm_index<32>>(array, queries));
+    print_result("pgm<48>", test_successor<pgm_index<48>>(array, queries));
+    print_result("pgm<64>", test_successor<pgm_index<64>>(array, queries));
+    print_result("pgm<80>", test_successor<pgm_index<80>>(array, queries));
+    print_result("pgm<96>", test_successor<pgm_index<96>>(array, queries));
+    print_result("pgm<112>", test_successor<pgm_index<112>>(array, queries));
+    print_result("pgm<128>", test_successor<pgm_index<128>>(array, queries));
     }
 }
