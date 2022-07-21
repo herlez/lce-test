@@ -72,7 +72,7 @@ public:
                 prev_key = cur_key;
             }
         }
-        m_hi_idx[m_key_max - m_key_min] = m_num - 1;
+        m_hi_idx[m_key_max - m_key_min + 1] = m_num - 1;
 
         // build the predecessor data structure for low bits
         m_lo_pred = lo_pred_t(array);
