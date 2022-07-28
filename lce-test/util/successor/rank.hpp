@@ -1,10 +1,10 @@
 #pragma once
 
-#include "bit_vector.hpp"
-#include "bit_rank.hpp"
-#include "bit_select.hpp"
+#include "helpers/bit_vector.hpp"
+#include "helpers/bit_rank.hpp"
+#include "helpers/bit_select.hpp"
 
-#include "util.hpp"
+#include "helpers/util.hpp"
 #include "result.hpp"
 
 namespace stash {
@@ -30,13 +30,13 @@ public:
 
         assert_sorted_ascending(array);
 
-        m_bv = bit_vector(m_max - m_min);
+        m_bv = bit_vector(m_max - m_min + 1);
         for(size_t i = 0; i < m_num; i++) {
             m_bv[array[i] - m_min] = 1;
         }
 
         assert(m_bv[0] == 1);
-        assert(m_bv[m_num-1] == 1);
+        assert(m_bv[m_max - m_min] == 1);
 
         m_rank = bit_rank(m_bv);
     }

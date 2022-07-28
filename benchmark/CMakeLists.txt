@@ -24,9 +24,16 @@ add_executable(bench_time
 
 target_compile_options(bench_time PRIVATE -Wall -Wextra -pedantic -O3) #-Winline -Werror
 
-find_package(SDSL REQUIRED)
-find_package(divsufsort REQUIRED)
-find_package(divsufsort64 REQUIRED)
+if (LCE_BUILD_SDSL)
+  find_package(SDSL REQUIRED)
+  find_package(divsufsort REQUIRED)
+  find_package(divsufsort64 REQUIRED)
+else()
+  set(SDSL_INCLUDE_DIRS "")
+  set(SDSL "")
+  set(divsufsort "")
+  set(divsufsort64 "")
+endif()
 
 target_include_directories(bench_time PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/lce-test/>
@@ -47,7 +54,7 @@ target_include_directories(bench_time SYSTEM PRIVATE
 )
 
 target_link_libraries(bench_time PRIVATE
-  ferrada_rmq tlx sais_lcp libsais ${SDSL} ${divsufsort} ${divsufsort64} malloc_count -ldl -fopenmp PRIVATE TBB::tbb)
+  ferrada_rmq tlx sais_lcp libsais ${SDSL} ${divsufsort} ${divsufsort64} pgm_index malloc_count -ldl PRIVATE TBB::tbb)
 
 
 option(LCE_BUILD_SDSL
@@ -90,5 +97,12 @@ target_link_libraries(bench_sparse_ss PRIVATE tlx malloc_count -ldl libsais TBB:
 add_executable(genqueries genqueries.cpp)
 target_link_libraries(genqueries PRIVATE tlx)
 
+add_executable(bench_predecessor bench_predecessor.cpp)
+target_link_libraries(bench_predecessor PRIVATE pgm_index tlx malloc_count -ldl)
+
+target_include_directories(bench_predecessor PUBLIC
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/lce-test/>
+  $<INSTALL_INTERFACE:${PROJECT_SOURCE_DIR}/lce-test/>
+)
 
 ################################################################################

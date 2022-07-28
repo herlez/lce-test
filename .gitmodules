@@ -12,10 +12,13 @@
 	url = https://github.com/kurpicz/sais-lite-lcp
 [submodule "extlib/libsais"]
 	path = extlib/libsais
-	url = git@github.com:IlyaGrebnov/libsais.git
+	url = https://github.com/IlyaGrebnov/libsais
 [submodule "extlib/ips4o"]
 	path = extlib/ips4o
 	url = https://github.com/ips4o/ips4o
 [submodule "extlib/parallel-hashmap"]
 	path = extlib/parallel-hashmap
 	url = https://github.com/greg7mdp/parallel-hashmap
+[submodule "extlib/PGM-index"]
+	path = extlib/PGM-index
+	url = https://github.com/gvinciguerra/PGM-index.git

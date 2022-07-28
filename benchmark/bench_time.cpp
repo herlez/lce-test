@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2019 Alexander Herlez <alexander.herlez@tu-dortmund.de>
  * Copyright (C) 2019 Florian Kurpicz <florian.kurpicz@tu-dortmund.de>
+ * Copyright (C) 2022 Patrick Dinklage <patrick.dinklage@tu-dortmund.de>
  *
  * All rights reserved. Published under the BSD-2 license in the LICENSE file.
  ******************************************************************************/
@@ -29,7 +30,10 @@
 #include "lce_prezza.hpp"
 #include "lce_prezza_mersenne.hpp"
 #include "lce_semi_synchronizing_sets.hpp"
+
+#ifdef ALLOW_PARALLEL
 #include "lce_semi_synchronizing_sets_par.hpp"
+#endif
 
 #include "lce_sdsl_cst.hpp"
 
@@ -161,7 +165,9 @@ public:
         construction_times.add(t.get_and_reset());
         lce_mem.add(malloc_count_current() - mem_before);
         construction_mem_peak.add(malloc_count_peak() - mem_before);
-      } else if (algorithm == "s2048_par") {
+      }
+#ifdef ALLOW_PARALLEL
+      else if (algorithm == "s2048_par") {
         size_t const mem_before = malloc_count_current();
         t.reset();
         if (prefer_long_queries) {
@@ -206,7 +212,9 @@ public:
         construction_times.add(t.get_and_reset());
         lce_mem.add(malloc_count_current() - mem_before);
         construction_mem_peak.add(malloc_count_peak() - mem_before);
-      } else if (algorithm == "sada") {
+      }
+#endif
+      else if (algorithm == "sada") {
         size_t const mem_before = malloc_count_current();
         t.reset();
         lce_structure = std::make_unique<LceSDSLsada>(file_path);

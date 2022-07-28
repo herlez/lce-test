@@ -19,6 +19,11 @@ void assert_sorted_ascending([[maybe_unused]] const array_t& a) {
     #endif
 }
 
+inline constexpr uint64_t idiv_ceil(const uint64_t a, const uint64_t b) {
+    const uint64_t q = a / b;
+    return (a % b == 0) ? q : q + 1;
+}
+
 inline constexpr uint64_t log2_ceil(uint64_t x) {
     return 64ULL - __builtin_clzll(x);
 }
