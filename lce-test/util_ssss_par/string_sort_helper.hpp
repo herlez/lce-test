@@ -4,7 +4,7 @@
 namespace lce_test::par {
 
 struct mock_string {
-  using size_type = uint32_t;
+  using size_type = uint64_t;
 
   mock_string(uint8_t const* const str, size_type size) : m_str(str), m_size(size) {}
 
@@ -230,6 +230,7 @@ class StringSetBase {
  * Class implementing StringSet concept for suffix sorting indexes of a
  * std::string text object.
  */
+template<typename sss_type = uint32_t>
 class StringShortSuffixSetTraits {
  public:
   //! exported alias for assumed string container
@@ -239,7 +240,7 @@ class StringShortSuffixSetTraits {
   typedef uint8_t Char;
 
   //! String reference: suffix index of the text.
-  typedef typename Text::size_type String;
+  typedef sss_type String;
 
   //! Iterator over string references: using std::vector's iterator over
   //! suffix array vector
@@ -253,18 +254,29 @@ class StringShortSuffixSetTraits {
  * Class implementing StringSet concept for suffix sorting indexes of a
  * std::string text object.
  */
-template <uint32_t t_tau>
+template <uint64_t t_tau, typename sss_type>
 class StringShortSuffixSet
-    : public StringShortSuffixSetTraits,
-      public StringSetBase<StringShortSuffixSet<t_tau>, StringShortSuffixSetTraits> {
+    : public StringShortSuffixSetTraits<sss_type>,
+      public StringSetBase<StringShortSuffixSet<t_tau, sss_type>, StringShortSuffixSetTraits<sss_type>> {
 
  public:
   //! exported alias for assumed string container
-  typedef std::tuple<Text, std::vector<String>, string_synchronizing_set_par<t_tau/3, uint32_t> const&> Container;
+  typedef typename StringShortSuffixSetTraits<sss_type>::Text Text;
+  //! exported alias for character type
+  typedef typename StringShortSuffixSetTraits<sss_type>::Char Char;
+  //! String reference: suffix index of the text.
+  typedef typename StringShortSuffixSetTraits<sss_type>::String String;
+  //! Iterator over string references: using std::vector's iterator over
+  //! suffix array vector
+  typedef typename StringShortSuffixSetTraits<sss_type>::Iterator Iterator;
+  //! exported alias for assumed string container
+  typedef std::tuple<Text, std::vector<String>, string_synchronizing_set_par<t_tau/3, sss_type> const&> Container;
+  //! iterator of characters in a string
+  typedef typename StringShortSuffixSetTraits<sss_type>::CharIterator CharIterator;
 
   //! Construct from begin and end string pointers
   StringShortSuffixSet(const Text& text,
-                       const Iterator& begin, const Iterator& end, string_synchronizing_set_par<t_tau/3, uint32_t> const& sss)
+                       const Iterator& begin, const Iterator& end, string_synchronizing_set_par<t_tau/3, sss_type> const& sss)
       : text_(&text),
         begin_(begin),
         end_(end),
@@ -348,7 +360,7 @@ class StringShortSuffixSet
 
   //! iterators inside the output suffix array.
   Iterator begin_, end_;
-  string_synchronizing_set_par<t_tau/3, uint32_t> const& sss_;
+  string_synchronizing_set_par<t_tau/3, sss_type> const& sss_;
   bool sss_has_runs_;
 };
 }  // namespace lce_test::par

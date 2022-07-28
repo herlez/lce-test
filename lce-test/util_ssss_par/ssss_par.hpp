@@ -23,6 +23,7 @@ class string_synchronizing_set_par {
       4, std::mutex> m_run_info;
 
  public:
+  static const size_t tau = t_tau;
   std::vector<t_index> const& get_sss() const {
     return m_sss;
   }
@@ -34,6 +35,9 @@ class string_synchronizing_set_par {
   
   bool has_runs() const {
     return m_runs_detected;
+  }
+  size_t num_runs() const {
+    return m_run_info.size();
   }
   size_t size() const {
     return m_sss.size();
@@ -267,10 +271,16 @@ class string_synchronizing_set_par {
           i = run_end - small_tau;
 
           if(run_end - run_start + 1 >= 3 * t_tau - 1) {
+            if(run_start==0) { continue; } //Run starts at 0, no run information needed
+            if(text[run_start-1] == text[run_start+period-1]) {continue;} //Run starts at previous PE, we are not responsible
+            while (run_end < text.size() && text[run_end+1] == text[run_end - period+1]) {
+              ++run_end;
+            }
+
             size_t const sss_pos1 = run_start - 1;
             size_t const sss_pos2 = run_end - (2*t_tau) + 2; 
             int64_t const run_info = int64_t{1} * text.size() - sss_pos2 + sss_pos1;
-            m_run_info[sss_pos1] = text[run_end + 1] > text[run_end - period + 1] ? run_info : run_info * (-1); 
+            m_run_info[sss_pos1] = text[run_end + 1] > text[run_end - period + 1] ? run_info : run_info * (-1);
           }
         } else {
           i = next_min - 1;
@@ -278,11 +288,5 @@ class string_synchronizing_set_par {
       }
     }
     return qset;
-  }
-
-  bool check_sss() {
-
-    //Check sss for 
-    return true;
   }
 };

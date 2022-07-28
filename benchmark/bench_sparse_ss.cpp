@@ -264,7 +264,7 @@ int main(int argc, char** argv) {
     malloc_count_reset_peak();
     auto mem_before = malloc_count_current();
     timer t;
-    libsais(text.data(), reinterpret_cast<int32_t*>(positions.data()), text_size, 0);
+    libsais(text.data(), reinterpret_cast<int32_t*>(positions.data()), text_size, 0, nullptr);
     std::cout << "RESULT algo=libsais time=" << t.get()
               << " sample_distance=" << sample_distance
               << " text_name=" << text_name

@@ -44,29 +44,29 @@ class lce_benchmark {
 public:
   void run() {
  
-    fs::path input_path(file_path);
-    std::string const filename = input_path.filename();
+    fs::path text_path(file_path);
+    std::string const filename = text_path.filename();
     
-    string lce_path = output_path + filename;
+    fs::path lce_path = fs::path{output_path} / filename;
 
     if (prefix_length > 0) {
       lce_path += "_" + std::to_string(prefix_length);
     }
 
-    const array<string, 21> lce_set{lce_path + "/lce_0", lce_path + "/lce_1",
-                                    lce_path + "/lce_2", lce_path + "/lce_3",
-                                    lce_path + "/lce_4", lce_path + "/lce_5",
-                                    lce_path + "/lce_6", lce_path + "/lce_7",
-                                    lce_path + "/lce_8", lce_path + "/lce_9",
-                                    lce_path + "/lce_10", lce_path + "/lce_11",
-                                    lce_path + "/lce_12", lce_path + "/lce_13",
-                                    lce_path + "/lce_14", lce_path + "/lce_15",
-                                    lce_path + "/lce_16",lce_path + "/lce_17",
-                                    lce_path + "/lce_18", lce_path + "/lce_19",
-                                    lce_path + "/lce_X"};
+    const array<string, 21> lce_set{lce_path / "lce_0", lce_path / "lce_1",
+                                    lce_path / "lce_2", lce_path / "lce_3",
+                                    lce_path / "lce_4", lce_path / "lce_5",
+                                    lce_path / "lce_6", lce_path / "lce_7",
+                                    lce_path / "lce_8", lce_path / "lce_9",
+                                    lce_path / "lce_10", lce_path / "lce_11",
+                                    lce_path / "lce_12", lce_path / "lce_13",
+                                    lce_path / "lce_14", lce_path / "lce_15",
+                                    lce_path / "lce_16", lce_path / "lce_17",
+                                    lce_path / "lce_18", lce_path / "lce_19",
+                                    lce_path / "lce_20"};
     
-    build_lce_range(file_path, output_path + filename, prefix_length);
-    
+    //Deprecated. Use genqueries instead.
+    //build_lce_range(text_path, lce_path, prefix_length);
     
     /************************************
      ****PREPARE LCE DATA STRUCTURES*****
@@ -85,7 +85,7 @@ public:
               << "runs=" << runs << " ";
 
     for (size_t i = 0; i < runs; ++i) {
-      text = load_text(file_path, prefix_length);
+      text = load_text(text_path, prefix_length);
 
       auto* old_structure = lce_structure.release();
       if (old_structure != nullptr) {
@@ -143,7 +143,7 @@ public:
         lce_mem.add(malloc_count_current() - mem_before);
         construction_mem_peak.add(malloc_count_peak() - mem_before);
         construction_mem_peak.add(malloc_count_peak() - mem_before);
-      } else if (algorithm == "s512") {
+      } else if (algorithm == "s512" || algorithm == "s") {
         size_t const mem_before = malloc_count_current();
         t.reset();
         if (prefer_long_queries) {
@@ -190,7 +190,7 @@ public:
         lce_mem.add(malloc_count_current() - mem_before);
         construction_mem_peak.add(malloc_count_peak() - mem_before);
         construction_mem_peak.add(malloc_count_peak() - mem_before);
-      } else if (algorithm == "s512_par") {
+      } else if (algorithm == "s512_par" || algorithm == "s_par") {
         size_t const mem_before = malloc_count_current();
         t.reset();
         if (prefer_long_queries) {
@@ -217,7 +217,7 @@ public:
       else if (algorithm == "sada") {
         size_t const mem_before = malloc_count_current();
         t.reset();
-        lce_structure = std::make_unique<LceSDSLsada>(file_path);
+        lce_structure = std::make_unique<LceSDSLsada>(text_path);
         construction_times.add(t.get_and_reset());
         lce_mem.add(malloc_count_current() - mem_before);
         construction_mem_peak.add(malloc_count_peak() - mem_before);
@@ -225,7 +225,7 @@ public:
       } else if (algorithm == "sct3") {
         size_t const mem_before = malloc_count_current();
         t.reset();
-        lce_structure = std::make_unique<LceSDSLsada>(file_path);
+        lce_structure = std::make_unique<LceSDSLsada>(text_path);
         construction_times.add(t.get_and_reset());
         lce_mem.add(malloc_count_current() - mem_before);
         construction_mem_peak.add(malloc_count_peak() - mem_before);
@@ -238,7 +238,7 @@ public:
               << "construction_max_time=" << construction_times.max() << " "
               << "construction_avg_time=" << construction_times.avg() << " "
 
-              << "input=" << file_path << " "
+              << "input=" << text_path << " "
               << "size=" << text.size() << " "
 
               << "lce_mem=" << lce_mem.max() << " "
@@ -257,7 +257,7 @@ public:
                 << "algo=" << print_algo_name() << "_queries "
                 << "runs=" << runs << " "
                 << "length_exp=" << i << " "
-                << "input=" << file_path << " "
+                << "input=" << text_path << " "
                 << "size=" << text.size() << " ";
       vector<uint64_t> v;
       std::ifstream lc(lce_set[i], ios::in);
@@ -285,7 +285,7 @@ public:
         }
         if (check) {
           correct = true;
-          auto check_text = load_text(file_path, prefix_length);
+          auto check_text = load_text(text_path, prefix_length);
           auto lce_naive = LceUltraNaive(check_text);
           for (size_t j = 0; j < number_lce_queries * 2; j += 2) {
             size_t const lce = lce_structure->lce(lce_indices[j],
@@ -346,7 +346,7 @@ private:
       name = "sss2048";
     } else if (algorithm == "s1024") {
       name = "sss1024";
-    } else if (algorithm == "s512") {
+    } else if (algorithm == "s512" || algorithm == "s") {
       name = "sss512";
     } else if (algorithm == "s256") {
       name = "sss256";
@@ -354,7 +354,7 @@ private:
       name = "sss2048_par";
     } else if (algorithm == "s1024_par") {
       name = "sss1024_par";
-    } else if (algorithm == "s512_par") {
+    } else if (algorithm == "s512_par" || algorithm == "s_par") {
       name = "sss512_par";
     } else if (algorithm == "s256_par") {
       name = "sss256_par";
@@ -385,15 +385,14 @@ int32_t main(int argc, char *argv[]) {
 
   cp.add_param_string("file", lce_bench.file_path, "The text which is queried");
   cp.add_string('o', "output_path", lce_bench.output_path, "Path where LCE "
-                "queries for [-m]ode [s]orted are stored "
-                "(default: /tmp/res_lce).");
+                "queries are stored (default: /tmp/res_lce).");
   cp.add_bytes('p', "pre", lce_bench.prefix_length, "Size of the prefix in "
                "bytes that will be read (optional).");
-  cp.add_string('a', "algorithm", lce_bench.algorithm, "LCP data structure "
+  cp.add_string('a', "algorithm", lce_bench.algorithm, "LCE data structure "
                 "that is computed: [u]ltra naive (default), [n]aive, "
                 "prezza [m]ersenne, [p]rezza, or [s]tring synchronizing sets "
-                " with Tau = 1024. [s512] and [s256] for Tau = 512 and 256, "
-                "resp.");
+                "with tau = 512. [s2048], [s1024], [s512], [s256] for different "
+                "tau values. Suffix _par for parallel sss, e.g. [s256_par]");
   cp.add_flag('l', "long", lce_bench.prefer_long_queries, "Prefer long queries,"
               " i.e., queries with long LCE get faster, all other get slower. "
               "Only for [s]tring synchronizing sets.");
