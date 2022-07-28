@@ -34,8 +34,9 @@
 #ifdef ALLOW_PARALLEL
 #include "lce_semi_synchronizing_sets_par.hpp"
 #endif
-
+#ifdef LCE_BUILD_SDSL
 #include "lce_sdsl_cst.hpp"
+#endif
 
 namespace fs = std::filesystem;
 
@@ -214,6 +215,8 @@ public:
         construction_mem_peak.add(malloc_count_peak() - mem_before);
       }
 #endif
+
+#ifdef LCE_BUILD_SDSL
       else if (algorithm == "sada") {
         size_t const mem_before = malloc_count_current();
         t.reset();
@@ -229,7 +232,9 @@ public:
         construction_times.add(t.get_and_reset());
         lce_mem.add(malloc_count_current() - mem_before);
         construction_mem_peak.add(malloc_count_peak() - mem_before);
-      } else {
+      }
+#endif
+      else {
         return;
       }
     }
