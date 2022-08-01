@@ -248,7 +248,10 @@ public:
 
               << "lce_mem=" << lce_mem.max() << " "
               << "construction_mem_peak=" << construction_mem_peak.max() << " "
-              << "threads=" << omp_get_max_threads() << " ";
+              #ifdef ALLOW_PARALLEL
+              << "threads=" << omp_get_max_threads() << " "
+              #endif
+              ;
     std::cout << std::endl;
 
     std::vector<uint64_t> lce_indices(number_lce_queries * 2);

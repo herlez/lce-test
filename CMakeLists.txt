@@ -84,11 +84,10 @@ target_include_directories(libsais PUBLIC
 )
 
 # Change this line to your tbb path
-list(APPEND CMAKE_PREFIX_PATH /work/smarherl/tbb/lib64/cmake/TBB)
-find_package(TBB REQUIRED)
+#list(APPEND CMAKE_PREFIX_PATH /work/smarherl/tbb/lib64/cmake/TBB)
+file(REMOVE ${CMAKE_CURRENT_SOURCE_DIR}/extlib/ips4o/extern/cmake-modules/FindTBB.cmake)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/extlib/ips4o)
 add_subdirectory(benchmark)
-#set(IPS4O_USE_OPENMP TRUE)
-#add_subdirectory(extlib/ips4o)
 
 # include PGM index
 add_library(pgm_index INTERFACE)

@@ -9,15 +9,22 @@
 ################################################################################
 
 # include malloc_count
-add_library(malloc_count
-  ${PROJECT_SOURCE_DIR}/extlib/malloc_count/malloc_count.c
-  ${PROJECT_SOURCE_DIR}/extlib/malloc_count/stack_count.c
-)
+if (ALLOW_PARALLEL)
+  add_library(malloc_count INTERFACE)
+  target_include_directories(malloc_count INTERFACE
+    ${PROJECT_SOURCE_DIR}/lce-test/malloc_count)
+else()
+  add_library(malloc_count
+    ${PROJECT_SOURCE_DIR}/extlib/malloc_count/malloc_count.c
+    ${PROJECT_SOURCE_DIR}/extlib/malloc_count/stack_count.c
+  )
+  target_include_directories(malloc_count PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/extlib/malloc_count/>
+    $<INSTALL_INTERFACE:${PROJECT_SOURCE_DIR}/extlib/malloc_count/>
+  )
+endif()
   
-target_include_directories(malloc_count PUBLIC
-  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/extlib/malloc_count/>
-  $<INSTALL_INTERFACE:${PROJECT_SOURCE_DIR}/extlib/malloc_count/>
-)
+
 
 add_executable(bench_time
   bench_time.cpp)
@@ -40,12 +47,10 @@ target_include_directories(bench_time PUBLIC
   $<INSTALL_INTERFACE:${PROJECT_SOURCE_DIR}/lce-test/>
   #/work/smarherl/oneapi-tbb-2021.3.0/include
   #${SDSL_INCLUDE_DIRS}
-  #${PROJECT_SOURCE_DIR}/extlib/ips4o/include
 )
 
 target_include_directories(bench_time SYSTEM PRIVATE
   ${SDSL_INCLUDE_DIRS}
-  ${PROJECT_SOURCE_DIR}/extlib/ips4o/include
 )
 
 target_include_directories(bench_time SYSTEM PRIVATE
@@ -54,7 +59,7 @@ target_include_directories(bench_time SYSTEM PRIVATE
 )
 
 target_link_libraries(bench_time PRIVATE
-  ferrada_rmq tlx sais_lcp libsais ${SDSL} ${divsufsort} ${divsufsort64} pgm_index malloc_count -ldl PRIVATE TBB::tbb)
+  ferrada_rmq tlx sais_lcp libsais ${SDSL} ${divsufsort} ${divsufsort64} pgm_index malloc_count -ldl PRIVATE ips4o)
 
 
 option(LCE_BUILD_SDSL
@@ -78,6 +83,7 @@ if (LCE_BUILD_SDSL)
 
 endif()
 
+if(ALLOW_PARALLEL)
 add_executable(bench_sparse_ss bench_sparse_ss.cpp)
 
 target_compile_options(bench_sparse_ss PRIVATE -Wall -Wextra -pedantic -O3) #-Winline -Werror
@@ -86,13 +92,11 @@ target_include_directories(bench_sparse_ss PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/lce-test/>
   $<INSTALL_INTERFACE:${PROJECT_SOURCE_DIR}/lce-test/>
   #${SDSL_INCLUDE_DIRS}
-  ${PROJECT_SOURCE_DIR}/extlib/ips4o/include
   ${PROJECT_SOURCE_DIR}/extlib/parallel-hashmap
   ${PROJECT_SOURCE_DIR}/extlib/libsais
 )
-
-
-target_link_libraries(bench_sparse_ss PRIVATE tlx malloc_count -ldl libsais TBB::tbb)
+target_link_libraries(bench_sparse_ss PRIVATE tlx malloc_count -ldl libsais ips4o)
+endif()
 
 add_executable(genqueries genqueries.cpp)
 target_link_libraries(genqueries PRIVATE tlx)
