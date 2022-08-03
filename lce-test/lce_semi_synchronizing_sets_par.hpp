@@ -165,35 +165,10 @@ class LceSemiSyncSetsPar : public LceDataStructure {
      first element greater than i */
   inline sss_type suc(sss_type i) const {
     return ind_->successor(i).pos;
-    
-    /*size_t aprx_pos = std::min(1.0*i/text_.size() * sync_set_.size(), static_cast<double>(sync_set_.size())) + 67; 
-    size_t scan_pos = aprx_pos;
-    if(aprx_pos != 0 && sync_set_[scan_pos-1] > i) {
-      //scan left
-      while(scan_pos > 0 && sync_set_[scan_pos] >= i) {
-        --scan_pos;
-      } 
-      ++scan_pos;
-    } else {
-      while(scan_pos < sync_set_.size() && sync_set_[scan_pos] < i) {
-        //scan right
-        ++scan_pos;
-      }
-    }
-    err.push_back(static_cast<int64_t>(aprx_pos) - static_cast<int64_t>(scan_pos));
-    if(err.size() == 1'000'000) {
-      std::cout << "err_avg=" << std::accumulate(err.begin(), err.end(), 0.0)/err.size() << " ";
-      for(auto& i : err) {
-        i = std::abs(i);
-      }
-      std::cout << "err_abs_avg=" << std::accumulate(err.begin(), err.end(), 0.0)/err.size() << " ";
-    }
-    return scan_pos;*/
   }
 
  private:
   std::vector<uint8_t> const& text_;
-  mutable std::vector<int64_t> err;
   size_t const text_length_in_bytes_;
 
   std::unique_ptr<stash::pred::index_par<std::vector<sss_type>, sss_type, 7>> ind_;

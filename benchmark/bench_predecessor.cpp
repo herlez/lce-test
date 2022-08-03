@@ -22,6 +22,7 @@
 #include "util/successor/index.hpp"
 #include "util/successor/pgm_index.hpp"
 #include "util/successor/rank.hpp"
+#include "util/successor/j_index.hpp"
 
 #ifdef ALLOW_PARALLEL
 #include "util/successor/index_par.hpp"
@@ -56,6 +57,7 @@ using rank            = pred::rank<std::vector<value_t>, value_t>;
 
 template<size_t k>
 using index = pred::index<std::vector<value_t>, value_t, k>;
+using j_index = pred::j_index<std::vector<value_t>, value_t>;
 
 #ifdef ALLOW_PARALLEL
 template<size_t k>
@@ -224,6 +226,7 @@ int main(int argc, char** argv) {
     if(!no_pred) {
     std::cout << "# predecessor ..." << std::endl;
     
+    print_result("j_index", test_predecessor<j_index>(array, queries));
     #ifdef ALLOW_PARALLEL
     print_result("idx<4>", test_predecessor<index_par<4>>(array, queries));
     print_result("idx<5>", test_predecessor<index_par<5>>(array, queries));
@@ -274,6 +277,7 @@ int main(int argc, char** argv) {
     if(!no_succ) {
     std::cout << "# successor ..." << std::endl;
     
+    print_result("j_index", test_successor<j_index>(array, queries));
     #ifdef ALLOW_PARALLEL
     print_result("idx<4>", test_successor<index_par<4>>(array, queries));
     print_result("idx<5>", test_successor<index_par<5>>(array, queries));
@@ -289,6 +293,7 @@ int main(int argc, char** argv) {
     print_result("idx<15>", test_successor<index_par<15>>(array, queries));
     print_result("idx<16>", test_successor<index_par<16>>(array, queries));
     #else
+    
     print_result("bs", test_successor<binsearch>(array, queries));
     print_result("bs*", test_successor<binsearch_cache>(array, queries));
     print_result("rank", test_successor<rank>(array, queries));
