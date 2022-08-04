@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <chrono>
 #include <fstream>
+#include <array>
 #include <iostream>
 #include <random>
 #include <vector>
