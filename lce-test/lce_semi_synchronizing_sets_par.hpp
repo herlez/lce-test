@@ -46,6 +46,7 @@ class LceSemiSyncSetsPar : public LceDataStructure {
 
     sync_set_ = string_synchronizing_set_par<kTau, sss_type>(text_);
     //check_string_synchronizing_set(text, sync_set_);
+    //print_sss();
 
 #ifdef DETAILED_TIME
     std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
@@ -157,6 +158,13 @@ class LceSemiSyncSetsPar : public LceDataStructure {
 
   std::vector<sss_type> getSyncSet() {
     return sync_set_.get_sss();
+  }
+
+  void print_sss() {
+    std::ofstream of("/tmp/sss", std::ios::trunc);
+    for(auto i : sync_set_.get_sss()) {
+      of << i << "\n";
+    }
   }
 
  private:
