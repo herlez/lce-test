@@ -17,8 +17,8 @@ private:
     item_t m_min;
     item_t m_max;
 
-    int64_t correction;
-    int64_t bin_search_interval;
+    int64_t max_left_error = 0;
+    int64_t max_right_error = 0;
     double slope;
     mutable std::vector<int64_t> err;
 
@@ -31,8 +31,6 @@ public:
 
         assert_sorted_ascending(array);
         slope = static_cast<double>(m_max)/static_cast<double>(m_num);
-        int64_t max_left_error = 0;
-        int64_t max_right_error = 0;
         
         for(size_t i = 0; i < m_num; i++) {
             int64_t apprx_pos = static_cast<int64_t>(1.0*(*m_array)[i]/slope);
@@ -44,13 +42,9 @@ public:
         --max_left_error;
         ++max_left_error;
 
-        correction = std::midpoint(max_left_error, max_right_error);
-        bin_search_interval = max_right_error - correction;
 
         std::cout << "\nmax_left_error=" << max_left_error
                   << " max_right_error=" << max_right_error
-                  << " correction=" << correction
-                  << " bin_search_interval=" << bin_search_interval
                   << " slope=" << slope
                   << " \n";
     }
@@ -81,10 +75,8 @@ public:
         if(unlikely(x >= m_max)) return result { true, m_num-1 };
  
         int64_t aprx_pos = (1.0*x)/slope;
-        aprx_pos = std::clamp(aprx_pos + correction, int64_t{0}, static_cast<int64_t>(m_num-1)); 
-        
-        int64_t left_border = std::max(aprx_pos - bin_search_interval, int64_t{0});
-        int64_t right_border = std::min(aprx_pos + bin_search_interval + 1, static_cast<int64_t>(m_num));
+        int64_t left_border = std::max(aprx_pos + max_left_error, int64_t{0});
+        int64_t right_border = std::min(aprx_pos + max_right_error + 1, static_cast<int64_t>(m_num));
         size_t scan_pos = std::distance(m_array->data(), std::upper_bound(m_array->data() + left_border,  m_array->data() + right_border, x)) - 1;
 
         /*err.push_back(static_cast<int64_t>(aprx_pos) - static_cast<int64_t>(scan_pos));
@@ -123,10 +115,8 @@ public:
         if(unlikely(x > m_max)) return result { false, m_num-1 };
  
         int64_t aprx_pos = (1.0*x)/slope;
-        aprx_pos = std::clamp(aprx_pos + correction, int64_t{0}, static_cast<int64_t>(m_num-1)); 
-        
-        int64_t left_border = std::max(aprx_pos - bin_search_interval, int64_t{0});
-        int64_t right_border = std::min(aprx_pos + bin_search_interval + 1, static_cast<int64_t>(m_num));
+        int64_t left_border = std::max(aprx_pos + max_left_error, int64_t{0});
+        int64_t right_border = std::min(aprx_pos + max_right_error + 1, static_cast<int64_t>(m_num));
         size_t scan_pos = std::distance(m_array->data(), std::lower_bound(m_array->data() + left_border,  m_array->data() + right_border, x));
 
         /*err.push_back(static_cast<int64_t>(aprx_pos) - static_cast<int64_t>(scan_pos));
