@@ -32,17 +32,15 @@ public:
         assert_sorted_ascending(array);
         slope = static_cast<double>(m_max)/static_cast<double>(m_num);
         
+        #pragma omp parallel for reduction(min:max_left_error) reduction(max:max_right_error)
         for(size_t i = 0; i < m_num; i++) {
             int64_t apprx_pos = static_cast<int64_t>(1.0*(*m_array)[i]/slope);
             int64_t error = static_cast<int64_t>(i) - apprx_pos;
             max_left_error = std::min(error, max_left_error);
             max_right_error = std::max(error, max_right_error);
-
         }
         --max_left_error;
-        ++max_left_error;
-
-
+        ++max_right_error;
         std::cout << "\nmax_left_error=" << max_left_error
                   << " max_right_error=" << max_right_error
                   << " slope=" << slope

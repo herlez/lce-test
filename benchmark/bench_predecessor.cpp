@@ -219,6 +219,9 @@ int main(int argc, char** argv) {
             << " type=" << test_types[r.type]
             << " universe=" << universe
             << " keys=" << array.size()
+#if ALLOW_PARALLEL
+            << " threads=" << omp_get_max_threads()
+#endif
             << " t_construct=" << r.t_construct
             << " t_queries=" << r.t_queries
             << " m_ds=" << r.m_ds
