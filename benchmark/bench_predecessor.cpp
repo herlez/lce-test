@@ -24,6 +24,7 @@
 #include "util/successor/pgm_index.hpp"
 #include "util/successor/rank.hpp"
 #include "util/successor/j_index.hpp"
+#include "util/successor/binsearch_std.hpp"
 
 #ifdef ALLOW_PARALLEL
 #include "util/successor/index_par.hpp"
@@ -54,6 +55,7 @@ using namespace stash;
 using value_t = uint64_t;
 using binsearch       = pred::binsearch<std::vector<value_t>, value_t>;
 using binsearch_cache = pred::binsearch_cache<std::vector<value_t>, value_t>;
+using binsearch_std   = pred::binsearch_std<std::vector<value_t>, value_t>;
 using rank            = pred::rank<std::vector<value_t>, value_t>;
 
 template<size_t k>
@@ -227,7 +229,6 @@ int main(int argc, char** argv) {
     if(!no_pred) {
     std::cout << "# predecessor ..." << std::endl;
     
-    print_result("j_index", test_predecessor<j_index>(array, queries));
     #ifdef ALLOW_PARALLEL
     print_result("idx<4>", test_predecessor<index_par<4>>(array, queries));
     print_result("idx<5>", test_predecessor<index_par<5>>(array, queries));
@@ -245,6 +246,7 @@ int main(int argc, char** argv) {
     #else
     print_result("bs", test_predecessor<binsearch>(array, queries));
     print_result("bs*", test_predecessor<binsearch_cache>(array, queries));
+    print_result("bs_std", test_predecessor<binsearch_std>(array, queries));
     print_result("rank", test_predecessor<rank>(array, queries));
     print_result("idx<4>", test_predecessor<index<4>>(array, queries));
     print_result("idx<5>", test_predecessor<index<5>>(array, queries));
@@ -260,6 +262,7 @@ int main(int argc, char** argv) {
     print_result("idx<15>", test_predecessor<index<15>>(array, queries));
     print_result("idx<16>", test_predecessor<index<16>>(array, queries));
     #endif
+    print_result("j_index", test_predecessor<j_index>(array, queries));
     print_result("pgm<4>", test_predecessor<pgm_index<4>>(array, queries));
     print_result("pgm<8>", test_predecessor<pgm_index<8>>(array, queries));
     print_result("pgm<12>", test_predecessor<pgm_index<12>>(array, queries));
@@ -273,12 +276,13 @@ int main(int argc, char** argv) {
     print_result("pgm<96>", test_predecessor<pgm_index<96>>(array, queries));
     print_result("pgm<112>", test_predecessor<pgm_index<112>>(array, queries));
     print_result("pgm<128>", test_predecessor<pgm_index<128>>(array, queries));
+    print_result("pgm<256>", test_predecessor<pgm_index<256>>(array, queries));
+    print_result("pgm<512>", test_predecessor<pgm_index<512>>(array, queries));
     }
 
     if(!no_succ) {
     std::cout << "# successor ..." << std::endl;
     
-    print_result("j_index", test_successor<j_index>(array, queries));
     #ifdef ALLOW_PARALLEL
     print_result("idx<4>", test_successor<index_par<4>>(array, queries));
     print_result("idx<5>", test_successor<index_par<5>>(array, queries));
@@ -294,9 +298,9 @@ int main(int argc, char** argv) {
     print_result("idx<15>", test_successor<index_par<15>>(array, queries));
     print_result("idx<16>", test_successor<index_par<16>>(array, queries));
     #else
-    
     print_result("bs", test_successor<binsearch>(array, queries));
     print_result("bs*", test_successor<binsearch_cache>(array, queries));
+    print_result("bs_std", test_successor<binsearch_std>(array, queries));
     print_result("rank", test_successor<rank>(array, queries));
     print_result("idx<4>", test_successor<index<4>>(array, queries));
     print_result("idx<5>", test_successor<index<5>>(array, queries));
@@ -312,7 +316,7 @@ int main(int argc, char** argv) {
     print_result("idx<15>", test_successor<index<15>>(array, queries));
     print_result("idx<16>", test_successor<index<16>>(array, queries));
     #endif
-    
+    print_result("j_index", test_successor<j_index>(array, queries));
     print_result("pgm<4>", test_successor<pgm_index<4>>(array, queries));
     print_result("pgm<8>", test_successor<pgm_index<8>>(array, queries));
     print_result("pgm<12>", test_successor<pgm_index<12>>(array, queries));
@@ -326,5 +330,7 @@ int main(int argc, char** argv) {
     print_result("pgm<96>", test_successor<pgm_index<96>>(array, queries));
     print_result("pgm<112>", test_successor<pgm_index<112>>(array, queries));
     print_result("pgm<128>", test_successor<pgm_index<128>>(array, queries));
+    print_result("pgm<256>", test_predecessor<pgm_index<256>>(array, queries));
+    print_result("pgm<512>", test_predecessor<pgm_index<512>>(array, queries));
     }
 }
