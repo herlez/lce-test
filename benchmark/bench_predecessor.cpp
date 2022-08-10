@@ -333,7 +333,7 @@ int main(int argc, char** argv) {
     print_result("pgm<96>", test_successor<pgm_index<96>>(array, queries));
     print_result("pgm<112>", test_successor<pgm_index<112>>(array, queries));
     print_result("pgm<128>", test_successor<pgm_index<128>>(array, queries));
-    print_result("pgm<256>", test_predecessor<pgm_index<256>>(array, queries));
-    print_result("pgm<512>", test_predecessor<pgm_index<512>>(array, queries));
+    print_result("pgm<256>", test_successor<pgm_index<256>>(array, queries));
+    print_result("pgm<512>", test_successor<pgm_index<512>>(array, queries));
     }
 }
