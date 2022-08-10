@@ -28,7 +28,7 @@ public:
     // finds the greatest element less than OR equal to x
     inline result predecessor(const item_t x) const {
         if(unlikely(x < m_min))  return result { false, 0 };
-        if(unlikely(x >= m_max)) return result { true, m_num-1 };
+        //if(unlikely(x >= m_max)) return result { true, m_num-1 };
 
         return {true, static_cast<size_t>(std::distance(m_array->data(), std::upper_bound(m_array->data(),  m_array->data() + m_num, x)) - 1)};
 
@@ -36,7 +36,7 @@ public:
 
     // finds the smallest element greater than OR equal to x
     inline result successor(const item_t x) const {
-        if(unlikely(x <= m_min)) return result { true, 0 };
+        //if(unlikely(x <= m_min)) return result { true, 0 };
         if(unlikely(x > m_max))  return result { false, 0 };
 
         return {true,  static_cast<size_t>(std::distance(m_array->data(), std::lower_bound(m_array->data(),  m_array->data() + m_num, x)))};
