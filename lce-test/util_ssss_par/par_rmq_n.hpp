@@ -13,8 +13,8 @@ template <typename key_type, u_int64_t c_block_size = 256>
 class par_RMQ_n {
   std::vector<key_type> const& m_data;
   std::vector<uint32_t> m_sampled_indexes;
-  std::vector<uint32_t> m_sampled_minimas;
-  par_RMQ_nlgn<uint32_t> m_sampled_rmq;
+  std::vector<key_type> m_sampled_minimas;
+  par_RMQ_nlgn<key_type> m_sampled_rmq;
 
  public:
   par_RMQ_n(std::vector<key_type> const& data) : m_data(data) {
@@ -42,10 +42,10 @@ class par_RMQ_n {
       m_sampled_minimas.push_back(m_data[min_index]);
     }
     //Build an RMQ data structure for these block minimas.
-    m_sampled_rmq = par_RMQ_nlgn<uint32_t>(m_sampled_minimas);
+    m_sampled_rmq = par_RMQ_nlgn<key_type>(m_sampled_minimas);
   }
 
-  size_t rmq(uint32_t const left, uint32_t const right) const {
+  uint32_t rmq(uint32_t const left, uint32_t const right) const {
     if (right - left <= c_block_size) {
       uint32_t min = left;
       for (uint32_t i = left; i <= right; ++i) {
