@@ -274,7 +274,7 @@ public:
       string line;
       string::size_type sz;
       while(getline(lc, line)) {
-        v.push_back(stoi(line, &sz));
+        v.push_back(std::stoll(line, &sz));
       }
       lc.close();
 
@@ -406,7 +406,7 @@ int32_t main(int argc, char *argv[]) {
               "Only for [s]tring synchronizing sets.");
   cp.add_flag('c', "check", lce_bench.check, "Check correctness of LCE queries "
               "by comparing with results of naive computation.");
-  cp.add_size_t('q', "queries", lce_bench.number_lce_queries, "Number of LCE "
+  cp.add_bytes('q', "queries", lce_bench.number_lce_queries, "Number of LCE "
               "queries that are executed (default=1,000,000).");
   cp.add_uint('r', "runs", lce_bench.runs, "Number of runs that are used to "
               "report an average running time (default=5).");
