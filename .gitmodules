@@ -1,6 +1,3 @@
-[submodule "libs/tlx"]
-	path = extlib/tlx
-	url = https://github.com/tlx/tlx
 [submodule "libs/rmq"]
 	path = extlib/rmq
 	url = https://github.com/hferrada/rmq
@@ -22,3 +19,6 @@
 [submodule "extlib/PGM-index"]
 	path = extlib/PGM-index
 	url = https://github.com/gvinciguerra/PGM-index.git
+[submodule "extlib/tlx"]
+	path = extlib/tlx
+	url = https://github.com/herlez/tlx

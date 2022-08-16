@@ -59,7 +59,7 @@ class Lce_rmq_par {
     StringShortSuffixSet<3 * kTau, sss_type> sufset{text_str, strings_to_sort.begin(), strings_to_sort.end(), sync_set};
 
     tlx::sort_strings_detail::StringPtr strptr(sufset);
-    tlx::sort_strings_detail::parallel_sample_sort(strptr, 0, 0);
+    tlx::sort_strings_detail::parallel_sample_sort(strptr, 0, static_cast<size_t>(omp_get_max_threads()), 0);
     
     // Check sorted strings
     /*{
