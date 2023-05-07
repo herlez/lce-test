@@ -60,7 +60,7 @@ Note that this options invalidates all other times and memory measurements for t
 
 Now, that we have built the code, we can use our benchmark tool to evaluate the data structures.
 To this end, change to ``build/benchmark``.
-To get an overview about all possible benchmark parameters, we can use ``benchmark_time -help``.
+To get an overview about all possible benchmark parameters, we can use ``./bench_time --help``.
 
 There are two different modes (``-m`` or ``--modes``) for our benchmarks:
 1. random, which asks random queries and
