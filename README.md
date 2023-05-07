@@ -49,12 +49,13 @@ git submodule update --init --recursive
 ```
 Then we build the code:
 ```
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
+# Produce Makefiles in `build/`
+cmake -B build/ -DCMAKE_BUILD_TYPE=Release
+# Perform the build
+cmake --build build/
 ```
 If we want detailed information (timings and memory requirements) of the string synchronizing set LCE data structure, we have to use ``-DDETAILED_TIME=True``.
-Note that this options invalidates all other times and memory measurements for this data structure.## How to use the Benchmark Tool
+Note that this options invalidates all other times and memory measurements for this data structure.
 
 ## How to Use the Benchmark Tool
 
