@@ -41,13 +41,15 @@ More experiments and a description of the legend can be found in our paper which
 
 ## How to Build the Code
 
-First, we clone the code and submodules:
+If you don't have it, install [Intel's oneApi Thread Building Blocks (TBB) library](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onetbb.html).
+
+Clone the code and submodules:
 ```
 git clone https://github.com/herlez/lce-test.git
 cd lce-test
 git submodule update --init --recursive
 ```
-Then we build the code:
+Then build the code:
 ```
 mkdir build
 cd build
